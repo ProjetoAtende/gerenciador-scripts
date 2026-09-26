@@ -1,0 +1,65 @@
+
+--- 2026-06-06T13:19:07.193Z debug
+🪵  Writing logs to "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-space-shooter-worker\.xdg-config\.wrangler\logs\wrangler-2026-06-06_13-19-06_979.log"
+---
+
+--- 2026-06-06T13:19:07.193Z debug
+.env file not found at "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-space-shooter-worker\.env". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T13:19:07.194Z debug
+.env file not found at "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-space-shooter-worker\.env.local". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T13:19:07.299Z log
+
+ ⛅️ wrangler 4.98.0
+───────────────────
+---
+
+--- 2026-06-06T13:19:07.334Z debug
+Running autoconfig detection in C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-space-shooter-worker...
+---
+
+--- 2026-06-06T13:19:07.363Z log
+
+---
+
+--- 2026-06-06T13:19:07.416Z error
+X [ERROR] In a non-interactive environment, it's necessary to set a CLOUDFLARE_API_TOKEN environment variable for wrangler to work. Please go to https://developers.cloudflare.com/fundamentals/api/get-started/create-token/ for instructions on how to create an api token, and assign its value to CLOUDFLARE_API_TOKEN.
+
+
+---
+
+--- 2026-06-06T13:19:07.432Z debug
+Error: In a non-interactive environment, it's necessary to set a CLOUDFLARE_API_TOKEN environment variable for wrangler to work. Please go to https://developers.cloudflare.com/fundamentals/api/get-started/create-token/ for instructions on how to create an api token, and assign its value to CLOUDFLARE_API_TOKEN.
+    at requireAuth (C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-space-shooter-worker\node_modules\wrangler\wrangler-dist\cli.js:139751:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.handler (C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-space-shooter-worker\node_modules\wrangler\wrangler-dist\cli.js:251078:50)
+    at async C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-space-shooter-worker\node_modules\wrangler\wrangler-dist\cli.js:207714:26
+    at async Object.handler (C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-space-shooter-worker\node_modules\wrangler\wrangler-dist\cli.js:207663:7)
+---
+
+--- 2026-06-06T13:19:07.642Z debug
+Metrics dispatcher: Posting data {"deviceId":"f2ed79fe-1cce-4511-b414-047b2ad6bf9f","event":"skills_install_skipped","timestamp":1780751947642,"properties":{"amplitude_session_id":1780751947304,"amplitude_event_id":0,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":true,"configFileType":"none","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":false,"hasAssets":false,"agent":"codex","category":"Workers","os":"win32:x64","reason":"Non-interactive terminal","currentAgentSkillsInstalled":"manual"}}
+---
+
+--- 2026-06-06T13:19:07.644Z debug
+Metrics dispatcher: Posting data {"deviceId":"f2ed79fe-1cce-4511-b414-047b2ad6bf9f","event":"wrangler command started","timestamp":1780751947644,"properties":{"amplitude_session_id":1780751947318,"amplitude_event_id":0,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":true,"configFileType":"jsonc","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":false,"hasAssets":false,"agent":"codex","argsUsed":[],"argsCombination":"","sanitizedCommand":"deploy","sanitizedArgs":{},"currentAgentSkillsInstalled":"manual"}}
+---
+
+--- 2026-06-06T13:19:07.646Z debug
+Metrics dispatcher: Posting data {"deviceId":"f2ed79fe-1cce-4511-b414-047b2ad6bf9f","event":"autoconfig_process_started","timestamp":1780751947645,"properties":{"amplitude_session_id":1780751947333,"amplitude_event_id":0,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"none","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":false,"hasAssets":false,"agent":"codex","category":"Workers","os":"win32:x64","autoConfigId":"fd7e2d92-c71c-4241-afef-1baa6cdd606d","command":"wrangler deploy","dryRun":false,"currentAgentSkillsInstalled":"manual"}}
+---
+
+--- 2026-06-06T13:19:07.647Z debug
+Metrics dispatcher: Posting data {"deviceId":"f2ed79fe-1cce-4511-b414-047b2ad6bf9f","event":"autoconfig_detection_started","timestamp":1780751947647,"properties":{"amplitude_session_id":1780751947334,"amplitude_event_id":0,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"none","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":false,"hasAssets":false,"agent":"codex","category":"Workers","os":"win32:x64","autoConfigId":"fd7e2d92-c71c-4241-afef-1baa6cdd606d","command":"wrangler deploy","currentAgentSkillsInstalled":"manual"}}
+---
+
+--- 2026-06-06T13:19:07.648Z debug
+Metrics dispatcher: Posting data {"deviceId":"f2ed79fe-1cce-4511-b414-047b2ad6bf9f","event":"autoconfig_process_ended","timestamp":1780751947648,"properties":{"amplitude_session_id":1780751947334,"amplitude_event_id":0,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"none","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":false,"hasAssets":false,"agent":"codex","category":"Workers","os":"win32:x64","autoConfigId":"fd7e2d92-c71c-4241-afef-1baa6cdd606d","command":"wrangler deploy","dryRun":false,"success":true,"currentAgentSkillsInstalled":"manual"}}
+---
+
+--- 2026-06-06T13:19:07.649Z debug
+Metrics dispatcher: Posting data {"deviceId":"f2ed79fe-1cce-4511-b414-047b2ad6bf9f","event":"wrangler command errored","timestamp":1780751947649,"properties":{"amplitude_session_id":1780751947318,"amplitude_event_id":1,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":true,"configFileType":"jsonc","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":false,"hasAssets":false,"agent":"codex","argsUsed":[],"argsCombination":"","sanitizedCommand":"deploy","sanitizedArgs":{},"durationMs":166,"errorType":"UserError","errorMessage":"user auth missing api token non interactive","currentAgentSkillsInstalled":"manual"}}
+---

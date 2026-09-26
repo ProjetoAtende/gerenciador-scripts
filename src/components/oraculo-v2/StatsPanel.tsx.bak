@@ -1,0 +1,2589 @@
+// ============================================================================
+// ORÁCULO V2 - STATS PANEL
+// Painel de estatísticas com gráficos e métricas
+// ============================================================================
+
+import { useState, useEffect, useMemo } from 'react';
+import { useSettings } from '../../contexts/SettingsContext';
+import {
+  Database,
+  CheckCircle,
+  CheckCircle2,
+  AlertCircle,
+  Users,
+  Loader2,
+
+  Mail,
+  Filter,
+  LineChart as LineChartIcon,
+  Table as TableIcon,
+  BarChart2,
+  UserCheck,
+  Activity,
+  TrendingDown,
+  Search,
+  X,
+  Building2,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  ExternalLink,
+} from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  LineChart,
+  Line,
+  LabelList,
+} from 'recharts';
+import {
+  obterEstatisticasGerais,
+  obterEstatisticasPorGrupoPeriodo,
+  obterEvolucaoPorGrupo,
+  obterTopUsuariosEmailPeriodo,
+  obterEvolucaoPorUsuario,
+  obterTopRespondentes,
+  obterEvolucaoPorRespondente,
+  obterProdutividadeRespondentes,
+  obterDemandaVsCapacidade,
+  obterTodosRespondentes,
+  obterTopEquipesSGS,
+  obterEvolucaoPorEquipeSGS,
+  obterEvolucaoRespondenteIndividual,
+  obterRejeitePorEquipeSGS,
+  obterStatusPorRespondente,
+  obterStatusPorEquipeSGS,
+  obterExternosSemUsuarioPorGSE,
+} from '../../services/oraculo/statisticsService';
+import type {
+  EstatisticasGerais,
+  EstatisticasPorGrupo,
+  TopUsuarioEmail,
+  EvolucaoPorGrupo,
+  EvolucaoPorUsuario,
+  TopRespondente,
+  EvolucaoPorRespondente,
+  ProdutividadeRespondentes,
+  DemandaVsCapacidade,
+  RespondenteLista,
+  TopEquipeSGS,
+  EvolucaoPorEquipeSGS,
+  EvolucaoRespondenteIndividual,
+  DistribuicaoStatus,
+  RejeiteEquipeSGS,
+  FiltroPeriodo,
+  ExternosSemUsuarioPorGSE,
+} from '../../services/oraculo/statisticsService.types';
+import {
+  COLORS,
+  STATUS_COLORS,
+  getStatusColor,
+  STATUS_ATENDIDOS,
+  LINE_COLORS,
+  OPCOES_PERIODO,
+  OPCOES_METRICA,
+  SGS_NOMES,
+  type VisualizacaoTipo,
+} from './stats/statsConstants';
+import { TicketsStatusModal } from './TicketsStatusModal';
+import { TicketsRejeiteModal } from './TicketsRejeiteModal';
+import { TicketsPendentesModal } from './TicketsPendentesModal';
+import { RespondentesModal } from './RespondentesModal';
+import { EquipeDetalheModal } from './EquipeDetalheModal';
+import { TicketsEquipeStatusModal } from './TicketsEquipeStatusModal';
+import { TicketsRespondenteStatusModal } from './TicketsRespondenteStatusModal';
+import { listarGrupos } from '../../services/oraculo/searchService';
+import type { GrupoDesignado } from '../../types/oracleV2';
+
+// ============================================================================
+// COMPONENTE: KPI Card
+// ============================================================================
+
+interface KPICardProps {
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  icon: React.ReactNode;
+  color: string;
+}
+
+function KPICard({ title, value, subtitle, icon, color }: KPICardProps) {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+      <div className="flex items-center gap-3">
+        <div
+          className="p-3 rounded-lg"
+          style={{ backgroundColor: `${color}15` }}
+        >
+          <div style={{ color }}>{icon}</div>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
+          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{value}</p>
+          {subtitle && (
+            <p className="text-xs text-gray-400 dark:text-gray-500">{subtitle}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// COMPONENTE: Stats Panel
+// ============================================================================
+
+export function StatsPanel() {
+  const { darkMode } = useSettings();
+
+  // Cores adaptativas para Recharts (não suporta Tailwind classes)
+  const chartTheme = useMemo(() => ({
+    grid: darkMode ? '#374151' : '#e5e7eb',
+    tickFill: darkMode ? '#d1d5db' : '#374151',
+    tooltipBg: darkMode ? '#1f2937' : 'white',
+    tooltipBorder: darkMode ? '#4b5563' : '#e5e7eb',
+    tooltipText: darkMode ? '#f3f4f6' : '#374151',
+    labelFill: darkMode ? '#d1d5db' : '#374151',
+    legendColor: darkMode ? '#d1d5db' : '#374151',
+  }), [darkMode]);
+
+  const [loading, setLoading] = useState(true);
+  const [estatisticasGerais, setEstatisticasGerais] = useState<EstatisticasGerais | null>(null);
+  const [estatisticasPorGrupo, setEstatisticasPorGrupo] = useState<EstatisticasPorGrupo[]>([]);
+  const [topUsuarios, setTopUsuarios] = useState<TopUsuarioEmail[]>([]);
+  const [grupos, setGrupos] = useState<GrupoDesignado[]>([]);
+  const [grupoFiltroEmail, setGrupoFiltroEmail] = useState<string | null>(null);
+  const [loadingUsuarios, setLoadingUsuarios] = useState(false);
+
+  // Estado ÚNICO de período para todos os 3 containers
+  const [periodoFiltro, setPeriodoFiltro] = useState<FiltroPeriodo>(null);
+  
+  // Estados para visualização e métricas
+  const [visualizacaoTopGrupos, setVisualizacaoTopGrupos] = useState<VisualizacaoTipo>('tabela');
+  const [visualizacaoUsuarios, setVisualizacaoUsuarios] = useState<VisualizacaoTipo>('tabela');
+  const [metricaTopGrupos, setMetricaTopGrupos] = useState<TipoMetricaEvolucao>('total');
+  const [evolucaoGrupos, setEvolucaoGrupos] = useState<EvolucaoPorGrupo[]>([]);
+  const [evolucaoUsuarios, setEvolucaoUsuarios] = useState<EvolucaoPorUsuario[]>([]);
+  const [loadingGrupos, setLoadingGrupos] = useState(false);
+  const [loadingEvolucaoGrupos, setLoadingEvolucaoGrupos] = useState(false);
+  const [loadingEvolucaoUsuarios, setLoadingEvolucaoUsuarios] = useState(false);
+
+  // Estados para visualização de respondentes
+  const [topRespondentes, setTopRespondentes] = useState<TopRespondente[]>([]);
+  const [evolucaoRespondentes, setEvolucaoRespondentes] = useState<EvolucaoPorRespondente[]>([]);
+  const [produtividadeRespondentes, setProdutividadeRespondentes] = useState<ProdutividadeRespondentes[]>([]);
+  const [demandaCapacidade, setDemandaCapacidade] = useState<DemandaVsCapacidade[]>([]);
+  const [visualizacaoRespondentes, setVisualizacaoRespondentes] = useState<VisualizacaoTipo>('tabela');
+  const [grupoFiltroRespondente, setGrupoFiltroRespondente] = useState<string | null>(null);
+  const [loadingRespondentes, setLoadingRespondentes] = useState(false);
+  const [loadingEvolucaoRespondentes, setLoadingEvolucaoRespondentes] = useState(false);
+  const [loadingProdutividade, setLoadingProdutividade] = useState(false);
+  const [loadingDemanda, setLoadingDemanda] = useState(false);
+
+  // Estados para autocomplete de respondente
+  const [todosRespondentes, setTodosRespondentes] = useState<RespondenteLista[]>([]);
+  const [respondenteSelecionado, setRespondenteSelecionado] = useState<string | null>(null);
+  const [buscaRespondente, setBuscaRespondente] = useState('');
+  const [showDropdownRespondente, setShowDropdownRespondente] = useState(false);
+  const [evolucaoIndividual, setEvolucaoIndividual] = useState<EvolucaoRespondenteIndividual[]>([]);
+  const [loadingEvolucaoIndividual, setLoadingEvolucaoIndividual] = useState(false);
+
+  // Estados para visualização de equipes SGS
+  const [topEquipesSGS, setTopEquipesSGS] = useState<TopEquipeSGS[]>([]);
+  const [evolucaoEquipesSGS, setEvolucaoEquipesSGS] = useState<EvolucaoPorEquipeSGS[]>([]);
+  const [visualizacaoEquipes, setVisualizacaoEquipes] = useState<VisualizacaoTipo>('tabela');
+  const [grupoFiltroEquipe, setGrupoFiltroEquipe] = useState<string | null>(null);
+  const [equipeSGSSelecionada, setEquipeSGSSelecionada] = useState<string | null>(null);
+  const [loadingEquipes, setLoadingEquipes] = useState(false);
+  const [loadingEvolucaoEquipes, setLoadingEvolucaoEquipes] = useState(false);
+
+  // Estados para novas métricas (status operacional, rejeites)
+  const [rejeiteEquipes, setRejeiteEquipes] = useState<RejeiteEquipeSGS[]>([]);
+  const [statusRespondente, setStatusRespondente] = useState<DistribuicaoStatus[]>([]);
+  const [statusEquipe, setStatusEquipe] = useState<DistribuicaoStatus[]>([]);
+  const [loadingRejeiteEquipes, setLoadingRejeiteEquipes] = useState(false);
+  const [loadingStatusRespondente, setLoadingStatusRespondente] = useState(false);
+  const [loadingStatusEquipe, setLoadingStatusEquipe] = useState(false);
+
+  // Externos e sem usuário por GSE
+  const [externosSemUsuarioPorGSE, setExternosSemUsuarioPorGSE] = useState<ExternosSemUsuarioPorGSE[]>([]);
+  const [loadingExternosSemUsuario, setLoadingExternosSemUsuario] = useState(false);
+  const [modalExternosEquipe, setModalExternosEquipe] = useState<{ gse: string; modo: 'externo' | 'vazio' } | null>(null);
+
+  // Estado para expand/collapse equipes SGS
+  const [equipesExpandidas, setEquipesExpandidas] = useState(false);
+  const MAX_EQUIPES_VISIVEIS = 4;
+
+  // Estado para modal de tickets por status (SMAX)
+  const [ticketsModal, setTicketsModal] = useState<{ respondente: string; status: string } | null>(null);
+
+  // Estado para modal de rejeites
+  const [rejeiteModal, setRejeiteModal] = useState<{ nome: string; tipo: 'equipe'; nomeExibicao?: string } | null>(null);
+  const [pendentesModal, setPendentesModal] = useState<{ periodo: string; totalAbertos: number; totalAtendidos: number } | null>(null);
+  const [produtividadeModal, setProdutividadeModal] = useState<{ periodo: string; totalRespostas: number; respondentesUnicos: number; media: number } | null>(null);
+  const [modalEquipeSGS, setModalEquipeSGS] = useState<{ codigo: string; nome: string } | null>(null);
+  const [modalMesEquipe, setModalMesEquipe] = useState<{ codigo: string; nome: string; periodo: string } | null>(null);
+  const [modalStatusEquipe, setModalStatusEquipe] = useState(false);
+  const [modalStatusRespondente, setModalStatusRespondente] = useState(false);
+
+  // Carregar dados principais
+  useEffect(() => {
+    async function carregarDados() {
+      setLoading(true);
+      try {
+        const [gerais, gruposLista] = await Promise.all([
+          obterEstatisticasGerais(),
+          listarGrupos(),
+        ]);
+
+        setEstatisticasGerais(gerais);
+        setGrupos(gruposLista);
+      } catch (error) {
+        console.error('Erro ao carregar estatísticas:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    carregarDados();
+  }, []);
+
+  // Carregar estatísticas por grupo quando mudar período ou visualização
+  useEffect(() => {
+    async function carregarEstatisticasGrupo() {
+      setLoadingGrupos(true);
+      try {
+        const porGrupo = await obterEstatisticasPorGrupoPeriodo(10, periodoFiltro);
+        setEstatisticasPorGrupo(porGrupo);
+      } catch (error) {
+        console.error('Erro ao carregar estatísticas por grupo:', error);
+      } finally {
+        setLoadingGrupos(false);
+      }
+    }
+
+    carregarEstatisticasGrupo();
+  }, [periodoFiltro]);
+
+  // Carregar evolução por grupo quando mudar período ou métrica (apenas no modo gráfico do Top 10 Grupos)
+  useEffect(() => {
+    async function carregarEvolucaoGrupo() {
+      if (visualizacaoTopGrupos !== 'grafico') return;
+      
+      setLoadingEvolucaoGrupos(true);
+      try {
+        const evolucao = await obterEvolucaoPorGrupo(periodoFiltro, metricaTopGrupos);
+        setEvolucaoGrupos(evolucao);
+      } catch (error) {
+        console.error('Erro ao carregar evolução por grupo:', error);
+      } finally {
+        setLoadingEvolucaoGrupos(false);
+      }
+    }
+
+    carregarEvolucaoGrupo();
+  }, [periodoFiltro, metricaTopGrupos, visualizacaoTopGrupos]);
+
+  // Carregar top usuários quando mudar filtros
+  useEffect(() => {
+    async function carregarTopUsuarios() {
+      setLoadingUsuarios(true);
+      try {
+        const usuarios = await obterTopUsuariosEmailPeriodo(10, grupoFiltroEmail, periodoFiltro);
+        setTopUsuarios(usuarios);
+      } catch (error) {
+        console.error('Erro ao carregar top usuários:', error);
+      } finally {
+        setLoadingUsuarios(false);
+      }
+    }
+
+    // Só recarregar se não for o carregamento inicial
+    if (!loading) {
+      carregarTopUsuarios();
+    }
+  }, [grupoFiltroEmail, periodoFiltro, loading]);
+
+  // Carregar evolução por usuário quando mudar período ou grupo (apenas no modo gráfico)
+  useEffect(() => {
+    async function carregarEvolucaoUsuario() {
+      if (visualizacaoUsuarios !== 'grafico') return;
+      
+      setLoadingEvolucaoUsuarios(true);
+      try {
+        const evolucao = await obterEvolucaoPorUsuario(periodoFiltro, 10, grupoFiltroEmail);
+        setEvolucaoUsuarios(evolucao);
+      } catch (error) {
+        console.error('Erro ao carregar evolução por usuário:', error);
+      } finally {
+        setLoadingEvolucaoUsuarios(false);
+      }
+    }
+
+    if (!loading) {
+      carregarEvolucaoUsuario();
+    }
+  }, [periodoFiltro, grupoFiltroEmail, visualizacaoUsuarios, loading]);
+
+  // Carregar top respondentes
+  useEffect(() => {
+    async function carregarTopRespondentes() {
+      setLoadingRespondentes(true);
+      try {
+        const respondentes = await obterTopRespondentes(10, grupoFiltroRespondente, periodoFiltro);
+        setTopRespondentes(respondentes);
+      } catch (error) {
+        console.error('Erro ao carregar top respondentes:', error);
+      } finally {
+        setLoadingRespondentes(false);
+      }
+    }
+
+    if (!loading) {
+      carregarTopRespondentes();
+    }
+  }, [grupoFiltroRespondente, periodoFiltro, loading]);
+
+  // Carregar evolução por respondente (apenas no modo gráfico)
+  useEffect(() => {
+    async function carregarEvolucaoRespondente() {
+      if (visualizacaoRespondentes !== 'grafico') return;
+      // Se há respondente selecionado, não carrega top 10
+      if (respondenteSelecionado) return;
+      
+      setLoadingEvolucaoRespondentes(true);
+      try {
+        const evolucao = await obterEvolucaoPorRespondente(periodoFiltro, 10, grupoFiltroRespondente);
+        setEvolucaoRespondentes(evolucao);
+      } catch (error) {
+        console.error('Erro ao carregar evolução por respondente:', error);
+      } finally {
+        setLoadingEvolucaoRespondentes(false);
+      }
+    }
+
+    if (!loading) {
+      carregarEvolucaoRespondente();
+    }
+  }, [periodoFiltro, grupoFiltroRespondente, visualizacaoRespondentes, loading, respondenteSelecionado]);
+
+  // Carregar evolução de respondente individual (quando selecionado)
+  useEffect(() => {
+    async function carregarEvolucaoIndividual() {
+      if (!respondenteSelecionado) {
+        setEvolucaoIndividual([]);
+        return;
+      }
+
+      setLoadingEvolucaoIndividual(true);
+      try {
+        const evolucao = await obterEvolucaoRespondenteIndividual(
+          respondenteSelecionado,
+          periodoFiltro,
+          grupoFiltroRespondente
+        );
+        setEvolucaoIndividual(evolucao);
+      } catch (error) {
+        console.error('Erro ao carregar evolução individual:', error);
+      } finally {
+        setLoadingEvolucaoIndividual(false);
+      }
+    }
+
+    if (!loading) {
+      carregarEvolucaoIndividual();
+    }
+  }, [respondenteSelecionado, periodoFiltro, grupoFiltroRespondente, loading]);
+
+  // Carregar produtividade de respondentes
+  useEffect(() => {
+    async function carregarProdutividade() {
+      setLoadingProdutividade(true);
+      try {
+        const produtividade = await obterProdutividadeRespondentes(periodoFiltro);
+        setProdutividadeRespondentes(produtividade);
+      } catch (error) {
+        console.error('Erro ao carregar produtividade:', error);
+      } finally {
+        setLoadingProdutividade(false);
+      }
+    }
+
+    if (!loading) {
+      carregarProdutividade();
+    }
+  }, [periodoFiltro, loading]);
+
+  // Carregar demanda vs capacidade
+  useEffect(() => {
+    async function carregarDemanda() {
+      setLoadingDemanda(true);
+      try {
+        const demanda = await obterDemandaVsCapacidade(periodoFiltro);
+        setDemandaCapacidade(demanda);
+      } catch (error) {
+        console.error('Erro ao carregar demanda vs capacidade:', error);
+      } finally {
+        setLoadingDemanda(false);
+      }
+    }
+
+    if (!loading) {
+      carregarDemanda();
+    }
+  }, [periodoFiltro, loading]);
+
+  // Carregar lista completa de respondentes (para autocomplete)
+  useEffect(() => {
+    async function carregarTodosRespondentes() {
+      try {
+        const respondentes = await obterTodosRespondentes(grupoFiltroRespondente, periodoFiltro);
+        setTodosRespondentes(respondentes);
+      } catch (error) {
+        console.error('Erro ao carregar lista de respondentes:', error);
+      }
+    }
+
+    if (!loading) {
+      carregarTodosRespondentes();
+    }
+  }, [grupoFiltroRespondente, periodoFiltro, loading]);
+
+  // Carregar top equipes SGS
+  useEffect(() => {
+    async function carregarTopEquipes() {
+      setLoadingEquipes(true);
+      try {
+        const equipes = await obterTopEquipesSGS(10, grupoFiltroEquipe, periodoFiltro);
+        setTopEquipesSGS(equipes);
+      } catch (error) {
+        console.error('Erro ao carregar top equipes SGS:', error);
+      } finally {
+        setLoadingEquipes(false);
+      }
+    }
+
+    if (!loading) {
+      carregarTopEquipes();
+    }
+  }, [grupoFiltroEquipe, periodoFiltro, loading]);
+
+  // Carregar evolução por equipe SGS (apenas no modo gráfico)
+  useEffect(() => {
+    async function carregarEvolucaoEquipe() {
+      // Carregar evolução no modo gráfico OU quando uma equipe específica está selecionada (para barras verticais)
+      if (visualizacaoEquipes !== 'grafico' && !equipeSGSSelecionada) return;
+
+      setLoadingEvolucaoEquipes(true);
+      try {
+        const evolucao = await obterEvolucaoPorEquipeSGS(periodoFiltro, 10, grupoFiltroEquipe);
+        setEvolucaoEquipesSGS(evolucao);
+      } catch (error) {
+        console.error('Erro ao carregar evolução por equipe SGS:', error);
+      } finally {
+        setLoadingEvolucaoEquipes(false);
+      }
+    }
+
+    if (!loading) {
+      carregarEvolucaoEquipe();
+    }
+  }, [periodoFiltro, grupoFiltroEquipe, visualizacaoEquipes, equipeSGSSelecionada, loading]);
+
+  // Carregar rejeites por equipe SGS
+  useEffect(() => {
+    async function carregarRejeiteEquipes() {
+      setLoadingRejeiteEquipes(true);
+      try {
+        const data = await obterRejeitePorEquipeSGS(10, grupoFiltroEquipe, periodoFiltro);
+        setRejeiteEquipes(data);
+      } catch (error) {
+        console.error('Erro ao carregar rejeites por equipe SGS:', error);
+      } finally {
+        setLoadingRejeiteEquipes(false);
+      }
+    }
+
+    if (!loading) {
+      carregarRejeiteEquipes();
+    }
+  }, [grupoFiltroEquipe, periodoFiltro, loading]);
+
+  // Carregar status individual do respondente selecionado
+  useEffect(() => {
+    async function carregarStatusRespondente() {
+      if (!respondenteSelecionado) {
+        setStatusRespondente([]);
+        return;
+      }
+      setLoadingStatusRespondente(true);
+      try {
+        const data = await obterStatusPorRespondente(respondenteSelecionado, grupoFiltroRespondente, periodoFiltro);
+        setStatusRespondente(data);
+      } catch (error) {
+        console.error('Erro ao carregar status do respondente:', error);
+      } finally {
+        setLoadingStatusRespondente(false);
+      }
+    }
+
+    if (!loading) {
+      carregarStatusRespondente();
+    }
+  }, [respondenteSelecionado, grupoFiltroRespondente, periodoFiltro, loading]);
+
+  // Carregar status individual da equipe SGS selecionada
+  useEffect(() => {
+    async function carregarStatusEquipe() {
+      if (!equipeSGSSelecionada) {
+        setStatusEquipe([]);
+        return;
+      }
+      setLoadingStatusEquipe(true);
+      try {
+        const data = await obterStatusPorEquipeSGS(equipeSGSSelecionada, grupoFiltroEquipe, periodoFiltro);
+        setStatusEquipe(data);
+      } catch (error) {
+        console.error('Erro ao carregar status da equipe SGS:', error);
+      } finally {
+        setLoadingStatusEquipe(false);
+      }
+    }
+
+    if (!loading) {
+      carregarStatusEquipe();
+    }
+  }, [equipeSGSSelecionada, grupoFiltroEquipe, periodoFiltro, loading]);
+
+  // Carregar externos/sem usuário por GSE da equipe selecionada
+  useEffect(() => {
+    async function carregarExternos() {
+      if (!equipeSGSSelecionada) {
+        setExternosSemUsuarioPorGSE([]);
+        return;
+      }
+      setLoadingExternosSemUsuario(true);
+      try {
+        const data = await obterExternosSemUsuarioPorGSE(equipeSGSSelecionada, periodoFiltro);
+        setExternosSemUsuarioPorGSE(data);
+      } catch (error) {
+        console.error('Erro ao carregar externos/sem usuário por GSE:', error);
+      } finally {
+        setLoadingExternosSemUsuario(false);
+      }
+    }
+    if (!loading) carregarExternos();
+  }, [equipeSGSSelecionada, periodoFiltro, loading]);
+  const respondentesFiltrados = useMemo(() => {
+    if (!buscaRespondente.trim()) return todosRespondentes.slice(0, 20);
+    const busca = buscaRespondente.toLowerCase();
+    return todosRespondentes
+      .filter(r => r.nome.toLowerCase().includes(busca))
+      .slice(0, 20);
+  }, [todosRespondentes, buscaRespondente]);
+
+  // Transformar dados de evolução por grupo para formato do gráfico de linhas
+  const dadosGraficoEvolucaoGrupos = useMemo(() => {
+    if (!evolucaoGrupos.length) return [];
+
+    // Agrupar por período, criando colunas para cada grupo
+    const periodos = [...new Set(evolucaoGrupos.map(e => e.periodo))];
+    const gruposUnicos = [...new Set(evolucaoGrupos.map(e => e.grupo))];
+
+    return periodos.map(periodo => {
+      const ponto: Record<string, string | number> = { periodo };
+      gruposUnicos.forEach(grupo => {
+        const item = evolucaoGrupos.find(e => e.periodo === periodo && e.grupo === grupo);
+        ponto[grupo] = item?.valor || 0;
+      });
+      return ponto;
+    });
+  }, [evolucaoGrupos]);
+
+  const gruposParaLinhas = useMemo(() => {
+    return [...new Set(evolucaoGrupos.map(e => e.grupo))];
+  }, [evolucaoGrupos]);
+
+  // Transformar dados de evolução por usuário para formato do gráfico de linhas
+  const dadosGraficoEvolucaoUsuarios = useMemo(() => {
+    if (!evolucaoUsuarios.length) return [];
+
+    // Agrupar por período, criando colunas para cada usuário
+    const periodos = [...new Set(evolucaoUsuarios.map(e => e.periodo))];
+    const usuariosUnicos = [...new Set(evolucaoUsuarios.map(e => e.email))];
+
+    return periodos.map(periodo => {
+      const ponto: Record<string, string | number> = { periodo };
+      usuariosUnicos.forEach(email => {
+        const item = evolucaoUsuarios.find(e => e.periodo === periodo && e.email === email);
+        // Usar email resumido como chave
+        const emailKey = email.length > 20 ? email.substring(0, 17) + '...' : email;
+        ponto[emailKey] = item?.valor || 0;
+      });
+      return ponto;
+    });
+  }, [evolucaoUsuarios]);
+
+  const usuariosParaLinhas = useMemo(() => {
+    return [...new Set(evolucaoUsuarios.map(e => {
+      const email = e.email;
+      return email.length > 20 ? email.substring(0, 17) + '...' : email;
+    }))];
+  }, [evolucaoUsuarios]);
+
+  // Transformar dados de evolução por respondente para formato do gráfico de linhas
+  const dadosGraficoEvolucaoRespondentes = useMemo(() => {
+    if (!evolucaoRespondentes.length) return [];
+
+    const periodos = [...new Set(evolucaoRespondentes.map(e => e.periodo))];
+    const nomesUnicos = [...new Set(evolucaoRespondentes.map(e => e.nome))];
+
+    return periodos.map(periodo => {
+      const ponto: Record<string, string | number> = { periodo };
+      nomesUnicos.forEach(nome => {
+        const item = evolucaoRespondentes.find(e => e.periodo === periodo && e.nome === nome);
+        const nomeKey = nome.length > 25 ? nome.substring(0, 22) + '...' : nome;
+        ponto[nomeKey] = item?.valor || 0;
+      });
+      return ponto;
+    });
+  }, [evolucaoRespondentes]);
+
+  const respondentesParaLinhas = useMemo(() => {
+    return [...new Set(evolucaoRespondentes.map(e => {
+      const nome = e.nome;
+      return nome.length > 25 ? nome.substring(0, 22) + '...' : nome;
+    }))];
+  }, [evolucaoRespondentes]);
+
+  // Transformar dados de evolução por equipe SGS para formato do gráfico de linhas
+  const dadosGraficoEvolucaoEquipes = useMemo(() => {
+    if (!evolucaoEquipesSGS.length) return [];
+
+    const periodos = [...new Set(evolucaoEquipesSGS.map(e => e.periodo))];
+    const equipesUnicas = [...new Set(evolucaoEquipesSGS.map(e => e.equipe_sgs))];
+
+    return periodos.map(periodo => {
+      const ponto: Record<string, string | number> = { periodo };
+      equipesUnicas.forEach(equipe => {
+        const item = evolucaoEquipesSGS.find(e => e.periodo === periodo && e.equipe_sgs === equipe);
+        const label = `SGS ${equipe}`;
+        ponto[label] = item?.valor || 0;
+      });
+      return ponto;
+    });
+  }, [evolucaoEquipesSGS]);
+
+  const equipesParaLinhas = useMemo(() => {
+    return [...new Set(evolucaoEquipesSGS.map(e => `SGS ${e.equipe_sgs}`))];
+  }, [evolucaoEquipesSGS]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="animate-spin text-indigo-600" size={40} />
+        <span className="ml-3 text-gray-600 dark:text-gray-400 font-medium">Carregando estatísticas...</span>
+      </div>
+    );
+  }
+
+
+
+  return (
+    <div className="space-y-6">
+      {/* ====================================================================
+          CARDS KPI
+          ==================================================================== */}
+      <div className="grid grid-cols-5 gap-4">
+        <KPICard
+          title="Total de Chamados"
+          value={estatisticasGerais?.totalChamados.toLocaleString('pt-BR') || '0'}
+          icon={<Database size={24} />}
+          color={COLORS.primary}
+        />
+        <KPICard
+          title="Com Solução"
+          value={estatisticasGerais?.comSolucao.toLocaleString('pt-BR') || '0'}
+          subtitle={`${estatisticasGerais?.percentualComSolucao || 0}%`}
+          icon={<CheckCircle size={24} />}
+          color={COLORS.success}
+        />
+        <KPICard
+          title="Sem Solução"
+          value={estatisticasGerais?.semSolucao.toLocaleString('pt-BR') || '0'}
+          subtitle={`${(100 - (estatisticasGerais?.percentualComSolucao || 0)).toFixed(1)}%`}
+          icon={<AlertCircle size={24} />}
+          color={COLORS.warning}
+        />
+        <KPICard
+          title="Atendidos"
+          value={estatisticasGerais?.totalAtendidos.toLocaleString('pt-BR') || '0'}
+          subtitle={`${estatisticasGerais?.percentualAtendidos || 0}%`}
+          icon={<CheckCircle2 size={24} />}
+          color={COLORS.emerald}
+        />
+        <KPICard
+          title="Grupos Ativos"
+          value={estatisticasGerais?.totalGrupos.toLocaleString('pt-BR') || '0'}
+          icon={<Users size={24} />}
+          color={COLORS.gray}
+        />
+      </div>
+
+      {/* ====================================================================
+          DEMANDA VS CAPACIDADE
+          ==================================================================== */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+        {/* Header com título e controles */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <TrendingDown size={20} className="text-rose-600" />
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Demanda vs Capacidade</h3>
+            <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">tickets abertos × atendidos (Fechado + Ag. Aceite Definitivo)</span>
+          </div>
+
+          {/* Filtro de Período */}
+          <div className="flex items-center gap-1.5">
+            <Filter size={14} className="text-gray-500 dark:text-gray-400" />
+            <select
+              value={periodoFiltro === null ? 'null' : String(periodoFiltro)}
+              onChange={(e) => setPeriodoFiltro(e.target.value === 'null' ? null : Number(e.target.value) as FiltroPeriodo)}
+              className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-rose-500"
+            >
+              {OPCOES_PERIODO.map((opcao) => (
+                <option key={opcao.value ?? 'null'} value={opcao.value === null ? 'null' : String(opcao.value)}>
+                  {opcao.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Conteúdo */}
+        {loadingDemanda ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="animate-spin text-rose-600" size={32} />
+          </div>
+        ) : demandaCapacidade.length > 0 ? (
+          <>
+          <ResponsiveContainer width="100%" height={350}>
+            <AreaChart
+              data={demandaCapacidade}
+              margin={{ left: 10, right: 10, top: 10, bottom: 10 }}
+              onClick={(state) => {
+                if (state && state.activePayload && state.activePayload.length > 0) {
+                  const payload = state.activePayload[0].payload as DemandaVsCapacidade;
+                  const pendentes = payload.tickets_abertos - payload.tickets_respondidos;
+                  if (pendentes > 0) {
+                    setPendentesModal({
+                      periodo: payload.periodo,
+                      totalAbertos: payload.tickets_abertos,
+                      totalAtendidos: payload.tickets_respondidos,
+                    });
+                  }
+                }
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+              <XAxis dataKey="periodo" fontSize={11} tickLine={false} angle={-45} textAnchor="end" height={60} tick={{ fill: chartTheme.tickFill }} />
+              <YAxis fontSize={12} tickLine={false} axisLine={false} tick={{ fill: chartTheme.tickFill }} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: chartTheme.tooltipBg,
+                  border: `1px solid ${chartTheme.tooltipBorder}`,
+                  borderRadius: '8px',
+                color: chartTheme.tooltipText,
+                }}
+                formatter={(value: number, name: string) => {
+                  if (name === 'tickets_abertos') return [value.toLocaleString('pt-BR'), 'Abertos'];
+                  if (name === 'tickets_respondidos') return [value.toLocaleString('pt-BR'), 'Atendidos (Fechado + Ag. Aceite Def.)'];
+                  if (name === 'saldo') return [value.toLocaleString('pt-BR'), 'Saldo'];
+                  return [value, name];
+                }}
+              />
+              <Legend
+                formatter={(value: string) => {
+                  if (value === 'tickets_abertos') return 'Tickets Abertos';
+                  if (value === 'tickets_respondidos') return 'Tickets Atendidos';
+                  if (value === 'saldo') return 'Saldo (Atendidos - Abertos)';
+                  return value;
+                }}
+                wrapperStyle={{ color: chartTheme.legendColor }}
+              />
+              <Area
+                type="monotone"
+                dataKey="tickets_abertos"
+                name="tickets_abertos"
+                stroke="#ef4444"
+                fill="#ef4444"
+                fillOpacity={0.2}
+                strokeWidth={2}
+                dot={(props: any) => {
+                  const { cx, cy, payload } = props;
+                  const pendentes = (payload.tickets_abertos || 0) - (payload.tickets_respondidos || 0);
+                  if (pendentes > 0) {
+                    return (
+                      <circle
+                        key={`dot-aberto-${props.index}`}
+                        cx={cx}
+                        cy={cy}
+                        r={5}
+                        fill="#ef4444"
+                        stroke="#fff"
+                        strokeWidth={2}
+                        style={{ cursor: 'pointer' }}
+                      />
+                    );
+                  }
+                  return <circle key={`dot-aberto-${props.index}`} cx={cx} cy={cy} r={2} fill="#ef4444" />;
+                }}
+                activeDot={{ r: 7, strokeWidth: 2, stroke: '#fff' }}
+              />
+              <Area
+                type="monotone"
+                dataKey="tickets_respondidos"
+                name="tickets_respondidos"
+                stroke="#22c55e"
+                fill="#22c55e"
+                fillOpacity={0.2}
+                strokeWidth={2}
+                dot={{ r: 2, fill: '#22c55e' }}
+                activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center mt-1 select-none">
+            Clique em um período com pendentes para ver os tickets ainda abertos
+          </p>
+          </>
+        ) : (
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+            <TrendingDown size={40} className="mx-auto mb-2 opacity-50" />
+            <p className="text-sm">Sem dados no período selecionado</p>
+          </div>
+        )}
+      </div>
+
+      {/* ====================================================================
+          GRÁFICO DE BARRAS / LINHA - TOP GRUPOS
+          ==================================================================== */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Users size={20} className="text-indigo-600" />
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Top 10 Grupos por Volume</h3>
+          </div>
+
+          {/* Controles */}
+          <div className="flex items-center gap-3">
+            {/* Toggle Visualização */}
+            <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setVisualizacaoTopGrupos('tabela')}
+                className={`px-3 py-1.5 text-sm flex items-center gap-1.5 transition-colors ${
+                  visualizacaoTopGrupos === 'tabela'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                <BarChart2 size={14} />
+                Barras
+              </button>
+              <button
+                onClick={() => setVisualizacaoTopGrupos('grafico')}
+                className={`px-3 py-1.5 text-sm flex items-center gap-1.5 transition-colors ${
+                  visualizacaoTopGrupos === 'grafico'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                <LineChartIcon size={14} />
+                Linha
+              </button>
+            </div>
+
+            {/* Filtro de Período */}
+            <div className="flex items-center gap-1.5">
+              <Filter size={14} className="text-gray-500 dark:text-gray-400" />
+              <select
+                value={periodoFiltro === null ? 'null' : String(periodoFiltro)}
+                onChange={(e) => setPeriodoFiltro(e.target.value === 'null' ? null : Number(e.target.value) as FiltroPeriodo)}
+                className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                {OPCOES_PERIODO.map((opcao) => (
+                  <option key={opcao.value ?? 'null'} value={opcao.value === null ? 'null' : String(opcao.value)}>
+                    {opcao.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filtro de Métrica (apenas no modo gráfico de linha) */}
+            {visualizacaoTopGrupos === 'grafico' && (
+              <select
+                value={metricaTopGrupos}
+                onChange={(e) => setMetricaTopGrupos(e.target.value as TipoMetricaEvolucao)}
+                className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                {OPCOES_METRICA.map((opcao) => (
+                  <option key={opcao.value} value={opcao.value}>
+                    {opcao.label}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
+
+        {/* Conteúdo: Gráfico de Barras ou Linha */}
+        {loadingGrupos || loadingEvolucaoGrupos ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="animate-spin text-indigo-600" size={32} />
+          </div>
+        ) : visualizacaoTopGrupos === 'tabela' ? (
+          <ResponsiveContainer width="100%" height={450}>
+            <BarChart
+              data={estatisticasPorGrupo}
+              layout="vertical"
+              margin={{ left: 20, right: 20, top: 10, bottom: 10 }}
+              barCategoryGap="20%"
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} horizontal={true} vertical={false} />
+              <XAxis type="number" fontSize={12} tickLine={false} tick={{ fill: chartTheme.tickFill }} />
+              <YAxis
+                type="category"
+                dataKey="grupo"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+                width={180}
+                tick={{ fill: chartTheme.tickFill }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: chartTheme.tooltipBg,
+                  border: `1px solid ${chartTheme.tooltipBorder}`,
+                  borderRadius: '8px',
+                color: chartTheme.tooltipText,
+                }}
+                formatter={(value: number) => value.toLocaleString('pt-BR')}
+              />
+              <Legend wrapperStyle={{ color: chartTheme.legendColor }} />
+              <Bar
+                dataKey="comSolucao"
+                name="Com Solução"
+                fill={COLORS.success}
+                stackId="a"
+                radius={[0, 4, 4, 0]}
+                barSize={25}
+              />
+              <Bar
+                dataKey="semSolucao"
+                name="Sem Solução"
+                fill={COLORS.warning}
+                stackId="a"
+                radius={[0, 4, 4, 0]}
+                barSize={25}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          /* Gráfico de Linha - Evolução por Grupo */
+          <div>
+            {dadosGraficoEvolucaoGrupos.length > 0 ? (
+              <ResponsiveContainer width="100%" height={450}>
+                <LineChart data={dadosGraficoEvolucaoGrupos}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                  <XAxis dataKey="periodo" fontSize={11} tickLine={false} angle={-45} textAnchor="end" height={60} tick={{ fill: chartTheme.tickFill }} />
+                  <YAxis fontSize={12} tickLine={false} axisLine={false} tick={{ fill: chartTheme.tickFill }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: chartTheme.tooltipBg,
+                      border: `1px solid ${chartTheme.tooltipBorder}`,
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                    color: chartTheme.tooltipText,
+                    }}
+                    formatter={(value: number) => value.toLocaleString('pt-BR')}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '11px', color: chartTheme.legendColor }} />
+                  {gruposParaLinhas.map((grupo, index) => (
+                    <Line
+                      key={grupo}
+                      type="monotone"
+                      dataKey={grupo}
+                      name={grupo}
+                      stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                      activeDot={{ r: 5 }}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center py-16 text-gray-500 dark:text-gray-400">
+                <div className="text-center">
+                  <LineChartIcon size={40} className="mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Sem dados para exibir no período selecionado</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ====================================================================
+          TABELA DETALHAMENTO POR GRUPO
+          ==================================================================== */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+        {/* Header com título e controles */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <TableIcon size={20} className="text-indigo-600" />
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Detalhamento por Grupo</h3>
+          </div>
+
+          {/* Filtro de Período */}
+          <div className="flex items-center gap-1.5">
+            <Filter size={14} className="text-gray-500 dark:text-gray-400" />
+            <select
+              value={periodoFiltro === null ? 'null' : String(periodoFiltro)}
+              onChange={(e) => setPeriodoFiltro(e.target.value === 'null' ? null : Number(e.target.value) as FiltroPeriodo)}
+              className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              {OPCOES_PERIODO.map((opcao) => (
+                <option key={opcao.value ?? 'null'} value={opcao.value === null ? 'null' : String(opcao.value)}>
+                  {opcao.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Conteúdo: Tabela */}
+        {loadingGrupos ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="animate-spin text-indigo-600" size={32} />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-400">Grupo</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-400">Total</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-400">Com Solução</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-400">Sem Solução</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-400">Taxa</th>
+                  <th className="py-3 px-4 font-medium text-gray-600 dark:text-gray-400 w-40">Progresso</th>
+                </tr>
+              </thead>
+              <tbody>
+                {estatisticasPorGrupo.map((grupo, index) => (
+                  <tr key={grupo.grupo} className={index % 2 === 0 ? 'bg-gray-50 dark:bg-gray-900' : ''}>
+                    <td className="py-3 px-4 font-medium text-gray-800 dark:text-gray-200">{grupo.grupo}</td>
+                    <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-400">
+                      {grupo.total.toLocaleString('pt-BR')}
+                    </td>
+                    <td className="py-3 px-4 text-right text-green-600 font-medium">
+                      {grupo.comSolucao.toLocaleString('pt-BR')}
+                    </td>
+                    <td className="py-3 px-4 text-right text-amber-600 font-medium">
+                      {grupo.semSolucao.toLocaleString('pt-BR')}
+                    </td>
+                    <td className="py-3 px-4 text-right font-semibold text-gray-800 dark:text-gray-200">
+                      {grupo.taxaResolucao}%
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                        <div
+                          className="h-2.5 rounded-full transition-all"
+                          style={{
+                            width: `${grupo.taxaResolucao}%`,
+                            backgroundColor: grupo.taxaResolucao >= 80
+                              ? COLORS.success
+                              : grupo.taxaResolucao >= 50
+                              ? COLORS.warning
+                              : COLORS.danger,
+                          }}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* ====================================================================
+          TOP 10 USUÁRIOS - LARGURA TOTAL
+          ==================================================================== */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+        {/* Header com título e controles */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Mail size={20} className="text-blue-600" />
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Top 10 Usuários</h3>
+          </div>
+
+          {/* Controles */}
+          <div className="flex items-center gap-3">
+            {/* Toggle Visualização */}
+            <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setVisualizacaoUsuarios('tabela')}
+                className={`px-3 py-1.5 text-sm flex items-center gap-1.5 transition-colors ${
+                  visualizacaoUsuarios === 'tabela'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                <BarChart2 size={14} />
+                Barras
+              </button>
+              <button
+                onClick={() => setVisualizacaoUsuarios('grafico')}
+                className={`px-3 py-1.5 text-sm flex items-center gap-1.5 transition-colors ${
+                  visualizacaoUsuarios === 'grafico'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                <LineChartIcon size={14} />
+                Linha
+              </button>
+            </div>
+
+            {/* Filtro de Período */}
+            <div className="flex items-center gap-1.5">
+              <Filter size={14} className="text-gray-500 dark:text-gray-400" />
+              <select
+                value={periodoFiltro === null ? 'null' : String(periodoFiltro)}
+                onChange={(e) => setPeriodoFiltro(e.target.value === 'null' ? null : Number(e.target.value) as FiltroPeriodo)}
+                className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {OPCOES_PERIODO.map((opcao) => (
+                  <option key={opcao.value ?? 'null'} value={opcao.value === null ? 'null' : String(opcao.value)}>
+                    {opcao.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filtro por Grupo GSE */}
+            <select
+              value={grupoFiltroEmail || ''}
+              onChange={(e) => setGrupoFiltroEmail(e.target.value || null)}
+              className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Todos os grupos</option>
+              {grupos.map((grupo) => (
+                <option key={grupo.grupo_designado} value={grupo.grupo_designado}>
+                  {grupo.grupo_designado} ({grupo.total_chamados.toLocaleString('pt-BR')})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Conteúdo */}
+        {loadingUsuarios || loadingEvolucaoUsuarios ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="animate-spin text-blue-600" size={32} />
+          </div>
+        ) : visualizacaoUsuarios === 'tabela' ? (
+          topUsuarios.length > 0 ? (
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart
+                data={topUsuarios.map((u, i) => ({
+                  email: u.email || '(sem email)',
+                  total: u.total_chamados,
+                  position: i + 1
+                }))}
+                layout="vertical"
+                margin={{ left: 20, right: 20, top: 10, bottom: 10 }}
+                barCategoryGap="15%"
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} horizontal={true} vertical={false} />
+                <XAxis type="number" fontSize={12} tickLine={false} tick={{ fill: chartTheme.tickFill }} />
+                <YAxis
+                  type="category"
+                  dataKey="email"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  width={200}
+                  tick={{ fill: chartTheme.tickFill }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: chartTheme.tooltipBg,
+                    border: `1px solid ${chartTheme.tooltipBorder}`,
+                    borderRadius: '8px',
+                  color: chartTheme.tooltipText,
+                  }}
+                  formatter={(value: number) => value.toLocaleString('pt-BR')}
+                />
+                <Bar
+                  dataKey="total"
+                  name="Chamados"
+                  fill="#3b82f6"
+                  radius={[0, 4, 4, 0]}
+                  barSize={25}
+                  label={{
+                    position: 'right',
+                    fill: chartTheme.labelFill,
+                    fontSize: 11,
+                    formatter: (value: number) => value.toLocaleString('pt-BR')
+                  }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+              <Mail size={40} className="mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Nenhum email encontrado</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                {grupoFiltroEmail ? 'Nenhum chamado com email neste grupo' : 'Faça upload do Excel com coluna EMAIL'}
+              </p>
+            </div>
+          )
+        ) : (
+          /* Gráfico de Linha - Evolução por Usuário */
+          <div>
+            {dadosGraficoEvolucaoUsuarios.length > 0 ? (
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={dadosGraficoEvolucaoUsuarios}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                  <XAxis dataKey="periodo" fontSize={11} tickLine={false} angle={-45} textAnchor="end" height={60} tick={{ fill: chartTheme.tickFill }} />
+                  <YAxis fontSize={12} tickLine={false} axisLine={false} tick={{ fill: chartTheme.tickFill }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: chartTheme.tooltipBg,
+                      border: `1px solid ${chartTheme.tooltipBorder}`,
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                    color: chartTheme.tooltipText,
+                    }}
+                    formatter={(value: number) => value.toLocaleString('pt-BR')}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '11px', color: chartTheme.legendColor }} />
+                  {usuariosParaLinhas.map((email, index) => (
+                    <Line
+                      key={email}
+                      type="monotone"
+                      dataKey={email}
+                      name={email}
+                      stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                      activeDot={{ r: 5 }}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center py-16 text-gray-500 dark:text-gray-400">
+                <div className="text-center">
+                  <LineChartIcon size={40} className="mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Sem dados para exibir no período selecionado</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ====================================================================
+          TOP 10 RESPONDENTES (NOME DESIGNADO)
+          ==================================================================== */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+        {/* Header com título e controles */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <UserCheck size={20} className="text-emerald-600" />
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Top 10 Respondentes</h3>
+            <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">atendidos: Fechado + Ag. Aceite Definitivo</span>
+          </div>
+
+          {/* Controles */}
+          <div className="flex items-center gap-3">
+            {/* Toggle Visualização */}
+            <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setVisualizacaoRespondentes('tabela')}
+                className={`px-3 py-1.5 text-sm flex items-center gap-1.5 transition-colors ${
+                  visualizacaoRespondentes === 'tabela'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                <BarChart2 size={14} />
+                Barras
+              </button>
+              <button
+                onClick={() => setVisualizacaoRespondentes('grafico')}
+                className={`px-3 py-1.5 text-sm flex items-center gap-1.5 transition-colors ${
+                  visualizacaoRespondentes === 'grafico'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                <LineChartIcon size={14} />
+                Linha
+              </button>
+            </div>
+
+            {/* Filtro de Período */}
+            <div className="flex items-center gap-1.5">
+              <Filter size={14} className="text-gray-500 dark:text-gray-400" />
+              <select
+                value={periodoFiltro === null ? 'null' : String(periodoFiltro)}
+                onChange={(e) => setPeriodoFiltro(e.target.value === 'null' ? null : Number(e.target.value) as FiltroPeriodo)}
+                className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              >
+                {OPCOES_PERIODO.map((opcao) => (
+                  <option key={opcao.value ?? 'null'} value={opcao.value === null ? 'null' : String(opcao.value)}>
+                    {opcao.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filtro por Grupo GSE */}
+            <select
+              value={grupoFiltroRespondente || ''}
+              onChange={(e) => setGrupoFiltroRespondente(e.target.value || null)}
+              className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="">Todos os grupos</option>
+              {grupos.map((grupo) => (
+                <option key={grupo.grupo_designado} value={grupo.grupo_designado}>
+                  {grupo.grupo_designado} ({grupo.total_chamados.toLocaleString('pt-BR')})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Autocomplete de Respondente */}
+        <div className="mb-4 relative">
+          <div className="flex items-center gap-2">
+            <Search size={14} className="text-gray-400 dark:text-gray-500" />
+            <div className="relative flex-1 max-w-md">
+              <input
+                type="text"
+                value={respondenteSelecionado || buscaRespondente}
+                onChange={(e) => {
+                  setBuscaRespondente(e.target.value);
+                  setRespondenteSelecionado(null);
+                  setShowDropdownRespondente(true);
+                }}
+                onFocus={() => setShowDropdownRespondente(true)}
+                placeholder="Buscar respondente pelo nome..."
+                className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 bg-white dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 pr-8"
+              />
+              {(respondenteSelecionado || buscaRespondente) && (
+                <button
+                  onClick={() => {
+                    setRespondenteSelecionado(null);
+                    setBuscaRespondente('');
+                    setShowDropdownRespondente(false);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                >
+                  <X size={14} />
+                </button>
+              )}
+              {showDropdownRespondente && !respondenteSelecionado && (
+                <div className="absolute z-[200] w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-[400px] overflow-y-auto">
+                  {respondentesFiltrados.length > 0 ? (
+                    respondentesFiltrados.map((r) => (
+                      <button
+                        key={r.nome}
+                        onClick={() => {
+                          setRespondenteSelecionado(r.nome);
+                          setBuscaRespondente('');
+                          setShowDropdownRespondente(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors flex justify-between items-center"
+                      >
+                        <span className="text-gray-800 dark:text-gray-200">{r.nome}</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500">{r.total_respostas.toLocaleString('pt-BR')} respostas</span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-sm text-gray-400 dark:text-gray-500">Nenhum respondente encontrado</div>
+                  )}
+                </div>
+              )}
+            </div>
+            {respondenteSelecionado && (
+              <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                Filtrando: {respondenteSelecionado}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Conteúdo */}
+        {loadingRespondentes || loadingEvolucaoRespondentes || loadingEvolucaoIndividual ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="animate-spin text-emerald-600" size={32} />
+          </div>
+        ) : respondenteSelecionado ? (
+          /* === MODO INDIVIDUAL: respondente selecionado === */
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Gráfico de evolução temporal (barras ou linha) */}
+            <div>
+              <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Evolução Temporal — {respondenteSelecionado}</h4>
+              {evolucaoIndividual.length > 0 ? (
+                <ResponsiveContainer width="100%" height={320}>
+                  {visualizacaoRespondentes === 'tabela' ? (
+                    <BarChart
+                      data={evolucaoIndividual.map(e => ({
+                        periodo: e.periodo,
+                        atendidos: e.valor,
+                        outros: e.valor_outros,
+                        total: e.valor + e.valor_outros,
+                      }))}
+                      margin={{ left: 10, right: 10, top: 10, bottom: 10 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                      <XAxis dataKey="periodo" fontSize={11} tickLine={false} angle={-45} textAnchor="end" height={60} tick={{ fill: chartTheme.tickFill }} />
+                      <YAxis fontSize={12} tickLine={false} axisLine={false} tick={{ fill: chartTheme.tickFill }} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: chartTheme.tooltipBg,
+                          border: `1px solid ${chartTheme.tooltipBorder}`,
+                          borderRadius: '8px',
+                          color: chartTheme.tooltipText,
+                        }}
+                        formatter={(value: number, name: string) => [value.toLocaleString('pt-BR'), name]}
+                        labelFormatter={(label) => `${label} — ${respondenteSelecionado}`}
+                      />
+                      <Legend wrapperStyle={{ color: chartTheme.legendColor }} />
+                      <Bar
+                        dataKey="atendidos"
+                        name="Atendidos"
+                        fill="#10b981"
+                        stackId="a"
+                        radius={[0, 0, 0, 0]}
+                        barSize={30}
+                      />
+                      <Bar
+                        dataKey="outros"
+                        name="Outros Status"
+                        fill={COLORS.warning}
+                        stackId="a"
+                        radius={[4, 4, 0, 0]}
+                        barSize={30}
+                      >
+                        <LabelList dataKey="total" position="top" fill={chartTheme.labelFill} fontSize={11} formatter={(value: number) => value.toLocaleString('pt-BR')} />
+                      </Bar>
+                    </BarChart>
+                  ) : (
+                    <LineChart
+                      data={evolucaoIndividual.map(e => ({
+                        periodo: e.periodo,
+                        total: e.valor,
+                      }))}
+                      margin={{ left: 10, right: 10, top: 10, bottom: 10 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                      <XAxis dataKey="periodo" fontSize={11} tickLine={false} angle={-45} textAnchor="end" height={60} tick={{ fill: chartTheme.tickFill }} />
+                      <YAxis fontSize={12} tickLine={false} axisLine={false} tick={{ fill: chartTheme.tickFill }} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: chartTheme.tooltipBg,
+                          border: `1px solid ${chartTheme.tooltipBorder}`,
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          color: chartTheme.tooltipText,
+                        }}
+                        formatter={(value: number) => [value.toLocaleString('pt-BR'), 'Respostas']}
+                        labelFormatter={(label) => `${label} — ${respondenteSelecionado}`}
+                      />
+                      <Legend
+                        formatter={() => respondenteSelecionado}
+                        wrapperStyle={{ fontSize: '12px', color: chartTheme.legendColor }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="total"
+                        name={respondenteSelecionado}
+                        stroke="#10b981"
+                        strokeWidth={3}
+                        dot={{ r: 4, fill: '#10b981' }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  )}
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                  <UserCheck size={40} className="mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Sem dados temporais para "{respondenteSelecionado}"</p>
+                </div>
+              )}
+            </div>
+
+            {/* Gráfico de barras verticais - Distribuição de Status Operacional */}
+            <div>
+              <button
+                onClick={() => setModalStatusRespondente(true)}
+                className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors flex items-center gap-1 group mb-2"
+              >
+                Distribuição de Status — {respondenteSelecionado}
+                <ExternalLink size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+              </button>
+              {loadingStatusRespondente ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="animate-spin text-emerald-600" size={32} />
+                </div>
+              ) : statusRespondente.length > 0 ? (
+                <div>
+                  <div className="space-y-1.5 mt-2 max-h-[400px] overflow-y-auto">
+                    {statusRespondente.map((item) => (
+                      <button
+                        key={item.status}
+                        onClick={() => {
+                          if (!STATUS_ATENDIDOS.includes(item.status)) {
+                            setTicketsModal({ respondente: respondenteSelecionado!, status: item.status });
+                          }
+                        }}
+                        className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg transition-colors text-xs ${
+                          STATUS_ATENDIDOS.includes(item.status)
+                            ? 'bg-gray-50 dark:bg-gray-900/50 cursor-default'
+                            : 'bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer'
+                        }`}
+                        disabled={STATUS_ATENDIDOS.includes(item.status)}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: getStatusColor(item.status) }} />
+                          <span className="text-gray-700 dark:text-gray-300">{item.status}</span>
+                          {!STATUS_ATENDIDOS.includes(item.status) && (
+                            <span className="text-[10px] text-blue-400">(ver tickets)</span>
+                          )}
+                        </div>
+                        <span className="font-semibold text-gray-800 dark:text-gray-200">{item.total.toLocaleString('pt-BR')}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                  <Activity size={40} className="mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Sem dados de status</p>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : visualizacaoRespondentes === 'tabela' ? (
+          (() => {
+            const dadosFiltrados = respondenteSelecionado
+              ? topRespondentes.filter(r => r.nome === respondenteSelecionado).length > 0
+                ? topRespondentes.filter(r => r.nome === respondenteSelecionado)
+                : todosRespondentes.filter(r => r.nome === respondenteSelecionado).map(r => ({
+                    nome: r.nome,
+                    total_respostas: r.total_respostas,
+                    total_rejeites: 0,
+                    total_outros: 0,
+                  }))
+              : topRespondentes;
+            return dadosFiltrados.length > 0 ? (
+            <ResponsiveContainer width="100%" height={respondenteSelecionado ? 120 : 400}>
+              <BarChart
+                data={dadosFiltrados.map((r, i) => ({
+                  nome: r.nome || '(sem nome)',
+                  atendidos: r.total_respostas,
+                  outros: (r as any).total_outros ?? 0,
+                  total: r.total_respostas + ((r as any).total_outros ?? 0),
+                  position: i + 1
+                }))}
+                layout="vertical"
+                margin={{ left: 20, right: 60, top: 10, bottom: 10 }}
+                barCategoryGap="15%"
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} horizontal={true} vertical={false} />
+                <XAxis type="number" fontSize={12} tickLine={false} tick={{ fill: chartTheme.tickFill }} />
+                <YAxis
+                  type="category"
+                  dataKey="nome"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  width={200}
+                  tick={{ fill: chartTheme.tickFill }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: chartTheme.tooltipBg,
+                    border: `1px solid ${chartTheme.tooltipBorder}`,
+                    borderRadius: '8px',
+                  color: chartTheme.tooltipText,
+                  }}
+                  formatter={(value: number, name: string) => [value.toLocaleString('pt-BR'), name]}
+                />
+                <Legend wrapperStyle={{ color: chartTheme.legendColor }} />
+                <Bar
+                  dataKey="atendidos"
+                  name="Atendidos"
+                  fill="#10b981"
+                  stackId="a"
+                  radius={[0, 0, 0, 0]}
+                  barSize={25}
+                />
+                <Bar
+                  dataKey="outros"
+                  name="Outros Status"
+                  fill={COLORS.warning}
+                  stackId="a"
+                  radius={[0, 4, 4, 0]}
+                  barSize={25}
+                >
+                  <LabelList dataKey="total" position="right" fill={chartTheme.labelFill} fontSize={11} formatter={(value: number) => value.toLocaleString('pt-BR')} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+              <UserCheck size={40} className="mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Nenhum respondente encontrado</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                Faça upload do Excel com as colunas NOME DESIGNADO e STATUS OPERACIONAL
+              </p>
+            </div>
+          );
+          })()
+        ) : (
+          /* Gráfico de Linha - Evolução por Respondente */
+          <div>
+            {dadosGraficoEvolucaoRespondentes.length > 0 ? (
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={dadosGraficoEvolucaoRespondentes}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                  <XAxis dataKey="periodo" fontSize={11} tickLine={false} angle={-45} textAnchor="end" height={60} tick={{ fill: chartTheme.tickFill }} />
+                  <YAxis fontSize={12} tickLine={false} axisLine={false} tick={{ fill: chartTheme.tickFill }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: chartTheme.tooltipBg,
+                      border: `1px solid ${chartTheme.tooltipBorder}`,
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                    color: chartTheme.tooltipText,
+                    }}
+                    formatter={(value: number) => value.toLocaleString('pt-BR')}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '11px', color: chartTheme.legendColor }} />
+                  {respondentesParaLinhas.map((nome, index) => (
+                    <Line
+                      key={nome}
+                      type="monotone"
+                      dataKey={nome}
+                      name={nome}
+                      stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                      activeDot={{ r: 5 }}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center py-16 text-gray-500 dark:text-gray-400">
+                <div className="text-center">
+                  <LineChartIcon size={40} className="mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Sem dados para exibir no período selecionado</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ====================================================================
+          PRODUÇÃO POR EQUIPE SGS
+          ==================================================================== */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+        {/* Header com título e controles */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Building2 size={20} className="text-sky-600" />
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Produção por Equipe SGS</h3>
+            <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">atendidos: Fechado + Ag. Aceite Definitivo</span>
+          </div>
+
+          {/* Controles */}
+          <div className="flex items-center gap-3">
+            {/* Toggle Visualização */}
+            <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setVisualizacaoEquipes('tabela')}
+                className={`px-3 py-1.5 text-sm flex items-center gap-1.5 transition-colors ${
+                  visualizacaoEquipes === 'tabela'
+                    ? 'bg-sky-600 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                <BarChart2 size={14} />
+                Barras
+              </button>
+              <button
+                onClick={() => setVisualizacaoEquipes('grafico')}
+                className={`px-3 py-1.5 text-sm flex items-center gap-1.5 transition-colors ${
+                  visualizacaoEquipes === 'grafico'
+                    ? 'bg-sky-600 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                <LineChartIcon size={14} />
+                Linha
+              </button>
+            </div>
+
+            {/* Filtro de Período */}
+            <div className="flex items-center gap-1.5">
+              <Filter size={14} className="text-gray-500 dark:text-gray-400" />
+              <select
+                value={periodoFiltro === null ? 'null' : String(periodoFiltro)}
+                onChange={(e) => setPeriodoFiltro(e.target.value === 'null' ? null : Number(e.target.value) as FiltroPeriodo)}
+                className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              >
+                {OPCOES_PERIODO.map((opcao) => (
+                  <option key={opcao.value ?? 'null'} value={opcao.value === null ? 'null' : String(opcao.value)}>
+                    {opcao.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filtro por Grupo GSE */}
+            <select
+              value={grupoFiltroEquipe || ''}
+              onChange={(e) => setGrupoFiltroEquipe(e.target.value || null)}
+              className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            >
+              <option value="">Todos os grupos</option>
+              {grupos.map((grupo) => (
+                <option key={grupo.grupo_designado} value={grupo.grupo_designado}>
+                  {grupo.grupo_designado} ({grupo.total_chamados.toLocaleString('pt-BR')})
+                </option>
+              ))}
+            </select>
+
+            {/* Filtro por Equipe SGS individual */}
+            <select
+              value={equipeSGSSelecionada || ''}
+              onChange={(e) => setEquipeSGSSelecionada(e.target.value || null)}
+              className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            >
+              <option value="">Todas as equipes SGS</option>
+              {topEquipesSGS.map((eq) => (
+                <option key={eq.equipe_sgs} value={eq.equipe_sgs}>
+                  {SGS_NOMES[eq.equipe_sgs] || `SGS ${eq.equipe_sgs}`} ({eq.total_respostas.toLocaleString('pt-BR')})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Conteúdo */}
+        {loadingEquipes || loadingEvolucaoEquipes ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="animate-spin text-sky-600" size={32} />
+          </div>
+        ) : visualizacaoEquipes === 'tabela' ? (
+          (() => {
+            if (equipeSGSSelecionada) {
+              /* === MODO INDIVIDUAL: equipe selecionada → barras verticais temporais === */
+              const evolucaoEquipe = evolucaoEquipesSGS.filter(e => e.equipe_sgs === equipeSGSSelecionada);
+              const nomeEquipe = SGS_NOMES[equipeSGSSelecionada] || `SGS ${equipeSGSSelecionada}`;
+              return (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Gráfico de evolução temporal (barras) */}
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Evolução Temporal — {nomeEquipe}</h4>
+                    {evolucaoEquipe.length > 0 ? (
+                      <>
+                      <ResponsiveContainer width="100%" height={460}>
+                        <BarChart
+                          data={evolucaoEquipe.map(e => ({
+                            periodo: e.periodo,
+                            total: e.valor,
+                          }))}
+                          margin={{ left: 10, right: 10, top: 10, bottom: 10 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                          <XAxis dataKey="periodo" fontSize={11} tickLine={false} angle={-45} textAnchor="end" height={60} tick={{ fill: chartTheme.tickFill }} />
+                          <YAxis fontSize={12} tickLine={false} axisLine={false} tick={{ fill: chartTheme.tickFill }} />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: chartTheme.tooltipBg,
+                              border: `1px solid ${chartTheme.tooltipBorder}`,
+                              borderRadius: '8px',
+                              color: chartTheme.tooltipText,
+                            }}
+                            formatter={(value: number) => [value.toLocaleString('pt-BR'), 'Respostas']}
+                            labelFormatter={(label) => `${label} — ${nomeEquipe}`}
+                          />
+                          <Bar
+                            dataKey="total"
+                            name="Respostas"
+                            fill="#0ea5e9"
+                            radius={[4, 4, 0, 0]}
+                            barSize={30}
+                            cursor="pointer"
+                            label={{
+                              position: 'top',
+                              fill: chartTheme.labelFill,
+                              fontSize: 11,
+                              formatter: (value: number) => value.toLocaleString('pt-BR'),
+                            }}
+                            onClick={(_data, index) => {
+                              const item = evolucaoEquipe[index];
+                              if (item) setModalMesEquipe({ codigo: equipeSGSSelecionada, nome: nomeEquipe, periodo: item.periodo });
+                            }}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                      <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center mt-1 select-none">
+                        Clique em um mês para ver a composição por grupo
+                      </p>
+                      </>
+                    ) : (
+                      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                        <Building2 size={40} className="mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">Sem dados temporais para "{nomeEquipe}" no período</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Lista de Status Operacional (sem gráfico — ocupa todo o espaço disponível) */}
+                  <div>
+                    <button
+                      onClick={() => setModalStatusEquipe(true)}
+                      className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-500 dark:hover:text-sky-400 transition-colors flex items-center gap-1 group mb-2"
+                    >
+                      Distribuição de Status — {nomeEquipe}
+                      <ExternalLink size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                    {loadingStatusEquipe ? (
+                      <div className="flex items-center justify-center py-12">
+                        <Loader2 className="animate-spin text-sky-600" size={32} />
+                      </div>
+                    ) : statusEquipe.length > 0 ? (
+                      <div className="space-y-1.5 max-h-[420px] overflow-y-auto">
+                        {statusEquipe.map((item) => (
+                          <div
+                            key={item.status}
+                            className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-900/50 text-xs"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: getStatusColor(item.status) }} />
+                              <span className="text-gray-700 dark:text-gray-300">{item.status}</span>
+                            </div>
+                            <span className="font-semibold text-gray-800 dark:text-gray-200">{item.total.toLocaleString('pt-BR')}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                        <Activity size={40} className="mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">Sem dados de status</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+            const equipesVisiveis = equipesExpandidas
+              ? topEquipesSGS
+              : topEquipesSGS.slice(0, MAX_EQUIPES_VISIVEIS);
+            const equipesOcultas = topEquipesSGS.length - MAX_EQUIPES_VISIVEIS;
+            return equipesVisiveis.length > 0 ? (
+            <div>
+              <ResponsiveContainer width="100%" height={Math.max(250, equipesVisiveis.length * 50)}>
+                <BarChart
+                  data={equipesVisiveis.map((e, i) => ({
+                    nome: SGS_NOMES[e.equipe_sgs] || `SGS ${e.equipe_sgs}`,
+                    atendidos: e.total_respostas,
+                    outros: e.total_outros,
+                    total: e.total_respostas + e.total_outros,
+                    rejeites: e.total_rejeites,
+                    position: i + 1,
+                    codigo: e.equipe_sgs,
+                  }))}
+                  layout="vertical"
+                  margin={{ left: 20, right: 60, top: 10, bottom: 10 }}
+                  barCategoryGap="15%"
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} horizontal={true} vertical={false} />
+                  <XAxis type="number" fontSize={12} tickLine={false} tick={{ fill: chartTheme.tickFill }} />
+                  <YAxis
+                    type="category"
+                    dataKey="nome"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    width={250}
+                    tick={{ fill: chartTheme.tickFill }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: chartTheme.tooltipBg,
+                      border: `1px solid ${chartTheme.tooltipBorder}`,
+                      borderRadius: '8px',
+                      color: chartTheme.tooltipText,
+                    }}
+                    formatter={(value: number, name: string) => [value.toLocaleString('pt-BR'), name]}
+                  />
+                  <Legend wrapperStyle={{ color: chartTheme.legendColor }} />
+                  <Bar
+                    dataKey="atendidos"
+                    name="Atendidos"
+                    fill="#0ea5e9"
+                    stackId="a"
+                    radius={[0, 0, 0, 0]}
+                    barSize={25}
+                    cursor="pointer"
+                    onClick={(_data: any, index: number) => {
+                      const equipe = equipesVisiveis[index];
+                      if (equipe) {
+                        setModalEquipeSGS({
+                          codigo: equipe.equipe_sgs,
+                          nome: SGS_NOMES[equipe.equipe_sgs] || `SGS ${equipe.equipe_sgs}`,
+                        });
+                      }
+                    }}
+                  />
+                  <Bar
+                    dataKey="outros"
+                    name="Outros Status"
+                    fill={COLORS.warning}
+                    stackId="a"
+                    radius={[0, 4, 4, 0]}
+                    barSize={25}
+                    cursor="pointer"
+                    onClick={(_data: any, index: number) => {
+                      const equipe = equipesVisiveis[index];
+                      if (equipe) {
+                        setModalEquipeSGS({
+                          codigo: equipe.equipe_sgs,
+                          nome: SGS_NOMES[equipe.equipe_sgs] || `SGS ${equipe.equipe_sgs}`,
+                        });
+                      }
+                    }}
+                  >
+                    <LabelList dataKey="total" position="right" fill={chartTheme.labelFill} fontSize={11} formatter={(value: number) => value.toLocaleString('pt-BR')} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+              {equipesOcultas > 0 && (
+                <div className="flex justify-center mt-3">
+                  <button
+                    onClick={() => setEquipesExpandidas(!equipesExpandidas)}
+                    className="flex items-center gap-1.5 px-4 py-2 text-sm text-sky-600 hover:text-sky-500 hover:bg-sky-50 dark:hover:bg-sky-900/20 rounded-lg transition-colors"
+                  >
+                    {equipesExpandidas ? (
+                      <>
+                        <ChevronUp size={16} />
+                        Recolher
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown size={16} />
+                        Expandir ({equipesOcultas} mais)
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+              <Building2 size={40} className="mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Nenhuma equipe SGS encontrada</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                Faça upload do Excel com a coluna DESIGNADO LOCALIZAÇÃO
+              </p>
+            </div>
+          );
+          })()
+        ) : (
+          /* Gráfico de Linha - Evolução por Equipe SGS */
+          (() => {
+            const linhasFiltradas = equipeSGSSelecionada
+              ? equipesParaLinhas.filter(e => e === `SGS ${equipeSGSSelecionada}`)
+              : equipesParaLinhas;
+            const nomeEquipeLinha = equipeSGSSelecionada
+              ? (SGS_NOMES[equipeSGSSelecionada] || `SGS ${equipeSGSSelecionada}`)
+              : null;
+
+            if (equipeSGSSelecionada) {
+              return (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Gráfico de linha - Evolução temporal */}
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Evolução Temporal — {nomeEquipeLinha}</h4>
+                    {dadosGraficoEvolucaoEquipes.length > 0 && linhasFiltradas.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={320}>
+                        <LineChart data={dadosGraficoEvolucaoEquipes}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                          <XAxis dataKey="periodo" fontSize={11} tickLine={false} angle={-45} textAnchor="end" height={60} tick={{ fill: chartTheme.tickFill }} />
+                          <YAxis fontSize={12} tickLine={false} axisLine={false} tick={{ fill: chartTheme.tickFill }} />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: chartTheme.tooltipBg,
+                              border: `1px solid ${chartTheme.tooltipBorder}`,
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                              color: chartTheme.tooltipText,
+                            }}
+                            formatter={(value: number) => value.toLocaleString('pt-BR')}
+                          />
+                          <Legend wrapperStyle={{ fontSize: '11px', color: chartTheme.legendColor }} />
+                          {linhasFiltradas.map((equipe, index) => (
+                            <Line
+                              key={equipe}
+                              type="monotone"
+                              dataKey={equipe}
+                              name={equipe}
+                              stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                              strokeWidth={2}
+                              dot={{ r: 3 }}
+                              activeDot={{ r: 5 }}
+                            />
+                          ))}
+                        </LineChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                        <Building2 size={40} className="mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">Sem dados temporais para "{nomeEquipeLinha}" no período</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Lista de Status Operacional (sem gráfico — ocupa todo o espaço disponível) */}
+                  <div>
+                    <button
+                      onClick={() => setModalStatusEquipe(true)}
+                      className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-sky-500 dark:hover:text-sky-400 transition-colors flex items-center gap-1 group mb-2"
+                    >
+                      Distribuição de Status — {nomeEquipeLinha}
+                      <ExternalLink size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                    {loadingStatusEquipe ? (
+                      <div className="flex items-center justify-center py-12">
+                        <Loader2 className="animate-spin text-sky-600" size={32} />
+                      </div>
+                    ) : statusEquipe.length > 0 ? (
+                      <div className="space-y-1.5 max-h-[420px] overflow-y-auto">
+                        {statusEquipe.map((item) => (
+                          <div
+                            key={item.status}
+                            className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-900/50 text-xs"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: getStatusColor(item.status) }} />
+                              <span className="text-gray-700 dark:text-gray-300">{item.status}</span>
+                            </div>
+                            <span className="font-semibold text-gray-800 dark:text-gray-200">{item.total.toLocaleString('pt-BR')}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                        <Activity size={40} className="mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">Sem dados de status</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+          <div>
+            {dadosGraficoEvolucaoEquipes.length > 0 && linhasFiltradas.length > 0 ? (
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={dadosGraficoEvolucaoEquipes}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                  <XAxis dataKey="periodo" fontSize={11} tickLine={false} angle={-45} textAnchor="end" height={60} tick={{ fill: chartTheme.tickFill }} />
+                  <YAxis fontSize={12} tickLine={false} axisLine={false} tick={{ fill: chartTheme.tickFill }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: chartTheme.tooltipBg,
+                      border: `1px solid ${chartTheme.tooltipBorder}`,
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      color: chartTheme.tooltipText,
+                    }}
+                    formatter={(value: number) => value.toLocaleString('pt-BR')}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '11px', color: chartTheme.legendColor }} />
+                  {linhasFiltradas.map((equipe, index) => (
+                    <Line
+                      key={equipe}
+                      type="monotone"
+                      dataKey={equipe}
+                      name={equipe}
+                      stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                      activeDot={{ r: 5 }}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center py-16 text-gray-500 dark:text-gray-400">
+                <div className="text-center">
+                  <LineChartIcon size={40} className="mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Sem dados para exibir no período selecionado</p>
+                </div>
+              </div>
+            )}
+          </div>
+            );
+          })()
+        )}
+      </div>
+
+      {/* ====================================================================
+          EXTERNOS E SEM USUÁRIO POR GSE
+          ==================================================================== */}
+      {equipeSGSSelecionada && (() => {
+        const nomeEquipeSel = SGS_NOMES[equipeSGSSelecionada] || `SGS ${equipeSGSSelecionada}`;
+        const dadosGSE = externosSemUsuarioPorGSE.map(d => ({
+          ...d,
+          gseShort: d.gse.split(' - ').pop() || d.gse,
+        }));
+        const alturaGrafico = Math.max(200, dadosGSE.length * 44);
+
+        return (
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Users size={20} className="text-orange-500" />
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                Externos e Sem Usuário por GSE
+              </h3>
+              <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                {nomeEquipeSel}
+              </span>
+              <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">· clique na barra para detalhar</span>
+            </div>
+
+            {loadingExternosSemUsuario ? (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="animate-spin text-orange-500" size={24} />
+                <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Carregando...</span>
+              </div>
+            ) : dadosGSE.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-gray-400 dark:text-gray-500">
+                <CheckCircle2 size={32} className="mb-2 opacity-50" />
+                <p className="text-sm">Nenhum ticket externo ou sem usuário no período selecionado</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={alturaGrafico}>
+                <BarChart
+                  data={dadosGSE}
+                  layout="vertical"
+                  margin={{ top: 0, right: 48, left: 10, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} horizontal={false} />
+                  <XAxis
+                    type="number"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fill: chartTheme.tickFill }}
+                    allowDecimals={false}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="gseShort"
+                    width={90}
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fill: chartTheme.tickFill }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: chartTheme.tooltipBg,
+                      border: `1px solid ${chartTheme.tooltipBorder}`,
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      color: chartTheme.tooltipText,
+                    }}
+                    formatter={(value: number, name: string) => [
+                      value.toLocaleString('pt-BR'),
+                      name === 'externos' ? 'Externos' : 'Sem usuário',
+                    ]}
+                    labelFormatter={(_: unknown, payload: any[]) =>
+                      payload?.[0]?.payload?.gse || ''
+                    }
+                  />
+                  <Legend
+                    formatter={(v) => v === 'externos' ? 'Externos' : 'Sem usuário'}
+                    wrapperStyle={{ fontSize: '11px', color: chartTheme.legendColor }}
+                  />
+                  <Bar
+                    dataKey="externos"
+                    name="externos"
+                    fill="#f97316"
+                    radius={[0, 4, 4, 0]}
+                    cursor="pointer"
+                    label={{ position: 'right', fontSize: 11, fill: '#f97316' }}
+                    onClick={(data: ExternosSemUsuarioPorGSE & { gseShort: string }) => {
+                      if (data.externos > 0)
+                        setModalExternosEquipe({ gse: data.gse, modo: 'externo' });
+                    }}
+                  />
+                  <Bar
+                    dataKey="sem_usuario"
+                    name="sem_usuario"
+                    fill="#6b7280"
+                    radius={[0, 4, 4, 0]}
+                    cursor="pointer"
+                    label={{ position: 'right', fontSize: 11, fill: '#9ca3af' }}
+                    onClick={(data: ExternosSemUsuarioPorGSE & { gseShort: string }) => {
+                      if (data.sem_usuario > 0)
+                        setModalExternosEquipe({ gse: data.gse, modo: 'vazio' });
+                    }}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ====================================================================
+          REJEITES POR EQUIPE SGS
+          ==================================================================== */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <AlertTriangle size={20} className="text-orange-600" />
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Rejeites por Equipe SGS</h3>
+          <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">quantidade de rejeições</span>
+        </div>
+
+        {loadingRejeiteEquipes ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="animate-spin text-orange-600" size={32} />
+          </div>
+        ) : rejeiteEquipes.length > 0 ? (
+          <ResponsiveContainer width="100%" height={Math.max(200, rejeiteEquipes.length * 50)}>
+            <BarChart
+              data={rejeiteEquipes.map((e) => ({
+                nome: SGS_NOMES[e.equipe_sgs] || `SGS ${e.equipe_sgs}`,
+                rejeites: e.total_rejeites,
+                chamados: e.total_chamados,
+              }))}
+              layout="vertical"
+              margin={{ left: 20, right: 20, top: 10, bottom: 10 }}
+              barCategoryGap="15%"
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} horizontal={true} vertical={false} />
+              <XAxis type="number" fontSize={12} tickLine={false} tick={{ fill: chartTheme.tickFill }} />
+              <YAxis
+                type="category"
+                dataKey="nome"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                width={250}
+                tick={{ fill: chartTheme.tickFill }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: chartTheme.tooltipBg,
+                  border: `1px solid ${chartTheme.tooltipBorder}`,
+                  borderRadius: '8px',
+                  color: chartTheme.tooltipText,
+                }}
+                formatter={(value: number, name: string) => {
+                  if (name === 'rejeites') return [value.toLocaleString('pt-BR'), 'Rejeições'];
+                  return [value.toLocaleString('pt-BR'), name];
+                }}
+              />
+              <Bar
+                dataKey="rejeites"
+                name="rejeites"
+                fill="#f97316"
+                radius={[0, 4, 4, 0]}
+                barSize={25}
+                cursor="pointer"
+                onClick={(_data: any, index: number) => {
+                  const e = rejeiteEquipes[index];
+                  if (e) setRejeiteModal({ nome: e.equipe_sgs, tipo: 'equipe', nomeExibicao: SGS_NOMES[e.equipe_sgs] || `SGS ${e.equipe_sgs}` });
+                }}
+                label={{
+                  position: 'right',
+                  fill: chartTheme.labelFill,
+                  fontSize: 11,
+                  formatter: (value: number) => value.toLocaleString('pt-BR'),
+                }}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+            <AlertTriangle size={40} className="mx-auto mb-2 opacity-50" />
+            <p className="text-sm">Sem dados de rejeite por equipe</p>
+          </div>
+        )}
+      </div>
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+        {/* Header com título e controles */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Activity size={20} className="text-violet-600" />
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Produtividade Média</h3>
+            <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">respostas por respondente</span>
+          </div>
+
+          {/* Filtro de Período */}
+          <div className="flex items-center gap-1.5">
+            <Filter size={14} className="text-gray-500 dark:text-gray-400" />
+            <select
+              value={periodoFiltro === null ? 'null' : String(periodoFiltro)}
+              onChange={(e) => setPeriodoFiltro(e.target.value === 'null' ? null : Number(e.target.value) as FiltroPeriodo)}
+              className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            >
+              {OPCOES_PERIODO.map((opcao) => (
+                <option key={opcao.value ?? 'null'} value={opcao.value === null ? 'null' : String(opcao.value)}>
+                  {opcao.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Explicação */}
+        <div className="mb-4 p-3 bg-violet-50 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-700 rounded-lg">
+          <p className="text-xs text-violet-800 dark:text-violet-300">
+            <strong>Como funciona:</strong> Cada ponto representa um período de tempo (dia, semana ou mês). 
+            A <strong>produtividade</strong> é calculada dividindo o <strong>total de respostas</strong> enviadas 
+            pelo <strong>número de pessoas únicas</strong> que responderam naquele período.
+            Exemplo: Se 10 respostas foram enviadas por 5 pessoas diferentes, a produtividade é 2.0 respostas/pessoa.
+          </p>
+        </div>
+
+        {/* Conteúdo */}
+        {loadingProdutividade ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="animate-spin text-violet-600" size={32} />
+          </div>
+        ) : produtividadeRespondentes.length > 0 ? (
+          <>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart
+              data={produtividadeRespondentes}
+              onClick={(state) => {
+                if (state && state.activePayload && state.activePayload.length > 0) {
+                  const payload = state.activePayload[0].payload as ProdutividadeRespondentes;
+                  setProdutividadeModal({
+                    periodo: payload.periodo,
+                    totalRespostas: payload.total_respostas,
+                    respondentesUnicos: payload.respondentes_unicos,
+                    media: payload.media_por_pessoa,
+                  });
+                }
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+              <XAxis dataKey="periodo" fontSize={11} tickLine={false} angle={-45} textAnchor="end" height={60} tick={{ fill: chartTheme.tickFill }} />
+              <YAxis fontSize={12} tickLine={false} axisLine={false} tick={{ fill: chartTheme.tickFill }} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: chartTheme.tooltipBg,
+                  border: `1px solid ${chartTheme.tooltipBorder}`,
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                color: chartTheme.tooltipText,
+                }}
+                formatter={(value: number, name: string, props: any) => {
+                  if (name === 'media_por_pessoa') {
+                    const item = props.payload;
+                    return [
+                      <div key="tooltip" className="text-xs">
+                        <div className="font-semibold text-violet-600 dark:text-violet-400 mb-1">
+                          {value.toFixed(2)} respostas/pessoa
+                        </div>
+                        <div className="text-gray-600 dark:text-gray-300">
+                          {item.total_respostas} respostas ÷ {item.respondentes_unicos} pessoas
+                        </div>
+                        {item.data_inicio && item.data_fim && (
+                          <div className="text-gray-500 dark:text-gray-400 mt-1 text-[10px]">
+                            {new Date(item.data_inicio + 'T00:00:00').toLocaleDateString('pt-BR')} até{' '}
+                            {new Date(item.data_fim + 'T00:00:00').toLocaleDateString('pt-BR')}
+                          </div>
+                        )}
+                      </div>,
+                      ''
+                    ];
+                  }
+                  return [value.toLocaleString('pt-BR'), name];
+                }}
+              />
+              <Legend 
+                formatter={(value: string) => {
+                  if (value === 'media_por_pessoa') return 'Produtividade Média';
+                  return value;
+                }}
+                wrapperStyle={{ color: chartTheme.legendColor }}
+              />
+              <Line
+                type="monotone"
+                dataKey="media_por_pessoa"
+                name="media_por_pessoa"
+                stroke="#8b5cf6"
+                strokeWidth={3}
+                dot={{ r: 5, fill: '#8b5cf6', stroke: '#fff', strokeWidth: 2, cursor: 'pointer' }}
+                activeDot={{ r: 7, strokeWidth: 2, stroke: '#fff' }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center mt-1 select-none">
+            Clique em um período para ver os respondentes
+          </p>
+          </>
+        ) : (
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+            <Activity size={40} className="mx-auto mb-2 opacity-50" />
+            <p className="text-sm">Sem dados de produtividade no período selecionado</p>
+          </div>
+        )}
+      </div>
+
+      {/* ====================================================================
+          FOOTER INFO
+          ==================================================================== */}
+      {estatisticasGerais?.dataMaisAntiga && estatisticasGerais?.dataMaisRecente && (
+        <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+          Período dos dados: {new Date(estatisticasGerais.dataMaisAntiga + 'T00:00:00').toLocaleDateString('pt-BR')} a{' '}
+          {new Date(estatisticasGerais.dataMaisRecente + 'T00:00:00').toLocaleDateString('pt-BR')}
+        </div>
+      )}
+
+      {/* Modal de tickets por status operacional (SMAX) */}
+      {ticketsModal && (
+        <TicketsStatusModal
+          respondente={ticketsModal.respondente}
+          status={ticketsModal.status}
+          grupoDesignado={grupoFiltroRespondente}
+          dias={periodoFiltro}
+          onClose={() => setTicketsModal(null)}
+        />
+      )}
+
+      {/* Modal de tickets com rejeição */}
+      {rejeiteModal && (
+        <TicketsRejeiteModal
+          nome={rejeiteModal.nome}
+          tipo={rejeiteModal.tipo}
+          grupoDesignado={grupoFiltroRespondente}
+          dias={periodoFiltro}
+          nomeExibicao={rejeiteModal.nomeExibicao}
+          onClose={() => setRejeiteModal(null)}
+        />
+      )}
+
+      {/* Modal de tickets pendentes (Demanda vs Capacidade) */}
+      {pendentesModal && (
+        <TicketsPendentesModal
+          periodo={pendentesModal.periodo}
+          dias={periodoFiltro}
+          totalAbertos={pendentesModal.totalAbertos}
+          totalAtendidos={pendentesModal.totalAtendidos}
+          onClose={() => setPendentesModal(null)}
+        />
+      )}
+
+      {/* Modal de respondentes (Produtividade Média) */}
+      {produtividadeModal && (
+        <RespondentesModal
+          periodo={produtividadeModal.periodo}
+          dias={periodoFiltro}
+          totalRespostas={produtividadeModal.totalRespostas}
+          respondentesUnicos={produtividadeModal.respondentesUnicos}
+          media={produtividadeModal.media}
+          onClose={() => setProdutividadeModal(null)}
+        />
+      )}
+
+      {/* Modal de detalhamento de Equipe SGS — composição GSE + top respondentes */}
+      {modalEquipeSGS && (
+        <EquipeDetalheModal
+          codigo={modalEquipeSGS.codigo}
+          nome={modalEquipeSGS.nome}
+          periodoFiltro={periodoFiltro}
+          onClose={() => setModalEquipeSGS(null)}
+        />
+      )}
+
+      {/* Modal de detalhamento de mês específico — composição GSE do mês + respondentes */}
+      {modalMesEquipe && (
+        <EquipeDetalheModal
+          codigo={modalMesEquipe.codigo}
+          nome={modalMesEquipe.nome}
+          periodoFiltro={periodoFiltro}
+          periodoLabel={modalMesEquipe.periodo}
+          onClose={() => setModalMesEquipe(null)}
+        />
+      )}
+
+      {/* Modal de tickets externos/sem usuário (drill-down do gráfico GSE) */}
+      {modalExternosEquipe && equipeSGSSelecionada && (
+        <TicketsEquipeStatusModal
+          equipe={equipeSGSSelecionada}
+          nomeEquipe={SGS_NOMES[equipeSGSSelecionada] || `SGS ${equipeSGSSelecionada}`}
+          gseInicial={modalExternosEquipe.gse}
+          modoInicial={modalExternosEquipe.modo}
+          grupoDesignado={null}
+          periodoFiltro={periodoFiltro}
+          onClose={() => setModalExternosEquipe(null)}
+        />
+      )}
+
+      {/* Modal de tickets por status da equipe individual */}
+      {modalStatusEquipe && equipeSGSSelecionada && (
+        <TicketsEquipeStatusModal
+          equipe={equipeSGSSelecionada}
+          nomeEquipe={SGS_NOMES[equipeSGSSelecionada] || `SGS ${equipeSGSSelecionada}`}
+          grupoDesignado={grupoFiltroEquipe}
+          periodoFiltro={periodoFiltro}
+          onClose={() => setModalStatusEquipe(false)}
+        />
+      )}
+
+      {/* Modal de tickets por status do respondente individual */}
+      {modalStatusRespondente && respondenteSelecionado && (
+        <TicketsRespondenteStatusModal
+          nomeRespondente={respondenteSelecionado}
+          grupoDesignado={grupoFiltroRespondente}
+          periodoFiltro={periodoFiltro}
+          onClose={() => setModalStatusRespondente(false)}
+        />
+      )}
+    </div>
+  );
+}

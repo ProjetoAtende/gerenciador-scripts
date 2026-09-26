@@ -1,0 +1,389 @@
+# 📋 Documentação Google Apps Script - Processador de Chamados
+
+## 🎯 Visão Geral
+Sistema automatizado que processa emails de chamados de suporte, extrai informações estruturadas e armazena no Supabase para gestão via dashboard web.
+
+## ⚙️ Configurações Iniciais
+
+```javascript
+const SUPABASE_URL = 'https://rdkvvigjmowtvhxqlrnp.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+const SENDER_EMAIL = 'exsypher0@gmail.com';
+```
+
+**Propósito:**
+- **SUPABASE_URL**: Endpoint da API REST do projeto Supabase
+- **SUPABASE_ANON_KEY**: Chave pública para autenticação nas APIs do Supabase
+- **SENDER_EMAIL**: Email para notificações de erro do sistema
+
+---
+
+## 🔄 Função Principal: `processarChamados()`
+
+**Propósito:** Função principal executada automaticamente a cada 5 minutos pelo trigger.
+
+### Fluxo de Execução:
+
+1. **Busca Label Gmail:**
+   ```javascript
+   const label = GmailApp.getUserLabelByName('Chamados-Sistema');
+   ```
+   - Localiza emails marcados com label "Chamados-Sistema"
+   - Se não encontrar, exibe mensagem orientativa
+
+2. **Filtra Emails Não Lidos:**
+   ```javascript
+   const emailsNaoLidos = threads.filter(thread => thread.isUnread());
+   ```
+   - Evita reprocessamento de emails já tratados
+   - Otimiza performance ignorando emails antigos
+
+3. **Processa Cada Email:**
+   ```javascript
+   for (const message of messages) {
+     if (message.isUnread()) {
+       processarEmail(message);
+       message.markRead(); // Marca como lido após processar
+     }
+   }
+   ```
+   - Garante que cada email seja processado apenas uma vez
+   - Marca como lido após processamento bem-sucedido
+
+4. **Tratamento de Erros:**
+   - Captura exceções e envia email de notificação
+   - Registra logs detalhados para debugging
+
+---
+
+## 📧 Processamento Individual: `processarEmail(message)`
+
+**Propósito:** Processa um email específico, extraindo dados e inserindo no banco.
+
+### Validações Realizadas:
+
+1. **Verificação de Assunto:**
+   ```javascript
+   if (!assunto.includes('[CHAMADO]')) {
+     console.log('Email não é um chamado válido');
+     return;
+   }
+   ```
+   - Filtra apenas emails que são chamados de suporte
+   - Ignora emails irrelevantes automaticamente
+
+2. **Extração de Dados:**
+   - Chama `extrairDadosHTML()` para parsing do conteúdo
+   - Valida se conseguiu extrair informações essenciais
+
+3. **Verificação de Duplicatas:**
+   ```javascript
+   const chamadoExistente = verificarChamadoExiste(dadosChamado.numero_chamado);
+   ```
+   - Consulta Supabase para verificar se chamado já existe
+   - Implementa lógica de reabertura para mesmo usuário
+
+4. **Regras de Duplicata:**
+   - **Chamado novo**: Insere na fila central (status: 'aguardando')
+   - **Duplicata com usuário anterior**: Atribui diretamente ao mesmo usuário (status: 'atribuido')
+   - **Duplicata sem usuário**: Insere na fila central normalmente
+
+---
+
+## 🔍 Extração de Dados: `extrairDadosHTML(assunto, corpoHtml)`
+
+**Propósito:** Faz parsing do HTML do email para extrair informações estruturadas.
+
+### Dados Extraídos:
+
+1. **Número do Chamado (do Assunto):**
+   ```javascript
+   const matchAssunto = assunto.match(/\[CHAMADO\].*?#(\d+)/);
+   ```
+   - Formato esperado: `[CHAMADO] # - #60248924: eproc Público Externo`
+   - Extrai apenas os dígitos do número do chamado
+
+2. **Data de Abertura (do HTML):**
+   ```javascript
+   const matchData = htmlLimpo.match(/Data de Abertura:.*?<\/span>.*?<span[^>]*>(.*?)<\/span>/i);
+   ```
+   - Busca padrão "Data de Abertura:" seguido de valor em span
+   - Remove tags HTML residuais do conteúdo
+
+3. **Grupo Solucionador - GSE (do HTML):**
+   ```javascript
+   const matchGSE = htmlLimpo.match(/Grupo Solucionador:.*?<\/span>.*?<span[^>]*>(.*?)<\/span>/i);
+   ```
+   - Extrai informação do campo "Grupo Solucionador"
+   - Exemplo: "GSE - SGS - EPROC PUB EXT - DEFPUB"
+
+4. **Descrição (do HTML):**
+   ```javascript
+   const matchDescricao = htmlLimpo.match(/Descrição:.*?<\/span>.*?<span[^>]*>(.*?)<\/span>/i);
+   ```
+   - Extrai texto completo da descrição do chamado
+   - Preserva quebras de linha convertendo tags `<p>` e `<br>`
+   - Remove tags HTML mas mantém formatação de texto
+
+### Tratamento de HTML:
+
+1. **Limpeza Inicial:**
+   ```javascript
+   const htmlLimpo = corpoHtml.replace(/\s+/g, ' ').replace(/\n/g, ' ');
+   ```
+   - Normaliza espaços em branco para facilitar regex
+   - Remove quebras de linha que atrapalham parsing
+
+2. **Decodificação de Entidades:**
+   - Chama `decodificarHTML()` para converter acentos e caracteres especiais
+   - Suporta encoding quoted-printable comum em emails
+
+---
+
+## 🔄 Função Utilitária: `decodificarHTML(texto)`
+
+**Propósito:** Converte entidades HTML e caracteres codificados para texto legível.
+
+### Conversões Realizadas:
+
+1. **Entidades HTML Básicas:**
+   ```javascript
+   .replace(/&amp;/g, '&')
+   .replace(/&lt;/g, '<')
+   .replace(/&gt;/g, '>')
+   .replace(/&quot;/g, '"')
+   .replace(/&nbsp;/g, ' ')
+   ```
+
+2. **Caracteres Acentuados (Quoted-Printable):**
+   ```javascript
+   .replace(/=C3=A1/g, 'á')  // á
+   .replace(/=C3=A9/g, 'é')  // é
+   .replace(/=C3=A7/g, 'ç')  // ç
+   .replace(/=C3=A3/g, 'ã')  // ã
+   ```
+   - Suporte completo para acentuação portuguesa
+   - Compatível com encoding de emails corporativos
+
+---
+
+## 📅 Conversão de Data: `converterDataParaISO(dataString)`
+
+**Propósito:** Converte data brasileira para formato ISO 8601 compatível com PostgreSQL.
+
+### Formatos Suportados:
+
+1. **Formato Brasileiro:**
+   ```javascript
+   const match = dataString.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+   ```
+   - Entrada: "24/07/2025 17:17"
+   - Saída: "2025-07-24T17:17:00-03:00"
+
+2. **Timezone Brasileiro:**
+   - Assume fuso horário de Brasília (-03:00)
+   - Compatível com horário de verão automático do PostgreSQL
+
+3. **Fallback para Erros:**
+   - Se parsing falhar, usa data atual como fallback
+   - Garante que sempre haverá uma data válida no banco
+
+---
+
+## 🔍 Verificação de Duplicatas: `verificarChamadoExiste(numeroChamado)`
+
+**Propósito:** Consulta Supabase para verificar se chamado já foi processado anteriormente.
+
+### Funcionamento:
+
+1. **Query Otimizada:**
+   ```javascript
+   const url = `${SUPABASE_URL}/rest/v1/tickets?numero_chamado=eq.${numeroChamado}&select=id,usuario_atual,status`;
+   ```
+   - Busca apenas campos necessários para decisão
+   - Usa índice `numero_chamado` para performance
+
+2. **Retorno Estruturado:**
+   - **null**: Chamado não existe (é novo)
+   - **objeto**: Dados do chamado existente com usuário anterior
+
+3. **Tratamento de Erros:**
+   - Em caso de falha na consulta, assume que não existe
+   - Evita bloquear processamento por problemas temporários
+
+---
+
+## 💾 Inserção de Dados: `inserirTicketSupabase(dadosChamado)`
+
+**Propósito:** Insere novo chamado na fila central do Supabase.
+
+### Payload Enviado:
+
+```javascript
+const payload = {
+  numero_chamado: dadosChamado.numero_chamado,    // Chave única
+  gse: dadosChamado.gse,                          // Grupo Solucionador
+  tempo_espera_origem: dadosChamado.tempo_espera_origem,  // Data ISO
+  descricao: dadosChamado.descricao,              // Texto completo
+  status: 'aguardando'                            // Estado inicial
+};
+```
+
+### Headers de Autenticação:
+
+```javascript
+headers: {
+  'apikey': SUPABASE_ANON_KEY,
+  'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+  'Content-Type': 'application/json',
+  'Prefer': 'return=minimal'  // Otimiza resposta
+}
+```
+
+---
+
+## 🔄 Reabertura para Usuário: `reabrirChamadoParaUsuario(dadosChamado, usuarioId)`
+
+**Propósito:** Cria novo registro de chamado já atribuído ao usuário que o atendeu anteriormente.
+
+### Diferenças da Inserção Normal:
+
+1. **Status Inicial:**
+   - Normal: `'aguardando'` (fila central)
+   - Reabertura: `'atribuido'` (direto para usuário)
+
+2. **Usuário Definido:**
+   ```javascript
+   usuario_atual: usuarioId  // Já define responsável
+   ```
+
+3. **Notificação Automática:**
+   - Usuário recebe notificação real-time via Supabase
+   - Aparece diretamente no dashboard pessoal
+
+---
+
+## 📬 Notificação de Erros: `enviarEmailErro(error)`
+
+**Propósito:** Envia email de alerta quando ocorrem falhas no processamento.
+
+### Informações Incluídas:
+
+```javascript
+const corpo = `
+Erro: ${error.message}        // Descrição do erro
+Stack: ${error.stack}         // Stack trace para debug
+Data/Hora: ${new Date().toLocaleString('pt-BR')}  // Timestamp
+`;
+```
+
+### Cenários de Disparo:
+
+- Falhas na conexão com Supabase
+- Erros de parsing de HTML
+- Problemas de autenticação
+- Exceções não tratadas
+
+---
+
+## ⏰ Configuração Automática: `configurarTrigger()`
+
+**Propósito:** Configura execução automática do processamento a cada 5 minutos.
+
+### Processo de Configuração:
+
+1. **Remove Triggers Existentes:**
+   ```javascript
+   triggers.forEach(trigger => {
+     if (trigger.getHandlerFunction() === 'processarChamados') {
+       ScriptApp.deleteTrigger(trigger);
+     }
+   });
+   ```
+   - Evita duplicação de triggers
+   - Permite reconfiguração sem conflitos
+
+2. **Cria Novo Trigger:**
+   ```javascript
+   ScriptApp.newTrigger('processarChamados')
+     .timeBased()
+     .everyMinutes(5)  // Intervalo otimizado
+     .create();
+   ```
+
+### Justificativa do Intervalo:
+
+- **5 minutos**: Balanceamento entre responsividade e uso de recursos
+- **Alternativas**: 1, 10, 15, 30 minutos (limitações do Google Apps Script)
+- **Consideração**: Emails corporativos raramente precisam de processamento sub-minuto
+
+---
+
+## 🧪 Função de Teste: `testarProcessamento()`
+
+**Propósito:** Permite execução manual para debugging e validação.
+
+### Casos de Uso:
+
+1. **Debugging**: Testar parsing de emails específicos
+2. **Validação**: Confirmar conexão com Supabase
+3. **Desenvolvimento**: Iterar rapidamente sem aguardar triggers
+4. **Troubleshooting**: Diagnosticar problemas em produção
+
+### Execução:
+
+- Roda imediatamente, independente do trigger
+- Processa todos os emails não lidos disponíveis
+- Exibe logs em tempo real na console do Apps Script
+
+---
+
+## 📊 Logs e Monitoramento
+
+### Tipos de Log:
+
+1. **Informacional:**
+   ```javascript
+   console.log('Iniciando processamento de chamados...');
+   console.log(`Encontrados ${emailsNaoLidos.length} emails não lidos`);
+   ```
+
+2. **Debug:**
+   ```javascript
+   console.log(`Número do chamado extraído: ${numeroChamado}`);
+   console.log('Dados extraídos:', dadosExtraidos);
+   ```
+
+3. **Erro:**
+   ```javascript
+   console.error('Erro ao processar email:', error);
+   console.error('Erro ao inserir no Supabase:', error);
+   ```
+
+### Monitoramento via Google Apps Script:
+
+- **Execuções**: Histórico de todas as execuções automáticas
+- **Logs**: Detalhamento completo de cada processamento
+- **Alertas**: Emails automáticos em caso de falhas críticas
+
+---
+
+## 🚀 Performance e Otimizações
+
+### Estratégias Implementadas:
+
+1. **Filtros Eficientes:**
+   - Processa apenas emails não lidos
+   - Verifica assunto antes de parsing completo
+
+2. **Queries Otimizadas:**
+   - Seleciona apenas campos necessários do Supabase
+   - Usa índices para consultas de duplicata
+
+3. **Tratamento de Erros Robusto:**
+   - Continua processamento mesmo com falhas individuais
+   - Logs detalhados para debugging
+
+4. **Marcação Inteligente:**
+   - Marca emails como lidos após processamento
+   - Evita reprocessamento desnecessário

@@ -1,0 +1,513 @@
+
+--- 2026-06-06T14:03:34.258Z debug
+🪵  Writing logs to "c:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-pong-worker\.xdg-config\.wrangler\logs\wrangler-2026-06-06_14-03-34_012.log"
+---
+
+--- 2026-06-06T14:03:34.257Z debug
+.env file not found at "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-space-shooter-worker\.env". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T14:03:34.259Z debug
+.env file not found at "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-space-shooter-worker\.env.local". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T14:03:34.271Z log
+
+ ⛅️ wrangler 4.98.0
+───────────────────
+---
+
+--- 2026-06-06T14:03:34.300Z debug
+Running autoconfig detection in C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-space-shooter-worker...
+---
+
+--- 2026-06-06T14:03:34.302Z debug
+Metrics dispatcher: Posting data {"deviceId":"f7f0257a-3ec3-4eea-8c31-e82c4293e199","event":"wrangler command started","timestamp":1780754614302,"properties":{"amplitude_session_id":1780754614282,"amplitude_event_id":0,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"jsonc","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":"vscode-copilot-agent","argsUsed":[],"argsCombination":"","sanitizedCommand":"deploy","sanitizedArgs":{},"currentAgentSkillsInstalled":"manual"}}
+---
+
+--- 2026-06-06T14:03:34.311Z debug
+Metrics dispatcher: Posting data {"deviceId":"f7f0257a-3ec3-4eea-8c31-e82c4293e199","event":"autoconfig_process_started","timestamp":1780754614311,"properties":{"amplitude_session_id":1780754614300,"amplitude_event_id":0,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"none","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":"vscode-copilot-agent","category":"Workers","os":"win32:x64","autoConfigId":"2a6bf9f9-6fe3-4e74-ac79-6eefb1a93fce","command":"wrangler deploy","dryRun":false,"currentAgentSkillsInstalled":"manual"}}
+---
+
+--- 2026-06-06T14:03:34.312Z debug
+Metrics dispatcher: Posting data {"deviceId":"f7f0257a-3ec3-4eea-8c31-e82c4293e199","event":"autoconfig_detection_started","timestamp":1780754614312,"properties":{"amplitude_session_id":1780754614300,"amplitude_event_id":0,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"none","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":"vscode-copilot-agent","category":"Workers","os":"win32:x64","autoConfigId":"2a6bf9f9-6fe3-4e74-ac79-6eefb1a93fce","command":"wrangler deploy","currentAgentSkillsInstalled":"manual"}}
+---
+
+--- 2026-06-06T14:03:34.314Z debug
+Metrics dispatcher: Posting data {"deviceId":"f7f0257a-3ec3-4eea-8c31-e82c4293e199","event":"autoconfig_process_ended","timestamp":1780754614314,"properties":{"amplitude_session_id":1780754614302,"amplitude_event_id":0,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"none","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":"vscode-copilot-agent","category":"Workers","os":"win32:x64","autoConfigId":"2a6bf9f9-6fe3-4e74-ac79-6eefb1a93fce","command":"wrangler deploy","dryRun":false,"success":true,"currentAgentSkillsInstalled":"manual"}}
+---
+
+--- 2026-06-06T14:03:34.423Z debug
+-- START CF API REQUEST: GET https://api.cloudflare.com/client/v4/accounts
+---
+
+--- 2026-06-06T14:03:34.424Z debug
+QUERY STRING: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:34.424Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:34.424Z debug
+INIT: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:34.424Z debug
+-- END CF API REQUEST
+---
+
+--- 2026-06-06T14:03:34.427Z debug
+-- START CF API REQUEST: GET https://api.cloudflare.com/client/v4/memberships
+---
+
+--- 2026-06-06T14:03:34.427Z debug
+QUERY STRING: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:34.427Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:34.428Z debug
+INIT: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:34.428Z debug
+-- END CF API REQUEST
+---
+
+--- 2026-06-06T14:03:34.957Z debug
+-- START CF API RESPONSE: OK 200
+---
+
+--- 2026-06-06T14:03:34.957Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:34.957Z debug
+RESPONSE: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:34.957Z debug
+-- END CF API RESPONSE
+---
+
+--- 2026-06-06T14:03:36.407Z debug
+-- START CF API RESPONSE: OK 200
+---
+
+--- 2026-06-06T14:03:36.407Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:36.407Z debug
+RESPONSE: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:36.408Z debug
+-- END CF API RESPONSE
+---
+
+--- 2026-06-06T14:03:36.409Z debug
+Saving to cache: {"account":{"id":"f5b30344beeaef6e365cde5bd79ee8c0","name":"David.pestilli@outlook.com's Account"}}
+---
+
+--- 2026-06-06T14:03:36.412Z debug
+Starting verifyWorkerMatchesCITag() with tag: undefined, name: arena-space-shooter-worker
+---
+
+--- 2026-06-06T14:03:36.412Z debug
+No WRANGLER_CI_MATCH_TAG variable provided, aborting verifyWorkerMatchesCITag()
+---
+
+--- 2026-06-06T14:03:36.415Z debug
+-- START CF API REQUEST: GET https://api.cloudflare.com/client/v4/accounts/f5b30344beeaef6e365cde5bd79ee8c0/workers/services/arena-space-shooter-worker
+---
+
+--- 2026-06-06T14:03:36.415Z debug
+QUERY STRING: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:36.416Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:36.416Z debug
+INIT: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:36.416Z debug
+-- END CF API REQUEST
+---
+
+--- 2026-06-06T14:03:38.333Z debug
+-- START CF API RESPONSE: Not Found 404
+---
+
+--- 2026-06-06T14:03:38.333Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:38.334Z debug
+RESPONSE: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:38.334Z debug
+-- END CF API RESPONSE
+---
+
+--- 2026-06-06T14:03:38.336Z debug
+Retrieving cached values for account from node_modules\.cache\wrangler
+---
+
+--- 2026-06-06T14:03:38.337Z debug
+-- START CF API REQUEST: GET https://api.cloudflare.com/client/v4/accounts/f5b30344beeaef6e365cde5bd79ee8c0/workers/scripts/arena-space-shooter-worker/secrets
+---
+
+--- 2026-06-06T14:03:38.337Z debug
+QUERY STRING: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:38.337Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:38.338Z debug
+INIT: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:38.338Z debug
+-- END CF API REQUEST
+---
+
+--- 2026-06-06T14:03:40.191Z debug
+-- START CF API RESPONSE: Not Found 404
+---
+
+--- 2026-06-06T14:03:40.192Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:40.192Z debug
+RESPONSE: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:40.192Z debug
+-- END CF API RESPONSE
+---
+
+--- 2026-06-06T14:03:40.196Z debug
+-- START CF API REQUEST: GET https://api.cloudflare.com/client/v4/accounts/f5b30344beeaef6e365cde5bd79ee8c0/workers/scripts/arena-space-shooter-worker/deployments
+---
+
+--- 2026-06-06T14:03:40.196Z debug
+QUERY STRING: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:40.196Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:40.196Z debug
+INIT: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:40.196Z debug
+-- END CF API REQUEST
+---
+
+--- 2026-06-06T14:03:41.965Z debug
+-- START CF API RESPONSE: Not Found 404
+---
+
+--- 2026-06-06T14:03:41.966Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:41.966Z debug
+RESPONSE: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:41.966Z debug
+-- END CF API RESPONSE
+---
+
+--- 2026-06-06T14:03:42.002Z debug
+-- START CF API REQUEST: GET https://api.cloudflare.com/client/v4/accounts/f5b30344beeaef6e365cde5bd79ee8c0/workers/scripts
+---
+
+--- 2026-06-06T14:03:42.002Z debug
+QUERY STRING: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:42.002Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:42.002Z debug
+INIT: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:42.002Z debug
+-- END CF API REQUEST
+---
+
+--- 2026-06-06T14:03:44.232Z debug
+-- START CF API RESPONSE: OK 200
+---
+
+--- 2026-06-06T14:03:44.232Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:44.232Z debug
+RESPONSE: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:44.232Z debug
+-- END CF API RESPONSE
+---
+
+--- 2026-06-06T14:03:44.243Z log
+Total Upload: 26.88 KiB / gzip: 6.28 KiB
+---
+
+--- 2026-06-06T14:03:44.245Z debug
+-- START CF API REQUEST: GET https://api.cloudflare.com/client/v4/accounts/f5b30344beeaef6e365cde5bd79ee8c0/workers/scripts/arena-space-shooter-worker/settings
+---
+
+--- 2026-06-06T14:03:44.245Z debug
+QUERY STRING: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:44.245Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:44.245Z debug
+INIT: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:44.245Z debug
+-- END CF API REQUEST
+---
+
+--- 2026-06-06T14:03:46.511Z debug
+-- START CF API RESPONSE: Not Found 404
+---
+
+--- 2026-06-06T14:03:46.511Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:46.511Z debug
+RESPONSE: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:46.511Z debug
+-- END CF API RESPONSE
+---
+
+--- 2026-06-06T14:03:46.511Z debug
+No settings found
+---
+
+--- 2026-06-06T14:03:46.514Z debug
+-- START CF API REQUEST: PUT https://api.cloudflare.com/client/v4/accounts/f5b30344beeaef6e365cde5bd79ee8c0/workers/scripts/arena-space-shooter-worker
+---
+
+--- 2026-06-06T14:03:46.514Z debug
+QUERY STRING: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:46.515Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:46.515Z debug
+INIT: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:46.516Z debug
+BODY: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:46.516Z debug
+-- END CF API REQUEST
+---
+
+--- 2026-06-06T14:03:49.043Z debug
+-- START CF API RESPONSE: OK 200
+---
+
+--- 2026-06-06T14:03:49.043Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:49.043Z debug
+RESPONSE: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:49.044Z debug
+-- END CF API RESPONSE
+---
+
+--- 2026-06-06T14:03:49.047Z log
+Your Worker has access to the following bindings:
+---
+
+--- 2026-06-06T14:03:49.047Z log
+Binding                Resource                
+---
+
+--- 2026-06-06T14:03:49.048Z log
+env.MATCH_ROOMS        Durable Object          
+  MatchRoom
+---
+
+--- 2026-06-06T14:03:49.048Z log
+env.ALLOWED_ORIGIN     Environment Variable    
+  "http://localhost:5173"
+---
+
+--- 2026-06-06T14:03:49.049Z log
+env.ALLOWED_ORIGINS    Environment Variable    
+  "http://localhost:5173,http://127.0.0...."
+---
+
+--- 2026-06-06T14:03:49.049Z log
+
+---
+
+--- 2026-06-06T14:03:49.053Z log
+Uploaded arena-space-shooter-worker (8.86 sec)
+---
+
+--- 2026-06-06T14:03:49.057Z debug
+-- START CF API REQUEST: GET https://api.cloudflare.com/client/v4/accounts/f5b30344beeaef6e365cde5bd79ee8c0/workers/subdomain
+---
+
+--- 2026-06-06T14:03:49.058Z debug
+QUERY STRING: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:49.058Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:49.058Z debug
+INIT: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:49.058Z debug
+-- END CF API REQUEST
+---
+
+--- 2026-06-06T14:03:50.918Z debug
+-- START CF API RESPONSE: OK 200
+---
+
+--- 2026-06-06T14:03:50.919Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:50.919Z debug
+RESPONSE: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:50.920Z debug
+-- END CF API RESPONSE
+---
+
+--- 2026-06-06T14:03:50.923Z debug
+-- START CF API REQUEST: GET https://api.cloudflare.com/client/v4/accounts/f5b30344beeaef6e365cde5bd79ee8c0/workers/scripts/arena-space-shooter-worker/subdomain
+---
+
+--- 2026-06-06T14:03:50.923Z debug
+QUERY STRING: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:50.923Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:50.923Z debug
+INIT: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:50.924Z debug
+-- END CF API REQUEST
+---
+
+--- 2026-06-06T14:03:52.756Z debug
+-- START CF API RESPONSE: OK 200
+---
+
+--- 2026-06-06T14:03:52.757Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:52.757Z debug
+RESPONSE: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:52.757Z debug
+-- END CF API RESPONSE
+---
+
+--- 2026-06-06T14:03:52.760Z debug
+-- START CF API REQUEST: POST https://api.cloudflare.com/client/v4/accounts/f5b30344beeaef6e365cde5bd79ee8c0/workers/scripts/arena-space-shooter-worker/subdomain
+---
+
+--- 2026-06-06T14:03:52.760Z debug
+QUERY STRING: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:52.761Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:52.761Z debug
+INIT: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:52.762Z debug
+-- END CF API REQUEST
+---
+
+--- 2026-06-06T14:03:54.713Z debug
+-- START CF API RESPONSE: OK 200
+---
+
+--- 2026-06-06T14:03:54.714Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:54.714Z debug
+RESPONSE: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T14:03:54.714Z debug
+-- END CF API RESPONSE
+---
+
+--- 2026-06-06T14:03:54.715Z log
+Deployed arena-space-shooter-worker triggers (5.66 sec)
+---
+
+--- 2026-06-06T14:03:54.715Z log
+  https://arena-space-shooter-worker.david-pestilli.workers.dev
+---
+
+--- 2026-06-06T14:03:54.716Z log
+Current Version ID: 1eb12217-4e9e-4c39-ba43-bce399384be3
+---
+
+--- 2026-06-06T14:03:54.718Z debug
+Metrics dispatcher: Posting data {"deviceId":"f7f0257a-3ec3-4eea-8c31-e82c4293e199","event":"deploy worker script","timestamp":1780754634718,"properties":{"amplitude_session_id":1780754634716,"amplitude_event_id":0,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"none","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":"vscode-copilot-agent","category":"Workers","os":"win32:x64","usesTypeScript":true,"durationMs":18304,"currentAgentSkillsInstalled":"manual"}}
+---
+
+--- 2026-06-06T14:03:54.721Z debug
+Metrics dispatcher: Posting data {"deviceId":"f7f0257a-3ec3-4eea-8c31-e82c4293e199","event":"wrangler command completed","timestamp":1780754634721,"properties":{"amplitude_session_id":1780754614282,"amplitude_event_id":1,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"jsonc","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":"vscode-copilot-agent","argsUsed":[],"argsCombination":"","sanitizedCommand":"deploy","sanitizedArgs":{},"durationMs":20455,"currentAgentSkillsInstalled":"manual"}}
+---

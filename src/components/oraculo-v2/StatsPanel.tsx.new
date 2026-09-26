@@ -1,0 +1,254 @@
+// ============================================================================
+// ORÁCULO V2 - STATS PANEL (Orquestrador)
+// Painel de estatísticas — delega render para sub-componentes em stats/
+// ============================================================================
+
+import { useState, useMemo } from 'react';
+import { useSettings } from '../../contexts/SettingsContext';
+import { Loader2 } from 'lucide-react';
+import { useOraculoStats } from '../../hooks/useOraculoStats';
+import type { FiltroPeriodo, TipoMetricaEvolucao } from '../../services/oraculo/statisticsService.types';
+import type { VisualizacaoTipo, ChartTheme } from './stats/statsConstants';
+import { SGS_NOMES } from './stats/statsConstants';
+import { StatsOverview, StatsGrupos, StatsRespondentes, StatsEquipesSGS } from './stats';
+import { TicketsStatusModal } from './TicketsStatusModal';
+import { TicketsRejeiteModal } from './TicketsRejeiteModal';
+import { TicketsPendentesModal } from './TicketsPendentesModal';
+import { RespondentesModal } from './RespondentesModal';
+import { EquipeDetalheModal } from './EquipeDetalheModal';
+import { TicketsEquipeStatusModal } from './TicketsEquipeStatusModal';
+import { TicketsRespondenteStatusModal } from './TicketsRespondenteStatusModal';
+
+// ============================================================================
+// COMPONENTE: Stats Panel (Orquestrador)
+// ============================================================================
+
+export function StatsPanel() {
+  const { darkMode } = useSettings();
+
+  // Cores adaptativas para Recharts
+  const chartTheme: ChartTheme = useMemo(() => ({
+    grid: darkMode ? '#374151' : '#e5e7eb',
+    tickFill: darkMode ? '#d1d5db' : '#374151',
+    tooltipBg: darkMode ? '#1f2937' : 'white',
+    tooltipBorder: darkMode ? '#4b5563' : '#e5e7eb',
+    tooltipText: darkMode ? '#f3f4f6' : '#374151',
+    labelFill: darkMode ? '#d1d5db' : '#374151',
+    legendColor: darkMode ? '#d1d5db' : '#374151',
+  }), [darkMode]);
+
+  // --- Filtros de UI ---
+  const [periodoFiltro, setPeriodoFiltro] = useState<FiltroPeriodo>(null);
+  const [visualizacaoTopGrupos, setVisualizacaoTopGrupos] = useState<VisualizacaoTipo>('tabela');
+  const [visualizacaoUsuarios, setVisualizacaoUsuarios] = useState<VisualizacaoTipo>('tabela');
+  const [metricaTopGrupos, setMetricaTopGrupos] = useState<TipoMetricaEvolucao>('total');
+  const [visualizacaoRespondentes, setVisualizacaoRespondentes] = useState<VisualizacaoTipo>('tabela');
+  const [grupoFiltroEmail, setGrupoFiltroEmail] = useState<string | null>(null);
+  const [grupoFiltroRespondente, setGrupoFiltroRespondente] = useState<string | null>(null);
+  const [grupoFiltroEquipe, setGrupoFiltroEquipe] = useState<string | null>(null);
+  const [respondenteSelecionado, setRespondenteSelecionado] = useState<string | null>(null);
+  const [equipeSGSSelecionada, setEquipeSGSSelecionada] = useState<string | null>(null);
+  const [visualizacaoEquipes, setVisualizacaoEquipes] = useState<VisualizacaoTipo>('tabela');
+
+  // --- Estados de modais ---
+  const [ticketsModal, setTicketsModal] = useState<{ respondente: string; status: string } | null>(null);
+  const [rejeiteModal, setRejeiteModal] = useState<{ nome: string; tipo: 'equipe'; nomeExibicao?: string } | null>(null);
+  const [pendentesModal, setPendentesModal] = useState<{ periodo: string; totalAbertos: number; totalAtendidos: number } | null>(null);
+  const [produtividadeModal, setProdutividadeModal] = useState<{ periodo: string; totalRespostas: number; respondentesUnicos: number; media: number } | null>(null);
+  const [modalEquipeSGS, setModalEquipeSGS] = useState<{ codigo: string; nome: string } | null>(null);
+  const [modalMesEquipe, setModalMesEquipe] = useState<{ codigo: string; nome: string; periodo: string } | null>(null);
+  const [modalExternosEquipe, setModalExternosEquipe] = useState<{ gse: string; modo: 'externo' | 'vazio' } | null>(null);
+  const [modalStatusEquipe, setModalStatusEquipe] = useState(false);
+  const [modalStatusRespondente, setModalStatusRespondente] = useState(false);
+
+  // --- Hook de dados ---
+  const { data, loading } = useOraculoStats({
+    periodoFiltro,
+    grupoFiltroEmail,
+    grupoFiltroRespondente,
+    grupoFiltroEquipe,
+    respondenteSelecionado,
+    equipeSGSSelecionada,
+    visualizacaoTopGrupos,
+    visualizacaoUsuarios,
+    visualizacaoRespondentes,
+    visualizacaoEquipes,
+    metricaTopGrupos,
+  });
+
+  // Loading inicial
+  if (loading.inicial) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="animate-spin text-indigo-600" size={40} />
+        <span className="ml-3 text-gray-600 dark:text-gray-400 font-medium">Carregando estatísticas...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* KPI Cards */}
+      <StatsOverview data={data.estatisticasGerais} />
+
+      {/* Grupos + Detalhamento + Usuários */}
+      <StatsGrupos
+        data={data}
+        loading={loading}
+        chartTheme={chartTheme}
+        periodoFiltro={periodoFiltro}
+        onPeriodoChange={setPeriodoFiltro}
+        visualizacaoTopGrupos={visualizacaoTopGrupos}
+        onVisualizacaoTopGruposChange={setVisualizacaoTopGrupos}
+        metricaTopGrupos={metricaTopGrupos}
+        onMetricaChange={setMetricaTopGrupos}
+        visualizacaoUsuarios={visualizacaoUsuarios}
+        onVisualizacaoUsuariosChange={setVisualizacaoUsuarios}
+        grupoFiltroEmail={grupoFiltroEmail}
+        onGrupoFiltroEmailChange={setGrupoFiltroEmail}
+      />
+
+      {/* Demanda + Respondentes + Produtividade */}
+      <StatsRespondentes
+        data={data}
+        loading={loading}
+        chartTheme={chartTheme}
+        periodoFiltro={periodoFiltro}
+        onPeriodoChange={setPeriodoFiltro}
+        visualizacaoRespondentes={visualizacaoRespondentes}
+        onVisualizacaoRespondentesChange={setVisualizacaoRespondentes}
+        grupoFiltroRespondente={grupoFiltroRespondente}
+        onGrupoFiltroRespondenteChange={setGrupoFiltroRespondente}
+        respondenteSelecionado={respondenteSelecionado}
+        onRespondenteSelecionadoChange={setRespondenteSelecionado}
+        onOpenTicketsModal={(respondente, status) => setTicketsModal({ respondente, status })}
+        onOpenModalStatusRespondente={() => setModalStatusRespondente(true)}
+        onOpenPendentesModal={(periodo, totalAbertos, totalAtendidos) => setPendentesModal({ periodo, totalAbertos, totalAtendidos })}
+        onOpenProdutividadeModal={(periodo, totalRespostas, respondentesUnicos, media) => setProdutividadeModal({ periodo, totalRespostas, respondentesUnicos, media })}
+      />
+
+      {/* Equipes SGS + Externos + Rejeites */}
+      <StatsEquipesSGS
+        data={data}
+        loading={loading}
+        chartTheme={chartTheme}
+        periodoFiltro={periodoFiltro}
+        onPeriodoChange={setPeriodoFiltro}
+        visualizacaoEquipes={visualizacaoEquipes}
+        onVisualizacaoEquipesChange={setVisualizacaoEquipes}
+        grupoFiltroEquipe={grupoFiltroEquipe}
+        onGrupoFiltroEquipeChange={setGrupoFiltroEquipe}
+        equipeSGSSelecionada={equipeSGSSelecionada}
+        onEquipeSGSSelecionadaChange={setEquipeSGSSelecionada}
+        onOpenModalEquipeSGS={(codigo, nome) => setModalEquipeSGS({ codigo, nome })}
+        onOpenModalMesEquipe={(codigo, nome, periodo) => setModalMesEquipe({ codigo, nome, periodo })}
+        onOpenRejeiteModal={(nome, tipo, nomeExibicao) => setRejeiteModal({ nome, tipo, nomeExibicao })}
+        onOpenModalStatusEquipe={() => setModalStatusEquipe(true)}
+        onOpenModalExternosEquipe={(gse, modo) => setModalExternosEquipe({ gse, modo })}
+      />
+
+      {/* Footer */}
+      {data.estatisticasGerais?.dataMaisAntiga && data.estatisticasGerais?.dataMaisRecente && (
+        <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+          Período dos dados: {new Date(data.estatisticasGerais.dataMaisAntiga + 'T00:00:00').toLocaleDateString('pt-BR')} a{' '}
+          {new Date(data.estatisticasGerais.dataMaisRecente + 'T00:00:00').toLocaleDateString('pt-BR')}
+        </div>
+      )}
+
+      {/* ================================================================
+          MODAIS
+          ================================================================ */}
+      {ticketsModal && (
+        <TicketsStatusModal
+          respondente={ticketsModal.respondente}
+          status={ticketsModal.status}
+          grupoDesignado={grupoFiltroRespondente}
+          dias={periodoFiltro}
+          onClose={() => setTicketsModal(null)}
+        />
+      )}
+
+      {rejeiteModal && (
+        <TicketsRejeiteModal
+          nome={rejeiteModal.nome}
+          tipo={rejeiteModal.tipo}
+          grupoDesignado={grupoFiltroRespondente}
+          dias={periodoFiltro}
+          nomeExibicao={rejeiteModal.nomeExibicao}
+          onClose={() => setRejeiteModal(null)}
+        />
+      )}
+
+      {pendentesModal && (
+        <TicketsPendentesModal
+          periodo={pendentesModal.periodo}
+          dias={periodoFiltro}
+          totalAbertos={pendentesModal.totalAbertos}
+          totalAtendidos={pendentesModal.totalAtendidos}
+          onClose={() => setPendentesModal(null)}
+        />
+      )}
+
+      {produtividadeModal && (
+        <RespondentesModal
+          periodo={produtividadeModal.periodo}
+          dias={periodoFiltro}
+          totalRespostas={produtividadeModal.totalRespostas}
+          respondentesUnicos={produtividadeModal.respondentesUnicos}
+          media={produtividadeModal.media}
+          onClose={() => setProdutividadeModal(null)}
+        />
+      )}
+
+      {modalEquipeSGS && (
+        <EquipeDetalheModal
+          codigo={modalEquipeSGS.codigo}
+          nome={modalEquipeSGS.nome}
+          periodoFiltro={periodoFiltro}
+          onClose={() => setModalEquipeSGS(null)}
+        />
+      )}
+
+      {modalMesEquipe && (
+        <EquipeDetalheModal
+          codigo={modalMesEquipe.codigo}
+          nome={modalMesEquipe.nome}
+          periodoFiltro={periodoFiltro}
+          periodoLabel={modalMesEquipe.periodo}
+          onClose={() => setModalMesEquipe(null)}
+        />
+      )}
+
+      {modalExternosEquipe && equipeSGSSelecionada && (
+        <TicketsEquipeStatusModal
+          equipe={equipeSGSSelecionada}
+          nomeEquipe={SGS_NOMES[equipeSGSSelecionada] || `SGS ${equipeSGSSelecionada}`}
+          gseInicial={modalExternosEquipe.gse}
+          modoInicial={modalExternosEquipe.modo}
+          grupoDesignado={null}
+          periodoFiltro={periodoFiltro}
+          onClose={() => setModalExternosEquipe(null)}
+        />
+      )}
+
+      {modalStatusEquipe && equipeSGSSelecionada && (
+        <TicketsEquipeStatusModal
+          equipe={equipeSGSSelecionada}
+          nomeEquipe={SGS_NOMES[equipeSGSSelecionada] || `SGS ${equipeSGSSelecionada}`}
+          grupoDesignado={grupoFiltroEquipe}
+          periodoFiltro={periodoFiltro}
+          onClose={() => setModalStatusEquipe(false)}
+        />
+      )}
+
+      {modalStatusRespondente && respondenteSelecionado && (
+        <TicketsRespondenteStatusModal
+          nomeRespondente={respondenteSelecionado}
+          grupoDesignado={grupoFiltroRespondente}
+          periodoFiltro={periodoFiltro}
+          onClose={() => setModalStatusRespondente(false)}
+        />
+      )}
+    </div>
+  );
+}

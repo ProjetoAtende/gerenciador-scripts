@@ -1,0 +1,707 @@
+
+--- 2026-06-06T10:25:22.247Z debug
+🪵  Writing logs to "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-pong-worker\.xdg-config\.wrangler\logs\wrangler-2026-06-06_10-25-21_572.log"
+---
+
+--- 2026-06-06T10:25:22.246Z debug
+.env file not found at "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-pong-worker\.env". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T10:25:22.248Z debug
+.env file not found at "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-pong-worker\.env.local". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T10:25:22.269Z log
+
+ ⛅️ wrangler 4.98.0
+───────────────────
+---
+
+--- 2026-06-06T10:25:22.325Z debug
+setting config
+---
+
+--- 2026-06-06T10:25:22.326Z debug
+Updating config... undefined undefined
+---
+
+--- 2026-06-06T10:25:22.345Z debug
+Metrics dispatcher: Posting data {"deviceId":"f7f0257a-3ec3-4eea-8c31-e82c4293e199","event":"wrangler command started","timestamp":1780741522345,"properties":{"amplitude_session_id":1780741522278,"amplitude_event_id":0,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"none","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":"vscode-copilot-agent","argsUsed":[],"argsCombination":"","sanitizedCommand":"dev","sanitizedArgs":{},"currentAgentSkillsInstalled":"manual"}}
+---
+
+--- 2026-06-06T10:25:22.608Z debug
+local dev variables file not found at ".dev.vars". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T10:25:22.608Z debug
+.env file not found at "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-pong-worker\.env". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T10:25:22.609Z debug
+.env file not found at "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-pong-worker\.env.local". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T10:25:22.612Z log
+Your Worker has access to the following bindings:
+---
+
+--- 2026-06-06T10:25:22.613Z log
+Binding                Resource                Mode
+---
+
+--- 2026-06-06T10:25:22.614Z log
+env.MATCH_ROOMS        Durable Object          local
+  MatchRoom
+---
+
+--- 2026-06-06T10:25:22.614Z log
+env.ALLOWED_ORIGIN     Environment Variable    local
+  "http://localhost:5173"
+---
+
+--- 2026-06-06T10:25:22.616Z log
+env.ALLOWED_ORIGINS    Environment Variable    local
+  "http://localhost:5173,http://127.0.0...."
+---
+
+--- 2026-06-06T10:25:22.618Z log
+
+---
+
+--- 2026-06-06T10:25:23.051Z debug
+RemoteRuntimeController teardown beginning...
+---
+
+--- 2026-06-06T10:25:23.051Z debug
+RemoteRuntimeController teardown complete
+---
+
+--- 2026-06-06T10:25:23.130Z log
+⎔ Starting local server...
+---
+
+--- 2026-06-06T10:25:23.154Z debug
+[InspectorProxyWorker] handleProxyControllerIncomingMessage {"type":"reloadStart"}
+---
+
+--- 2026-06-06T10:25:23.716Z debug
+[InspectorProxyWorker] handleProxyControllerIncomingMessage {"type":"reloadComplete","proxyData":{"userWorkerUrl":{"protocol":"http:","hostname":"127.0.0.1","port":"52877"},"userWorkerInspectorUrl":{"protocol":"ws:","hostname":"127.0.0.1","port":"52876","pathname":"/core:user:arena-pong-worker"},"userWorkerInnerUrlOverrides":{"protocol":"http:"},"headers":{"MF-Proxy-Shared-Secret":"928c53f1-000f-4a7c-9968-0aff54f71a6e"},"liveReload":false,"proxyLogsToController":false}}
+---
+
+--- 2026-06-06T10:25:23.719Z debug
+[InspectorProxyWorker] reconnectRuntimeWebSocket
+---
+
+--- 2026-06-06T10:25:23.720Z debug
+[InspectorProxyWorker] NEW RUNTIME WEBSOCKET http://127.0.0.1:52876/core:user:arena-pong-worker
+---
+
+--- 2026-06-06T10:25:23.721Z debug
+[InspectorProxyWorker] SEND TO DEVTOOLS {"method":"Runtime.executionContextsCleared"}
+---
+
+--- 2026-06-06T10:25:23.730Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Runtime.executionContextCreated',
+  params: {
+    context: {
+      id: 320673345,
+      origin: '',
+      name: 'Worker',
+      uniqueId: '5615063283501782849.1958459146381568232'
+    }
+  }
+}
+---
+
+--- 2026-06-06T10:25:23.732Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000001, result: {} }
+---
+
+--- 2026-06-06T10:25:23.734Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000002, method: 'Network.enable', result: {} }
+---
+
+--- 2026-06-06T10:25:23.735Z debug
+[InspectorProxyWorker] RUNTIME WEBSOCKET OPENED
+---
+
+--- 2026-06-06T10:25:23.737Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.enable","id":100000001}
+---
+
+--- 2026-06-06T10:25:23.739Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Network.enable","id":100000002}
+---
+
+--- 2026-06-06T10:25:33.732Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000003}
+---
+
+--- 2026-06-06T10:25:33.733Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000003, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:25:43.736Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000004}
+---
+
+--- 2026-06-06T10:25:43.737Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000004, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:25:53.746Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000005, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:25:53.747Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000005}
+---
+
+--- 2026-06-06T10:26:03.756Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000006, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:26:03.757Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000006}
+---
+
+--- 2026-06-06T10:26:13.761Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000007}
+---
+
+--- 2026-06-06T10:26:13.762Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000007, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:26:23.770Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000008, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:26:23.770Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000008}
+---
+
+--- 2026-06-06T10:26:33.774Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000009, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:26:33.774Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000009}
+---
+
+--- 2026-06-06T10:26:43.788Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000010, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:26:43.789Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000010}
+---
+
+--- 2026-06-06T10:26:53.805Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000011}
+---
+
+--- 2026-06-06T10:26:53.806Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000011, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:27:03.810Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000012}
+---
+
+--- 2026-06-06T10:27:03.812Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000012, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:27:13.818Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000013, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:27:13.818Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000013}
+---
+
+--- 2026-06-06T10:27:23.827Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000014}
+---
+
+--- 2026-06-06T10:27:23.827Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000014, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:27:33.827Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000015}
+---
+
+--- 2026-06-06T10:27:33.829Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000015, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:27:43.838Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000016}
+---
+
+--- 2026-06-06T10:27:43.839Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000016, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:27:53.839Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000017}
+---
+
+--- 2026-06-06T10:27:53.840Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000017, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:28:03.847Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000018}
+---
+
+--- 2026-06-06T10:28:03.850Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000018, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:28:13.853Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000019, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:28:13.853Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000019}
+---
+
+--- 2026-06-06T10:28:23.856Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000020}
+---
+
+--- 2026-06-06T10:28:23.857Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000020, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:28:33.860Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000021}
+---
+
+--- 2026-06-06T10:28:33.861Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000021, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:28:38.564Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Network.requestWillBeSent',
+  params: {
+    requestId: '0',
+    loaderId: '',
+    request: {
+      url: 'http://127.0.0.1:8787/ws?player=right&userId=bdb5a20d-0170-498b-87cc-607d85307af0&matchId=ping-pong-181053d9-2a8c-4f8e-b0a2-12046ef20ad9',
+      method: 'GET',
+      headers: [Object],
+      mixedContentType: 'blockable',
+      initialPriority: 'VeryLow',
+      referrerPolicy: 'unsafe-url',
+      isLinkPreload: false
+    },
+    timestamp: 67434.425,
+    wallTime: 1780741718.56,
+    initiator: { type: 'script', stack: [Object], lineNumber: 0 },
+    type: 'Fetch'
+  }
+}
+---
+
+--- 2026-06-06T10:28:38.585Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Network.requestWillBeSent',
+  params: {
+    requestId: '1',
+    loaderId: '',
+    request: {
+      url: 'http://127.0.0.1:8787/ws?player=right&userId=bdb5a20d-0170-498b-87cc-607d85307af0&matchId=ping-pong-181053d9-2a8c-4f8e-b0a2-12046ef20ad9',
+      method: 'GET',
+      headers: [Object],
+      mixedContentType: 'blockable',
+      initialPriority: 'VeryLow',
+      referrerPolicy: 'unsafe-url',
+      isLinkPreload: false
+    },
+    timestamp: 67434.433,
+    wallTime: 1780741718.569,
+    initiator: { type: 'script', stack: [Object], lineNumber: 0 },
+    type: 'Fetch'
+  }
+}
+---
+
+--- 2026-06-06T10:28:38.692Z error
+X [ERROR] Uncaught Error: internal error; reference = 2q36rsr9khmou1r4tmnlbi4d 
+
+
+---
+
+--- 2026-06-06T10:28:38.694Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Network.responseReceived',
+  params: {
+    requestId: '1',
+    timestamp: 67434.434,
+    type: 'XHR',
+    response: {
+      status: 409,
+      statusText: 'Conflict',
+      headers: [Object],
+      mimeType: 'application/json',
+      connectionReused: false,
+      connectionId: 0,
+      remotePort: 0,
+      fromDiskCache: false,
+      fromServiceWorker: false,
+      encodedDataLength: 0,
+      protocol: 'http/1.1',
+      securityState: 'unknown'
+    }
+  }
+}
+---
+
+--- 2026-06-06T10:28:38.694Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Network.dataReceived',
+  params: {
+    requestId: '1',
+    timestamp: 67434.434,
+    dataLength: 105,
+    encodedDataLength: 105
+  }
+}
+---
+
+--- 2026-06-06T10:28:38.695Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Network.loadingFinished',
+  params: {
+    requestId: '1',
+    timestamp: 67434.434,
+    encodedDataLength: 105,
+    cfResponse: {
+      body: 'ewogICJvayI6IGZhbHNlLAogICJlcnJvciI6ICJzbG90X3Rha2VuIiwKICAibWVzc2FnZSI6ICJBIHJhcXVldGUgcmlnaHQgamEgZXN0YSBvY3VwYWRhIG5lc3RhIHBhcnRpZGEuIgp9',
+      base64Encoded: true
+    }
+  }
+}
+---
+
+--- 2026-06-06T10:28:38.696Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Runtime.exceptionThrown',
+  params: {
+    timestamp: 1780741718582,
+    exceptionDetails: {
+      exceptionId: 1,
+      text: 'Uncaught Error: internal error; reference = 2q36rsr9khmou1r4tmnlbi4d',
+      lineNumber: 0,
+      columnNumber: -2,
+      url: 'undefined',
+      executionContextId: 320673345
+    }
+  }
+}
+---
+
+--- 2026-06-06T10:28:38.701Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Network.requestWillBeSent',
+  params: {
+    requestId: '2',
+    loaderId: '',
+    request: {
+      url: 'http://127.0.0.1:8787/ws?player=left&userId=2c467a78-f3ee-43ca-86d0-59a79999010d&matchId=ping-pong-181053d9-2a8c-4f8e-b0a2-12046ef20ad9',
+      method: 'GET',
+      headers: [Object],
+      mixedContentType: 'blockable',
+      initialPriority: 'VeryLow',
+      referrerPolicy: 'unsafe-url',
+      isLinkPreload: false
+    },
+    timestamp: 67434.565,
+    wallTime: 1780741718.7,
+    initiator: { type: 'script', stack: [Object], lineNumber: 0 },
+    type: 'Fetch'
+  }
+}
+---
+
+--- 2026-06-06T10:28:38.724Z error
+X [ERROR] Uncaught Error: Network connection lost. 
+
+
+---
+
+--- 2026-06-06T10:28:38.725Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Runtime.exceptionThrown',
+  params: {
+    timestamp: 1780741718714,
+    exceptionDetails: {
+      exceptionId: 2,
+      text: 'Uncaught Error: Network connection lost.',
+      lineNumber: 0,
+      columnNumber: -2,
+      url: 'undefined',
+      executionContextId: 320673345
+    }
+  }
+}
+---
+
+--- 2026-06-06T10:28:38.727Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Network.requestWillBeSent',
+  params: {
+    requestId: '3',
+    loaderId: '',
+    request: {
+      url: 'http://127.0.0.1:8787/ws?player=left&userId=2c467a78-f3ee-43ca-86d0-59a79999010d&matchId=ping-pong-181053d9-2a8c-4f8e-b0a2-12046ef20ad9',
+      method: 'GET',
+      headers: [Object],
+      mixedContentType: 'blockable',
+      initialPriority: 'VeryLow',
+      referrerPolicy: 'unsafe-url',
+      isLinkPreload: false
+    },
+    timestamp: 67434.591,
+    wallTime: 1780741718.726,
+    initiator: { type: 'script', stack: [Object], lineNumber: 0 },
+    type: 'Fetch'
+  }
+}
+---
+
+--- 2026-06-06T10:28:43.861Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000022}
+---
+
+--- 2026-06-06T10:28:43.862Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000022, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:28:53.871Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000023, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:28:53.872Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000023}
+---
+
+--- 2026-06-06T10:29:03.873Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000024, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:29:03.874Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000024}
+---
+
+--- 2026-06-06T10:29:13.877Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000025, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:29:13.878Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000025}
+---
+
+--- 2026-06-06T10:29:23.888Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000026}
+---
+
+--- 2026-06-06T10:29:23.889Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000026, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:29:33.889Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000027}
+---
+
+--- 2026-06-06T10:29:33.890Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000027, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:29:43.891Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000028}
+---
+
+--- 2026-06-06T10:29:43.892Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000028, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:29:53.905Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000029}
+---
+
+--- 2026-06-06T10:29:53.906Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000029, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:30:03.907Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000030, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:30:03.908Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000030}
+---
+
+--- 2026-06-06T10:30:13.921Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000031}
+---
+
+--- 2026-06-06T10:30:13.922Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000031, result: { id: '9270288718e88a0a' } }
+---
+
+--- 2026-06-06T10:30:14.381Z debug
+RemoteRuntimeController teardown beginning...
+---
+
+--- 2026-06-06T10:30:14.382Z debug
+RemoteRuntimeController teardown complete
+---
+
+--- 2026-06-06T10:30:14.384Z log
+⎔ Reloading local server...
+---
+
+--- 2026-06-06T10:30:14.390Z debug
+[InspectorProxyWorker] handleProxyControllerIncomingMessage {"type":"reloadStart"}
+---
+
+--- 2026-06-06T10:30:14.391Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.discardConsoleEntries","id":100000032}
+---
+
+--- 2026-06-06T10:30:14.393Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000032, result: {} }
+---
+
+--- 2026-06-06T10:30:14.477Z debug
+[InspectorProxyWorker] RUNTIME WEBSOCKET ERROR {
+  message: 'internal error; reference = 7nduekr4dpnhkk6gu2bntiln',
+  name: 'Error',
+  stack: 'Error: internal error; reference = 7nduekr4dpnhkk6gu2bntiln'
+}
+---
+
+--- 2026-06-06T10:30:14.479Z debug
+[InspectorProxyWorker] 'runtime websocket' error {
+  message: 'internal error; reference = 7nduekr4dpnhkk6gu2bntiln',
+  name: 'Error',
+  stack: 'Error: internal error; reference = 7nduekr4dpnhkk6gu2bntiln'
+}
+---
+
+--- 2026-06-06T10:30:14.579Z log
+⎔ Local server updated and ready
+---
+
+--- 2026-06-06T10:30:14.582Z debug
+[InspectorProxyWorker] handleProxyControllerIncomingMessage {"type":"reloadComplete","proxyData":{"userWorkerUrl":{"protocol":"http:","hostname":"127.0.0.1","port":"56490"},"userWorkerInspectorUrl":{"protocol":"ws:","hostname":"127.0.0.1","port":"52876","pathname":"/core:user:arena-pong-worker"},"userWorkerInnerUrlOverrides":{"protocol":"http:"},"headers":{"MF-Proxy-Shared-Secret":"928c53f1-000f-4a7c-9968-0aff54f71a6e"},"liveReload":false,"proxyLogsToController":false}}
+---
+
+--- 2026-06-06T10:30:14.583Z debug
+[InspectorProxyWorker] reconnectRuntimeWebSocket
+---
+
+--- 2026-06-06T10:30:14.584Z debug
+[InspectorProxyWorker] NEW RUNTIME WEBSOCKET http://127.0.0.1:52876/core:user:arena-pong-worker
+---
+
+--- 2026-06-06T10:30:14.585Z debug
+[InspectorProxyWorker] SEND TO DEVTOOLS {"method":"Runtime.executionContextsCleared"}
+---
+
+--- 2026-06-06T10:30:14.586Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Runtime.executionContextCreated',
+  params: {
+    context: {
+      id: 209054913,
+      origin: '',
+      name: 'Worker',
+      uniqueId: '-4621090921884352414.-392008486641374235'
+    }
+  }
+}
+---
+
+--- 2026-06-06T10:30:14.586Z debug
+[InspectorProxyWorker] RUNTIME WEBSOCKET OPENED
+---
+
+--- 2026-06-06T10:30:14.587Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.enable","id":100000033}
+---
+
+--- 2026-06-06T10:30:14.587Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Network.enable","id":100000034}
+---
+
+--- 2026-06-06T10:30:14.589Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000033, result: {} }
+---
+
+--- 2026-06-06T10:30:14.589Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000034, method: 'Network.enable', result: {} }
+---
+
+--- 2026-06-06T10:30:23.643Z debug
+DevEnv teardown beginning...
+---
+
+--- 2026-06-06T10:30:23.643Z debug
+ConfigController teardown beginning...
+---
+
+--- 2026-06-06T10:30:23.643Z debug
+BundlerController teardown beginning...
+---
+
+--- 2026-06-06T10:30:23.644Z debug
+LocalRuntimeController teardown beginning...
+---
+
+--- 2026-06-06T10:30:23.644Z log
+⎔ Shutting down local server...
+---
+
+--- 2026-06-06T10:30:23.645Z debug
+RemoteRuntimeController teardown beginning...
+---
+
+--- 2026-06-06T10:30:23.645Z debug
+RemoteRuntimeController teardown complete
+---
+
+--- 2026-06-06T10:30:23.645Z debug
+ProxyController teardown beginning...
+---
+
+--- 2026-06-06T10:30:23.645Z debug
+ConfigController teardown complete
+---
+
+--- 2026-06-06T10:30:23.651Z debug
+BundlerController teardown complete
+---
+
+--- 2026-06-06T10:30:23.658Z debug
+LocalRuntimeController teardown complete
+---
+
+--- 2026-06-06T10:30:23.660Z debug
+ProxyController teardown complete
+---
+
+--- 2026-06-06T10:30:23.661Z debug
+DevEnv teardown complete
+---
+
+--- 2026-06-06T10:30:23.662Z debug
+Metrics dispatcher: Posting data {"deviceId":"f7f0257a-3ec3-4eea-8c31-e82c4293e199","event":"wrangler command completed","timestamp":1780741823662,"properties":{"amplitude_session_id":1780741522278,"amplitude_event_id":1,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"none","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":"vscode-copilot-agent","argsUsed":[],"argsCombination":"","sanitizedCommand":"dev","sanitizedArgs":{},"durationMs":301410,"currentAgentSkillsInstalled":"manual"}}
+---

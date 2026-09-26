@@ -1,0 +1,2234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Shooter - Made with Ludo.ai</title>
+    <meta name="description" content="Interactive playable game created with Ludo.ai - AI-powered game development platform">
+    <meta name="generator" content="Ludo.ai">
+    <meta name="author" content="Ludo.ai">
+    <meta name="keywords" content="playable game, interactive, AI-generated, Ludo.ai, pixijs">
+    <meta name="created-date" content="2026-06-04">
+    <meta name="game-engine" content="pixijs">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+          overflow: hidden;
+        }
+        #gameContainer {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 0;
+          overflow: hidden;
+          padding: 8px 12px 24px;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+          max-width: 100vw;
+          max-height: calc(100vh - 28px);
+            width: auto;
+            height: auto;
+        }
+        .ludo-footer {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.7);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 11px;
+            text-decoration: none;
+            border-top-left-radius: 4px;
+            transition: all 0.2s ease;
+            z-index: 1000;
+        }
+        .ludo-footer:hover {
+            background: rgba(0, 0, 0, 0.9);
+            color: rgba(255, 255, 255, 0.9);
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer"></div>
+    <a href="https://ludo.ai" target="_blank" class="ludo-footer">
+        Made with Ludo.ai
+    </a>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.4.3/pixi.min.js" integrity="sha512-o3fAFcbCbTTJRFRNx4vByRZVtdKYF9uklctNjDXrN1JjT00rJxCCyNJSDi35rPBEqzWvYplcHLlEmyW34Ado8A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><script src="https://cdn.jsdelivr.net/npm/pixi-filters@5.3.0/dist/browser/pixi-filters.min.js"></script>
+    <script type="module">
+        // Ludo.ai Playable Game
+        // Generated on: 2026-06-04
+        // Engine: pixijs
+        // Title: Space Shooter
+        
+        // Monitor for canvas elements and move them to gameContainer
+        const gameContainer = document.getElementById('gameContainer');
+        
+        // Function to move canvas elements to gameContainer
+        function moveCanvasToContainer() {
+            const canvases = document.querySelectorAll('body > canvas');
+            canvases.forEach(canvas => {
+                if (canvas.parentElement === document.body) {
+                    gameContainer.appendChild(canvas);
+              fitCanvas(canvas);
+                }
+            });
+        }
+
+        function fitCanvas(canvas) {
+          const header = document.querySelector('.game-header');
+          const footer = document.querySelector('.ludo-footer');
+          const headerHeight = header ? header.getBoundingClientRect().height : 0;
+          const footerHeight = footer ? footer.getBoundingClientRect().height : 0;
+          const availableHeight = Math.max(240, window.innerHeight - headerHeight - footerHeight - 28);
+          const availableWidth = Math.max(320, window.innerWidth - 24);
+          const ratio = canvas.width && canvas.height ? canvas.width / canvas.height : 1;
+          const targetWidth = Math.min(availableWidth, availableHeight * ratio);
+
+          canvas.style.width = `${Math.floor(targetWidth)}px`;
+          canvas.style.height = 'auto';
+          canvas.style.maxWidth = 'none';
+          canvas.style.maxHeight = `${availableHeight}px`;
+        }
+
+        function fitAllCanvases() {
+          document.querySelectorAll('#gameContainer canvas').forEach(fitCanvas);
+        }
+        
+        // Monitor for new canvas elements
+        const observer = new MutationObserver(() => {
+            moveCanvasToContainer();
+          fitAllCanvases();
+        });
+        observer.observe(document.body, { childList: true });
+
+        window.addEventListener('resize', fitAllCanvases);
+        
+        // Initial check
+        setTimeout(moveCanvasToContainer, 100);
+        setTimeout(fitAllCanvases, 120);
+        
+        // ===== RUNTIME LIBRARY =====
+// PixiJS Runtime Library
+// This library provides utility functions for PixiJS games
+// All functions are side-effect free and only execute when called
+
+// ===== ASSET MANAGEMENT =====
+
+const __FALLBACK_ASSET__ = {
+  url: "https://storage.googleapis.com/scraper_ludo/user_images_dev/45f550b2dafbaa5d6f59a0af127d9fa2.png",
+  width: 200,
+  height: 200,
+  description: "Fallback asset (placeholder)"
+};
+
+// getAssetUrl(key) -> string
+function getAssetUrl(key) {
+  const asset = __ASSET_MAP__[key];
+  if (!asset) {
+    console.warn(`Asset '${key}' not found in asset map, using fallback asset`);
+    return __FALLBACK_ASSET__.url;
+  }
+  return asset.url;
+}
+
+// getAssetInfo(key) -> {url, width, height, description}
+function getAssetInfo(key) {
+  const asset = __ASSET_MAP__[key];
+  if (!asset) {
+    console.warn(`Asset '${key}' not found in asset map, using fallback asset`);
+    return __FALLBACK_ASSET__;
+  }
+  return {
+    url: asset.url,
+    width: asset.width,
+    height: asset.height,
+    description: asset.description
+  };
+}
+
+// createSprite(key, {x, y, scale, width, height, anchor}) -> Sprite
+// Use width OR height (not both) to maintain aspect ratio. anchor can be number or {x, y}
+function createSprite(key, options = {}) {
+  const assetInfo = getAssetInfo(key);
+  const sprite = PIXI.Sprite.from(assetInfo.url);
+
+  // Initialize userData to store base scale
+  sprite.userData = sprite.userData || {};
+
+  if (options.scale !== undefined) {
+    sprite.scale.set(options.scale);
+    sprite.userData.baseScale = options.scale;
+  }
+
+  if (options.x !== undefined) sprite.x = options.x;
+  if (options.y !== undefined) sprite.y = options.y;
+
+  if (options.anchor !== undefined) {
+    if (typeof options.anchor === 'number') {
+      sprite.anchor.set(options.anchor);
+    } else if (options.anchor.x !== undefined || options.anchor.y !== undefined) {
+      sprite.anchor.set(options.anchor.x || 0, options.anchor.y || 0);
+    }
+  }
+
+  if (options.width !== undefined) {
+    const aspectRatio = assetInfo.width / assetInfo.height;
+    sprite.width = options.width;
+    sprite.height = options.width / aspectRatio;
+    sprite.userData.baseScale = sprite.scale.x;
+    sprite.userData.targetWidth = options.width;
+  } else if (options.height !== undefined) {
+    const aspectRatio = assetInfo.width / assetInfo.height;
+    sprite.height = options.height;
+    sprite.width = options.height * aspectRatio;
+    sprite.userData.baseScale = sprite.scale.x;
+    sprite.userData.targetHeight = options.height;
+  }
+
+  // If no scale was set, store the default
+  if (sprite.userData.baseScale === undefined) {
+    sprite.userData.baseScale = 1;
+  }
+
+  // Override scale.set to work relatively to baseScale
+  const originalScaleSet = sprite.scale.set.bind(sprite.scale);
+
+  sprite.scale.set = function(x, y) {
+    // Read baseScale dynamically from userData to avoid race conditions
+    let baseScale = sprite.userData?.baseScale || 1;
+
+    // Safety check: if texture loaded after baseScale was calculated, recalculate
+    if (sprite.userData.targetWidth && sprite.texture && sprite.texture.valid) {
+      const expectedScale = sprite.userData.targetWidth / sprite.texture.width;
+      // If current baseScale is way off (close to 1 when it should be small), recalculate
+      if (Math.abs(baseScale - expectedScale) > 0.01 && Math.abs(baseScale - 1.0) < 0.01) {
+        baseScale = expectedScale;
+        sprite.userData.baseScale = expectedScale;
+      }
+    }
+
+    if (y === undefined) {
+      // single value: scale.set(1.2)
+      return originalScaleSet(x * baseScale, x * baseScale);
+    } else {
+      // two values: scale.set(1.2, 1.5)
+      return originalScaleSet(x * baseScale, y * baseScale);
+    }
+  };
+
+  // Keep original for absolute scaling if needed
+  sprite.scale.setAbsolute = originalScaleSet;
+
+  return sprite;
+}
+
+// createContainedSprite(key, containerWidth, containerHeight, options) -> Sprite
+// options: {fitMode, align, anchor}
+// fitMode: 'contain' (fit inside, default), 'cover' (fill, may crop), 'fill' (stretch)
+// align: 'center' (default), 'top', 'bottom', 'left', 'right', 'top-left', etc.
+function createContainedSprite(key, containerWidth, containerHeight, options = {}) {
+  const assetInfo = getAssetInfo(key);
+  const sprite = PIXI.Sprite.from(assetInfo.url);
+
+  // Store container dimensions
+  sprite.userData = sprite.userData || {};
+  sprite.userData.containerWidth = containerWidth;
+  sprite.userData.containerHeight = containerHeight;
+
+  // Calculate scale based on fit mode
+  const fitMode = options.fitMode || 'contain';
+  let scale;
+
+  if (fitMode === 'fill') {
+    // Stretch to fill container
+    sprite.scale.set(
+      containerWidth / assetInfo.width,
+      containerHeight / assetInfo.height
+    );
+  } else if (fitMode === 'cover') {
+    // Scale to cover container (may crop)
+    scale = Math.max(
+      containerWidth / assetInfo.width,
+      containerHeight / assetInfo.height
+    );
+    sprite.scale.set(scale);
+  } else {
+    // Contain - fit inside container
+    scale = Math.min(
+      containerWidth / assetInfo.width,
+      containerHeight / assetInfo.height
+    );
+    sprite.scale.set(scale);
+  }
+
+  sprite.userData.baseScale = sprite.scale.x;
+
+  // Set alignment/anchor
+  const align = options.align || 'center';
+
+  if (options.anchor !== undefined) {
+    // Custom anchor provided
+    if (typeof options.anchor === 'number') {
+      sprite.anchor.set(options.anchor);
+    } else {
+      sprite.anchor.set(options.anchor.x || 0, options.anchor.y || 0);
+    }
+  } else {
+    // Set anchor based on alignment
+    switch (align) {
+      case 'center':
+        sprite.anchor.set(0.5, 0.5);
+        sprite.x = containerWidth / 2;
+        sprite.y = containerHeight / 2;
+        break;
+      case 'top-left':
+        sprite.anchor.set(0, 0);
+        break;
+      case 'top':
+        sprite.anchor.set(0.5, 0);
+        sprite.x = containerWidth / 2;
+        break;
+      case 'top-right':
+        sprite.anchor.set(1, 0);
+        sprite.x = containerWidth;
+        break;
+      case 'left':
+        sprite.anchor.set(0, 0.5);
+        sprite.y = containerHeight / 2;
+        break;
+      case 'right':
+        sprite.anchor.set(1, 0.5);
+        sprite.x = containerWidth;
+        sprite.y = containerHeight / 2;
+        break;
+      case 'bottom-left':
+        sprite.anchor.set(0, 1);
+        sprite.y = containerHeight;
+        break;
+      case 'bottom':
+        sprite.anchor.set(0.5, 1);
+        sprite.x = containerWidth / 2;
+        sprite.y = containerHeight;
+        break;
+      case 'bottom-right':
+        sprite.anchor.set(1, 1);
+        sprite.x = containerWidth;
+        sprite.y = containerHeight;
+        break;
+    }
+  }
+
+  // Override scale.set to work relatively to baseScale
+  const originalScaleSet = sprite.scale.set.bind(sprite.scale);
+
+  sprite.scale.set = function(x, y) {
+    // Read baseScale dynamically from userData to avoid race conditions
+    const baseScale = sprite.userData?.baseScale || 1;
+    if (y === undefined) {
+      return originalScaleSet(x * baseScale, x * baseScale);
+    } else {
+      return originalScaleSet(x * baseScale, y * baseScale);
+    }
+  };
+
+  sprite.scale.setAbsolute = originalScaleSet;
+
+  return sprite;
+}
+
+// createTilingSprite(key, width, height, {x, y, tileScale}) -> TilingSprite
+// Tiles the texture to fill width x height while maintaining aspect ratio
+function createTilingSprite(key, width, height, options = {}) {
+  const assetInfo = getAssetInfo(key);
+  const tilingSprite = new PIXI.TilingSprite(
+    PIXI.Texture.from(assetInfo.url),
+    width,
+    height
+  );
+
+  if (options.x !== undefined) tilingSprite.x = options.x;
+  if (options.y !== undefined) tilingSprite.y = options.y;
+
+  // Calculate scale to match target height while maintaining aspect ratio
+  const scaleToFitHeight = height / assetInfo.height;
+
+  if (options.tileScale !== undefined) {
+    tilingSprite.tileScale.set(options.tileScale);
+  } else {
+    // Auto-scale to fill height, tiles will repeat horizontally
+    tilingSprite.tileScale.set(scaleToFitHeight);
+  }
+
+  return tilingSprite;
+}
+
+// preloadAssets(assetMap, onProgress, onComplete) -> Promise
+// onProgress(loaded, total, percent) and onComplete() callbacks
+async function preloadAssets(assetMap, onProgress, onComplete) {
+  const urls = Object.values(assetMap).map(asset => asset.url);
+  const uniqueUrls = [...new Set(urls)];
+
+  let loaded = 0;
+  const total = uniqueUrls.length;
+
+  try {
+    await Promise.all(
+      uniqueUrls.map(async (url) => {
+        await PIXI.Assets.load(url);
+        loaded++;
+        if (onProgress) {
+          onProgress(loaded, total, loaded / total);
+        }
+      })
+    );
+
+    if (onComplete) {
+      onComplete();
+    }
+  } catch (error) {
+    console.error('Error preloading assets:', error);
+  }
+}
+
+// ===== SPRITE SCALING HELPERS =====
+
+/**
+ * Resets sprite to its original base scale (1.0 relative)
+ * @param {PIXI.Sprite} sprite - The sprite to reset
+ */
+function resetSpriteScale(sprite) {
+  sprite.scale.set(1);
+}
+
+/**
+ * Animates a sprite with a pulse effect
+ * @param {PIXI.Sprite} sprite - The sprite to pulse
+ * @param {number} [intensity=0.1] - Pulse intensity (0.1 = 10% larger)
+ * @param {number} [duration=150] - Duration in milliseconds
+ */
+function pulseSpriteScale(sprite, intensity = 0.1, duration = 150) {
+  const pulseScale = 1 + intensity;
+  sprite.scale.set(pulseScale);
+
+  setTimeout(() => {
+    sprite.scale.set(1);
+  }, duration);
+}
+
+/**
+ * Animates sprite scale change smoothly
+ * @param {PIXI.Sprite} sprite - The sprite to animate
+ * @param {number} targetMultiplier - Target scale multiplier
+ * @param {number} [speed=0.2] - Animation speed (0-1, higher = faster)
+ * @param {Function} [onComplete] - Callback when animation completes
+ */
+function animateSpriteScale(sprite, targetMultiplier, speed = 0.2, onComplete) {
+  const baseScale = sprite.userData?.baseScale || 1;
+  const targetScale = baseScale * targetMultiplier;
+  const currentAbsolute = sprite.scale.x;
+
+  const animate = () => {
+    const newAbsolute = lerp(currentAbsolute, targetScale, speed);
+    sprite.scale.setAbsolute(newAbsolute);
+
+    if (Math.abs(newAbsolute - targetScale) > 0.01) {
+      requestAnimationFrame(animate);
+    } else {
+      sprite.scale.setAbsolute(targetScale);
+      if (onComplete) onComplete();
+    }
+  };
+
+  animate();
+}
+
+// ===== COLLISION DETECTION =====
+
+// rectangleCollision(rect1, rect2) -> boolean
+// rect: {x, y, width, height}
+function rectangleCollision(rect1, rect2) {
+  return (
+    rect1.x < rect2.x + rect2.width &&
+    rect1.x + rect1.width > rect2.x &&
+    rect1.y < rect2.y + rect2.height &&
+    rect1.y + rect1.height > rect2.y
+  );
+}
+
+// spriteCollision(sprite1, sprite2) -> boolean
+function spriteCollision(sprite1, sprite2) {
+  const bounds1 = sprite1.getBounds();
+  const bounds2 = sprite2.getBounds();
+
+  return rectangleCollision(
+    { x: bounds1.x, y: bounds1.y, width: bounds1.width, height: bounds1.height },
+    { x: bounds2.x, y: bounds2.y, width: bounds2.width, height: bounds2.height }
+  );
+}
+
+// circleCollision(obj1, obj2) -> boolean
+// Auto-detects radius from obj.radius or obj.width/2
+function circleCollision(obj1, obj2) {
+  const dx = obj1.x - obj2.x;
+  const dy = obj1.y - obj2.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  const radius1 = obj1.radius || obj1.width / 2 || 0;
+  const radius2 = obj2.radius || obj2.width / 2 || 0;
+
+  return distance < radius1 + radius2;
+}
+
+// ===== BOUNDARY HELPERS =====
+
+// setupBoundaryCollision(sprite, bounds) -> 'left'|'right'|'top'|'bottom'|null
+// bounds: {left, right, top, bottom}
+function setupBoundaryCollision(sprite, bounds) {
+  if (sprite.x < bounds.left) {
+    sprite.x = bounds.left;
+    return 'left';
+  }
+  if (sprite.x + sprite.width > bounds.right) {
+    sprite.x = bounds.right - sprite.width;
+    return 'right';
+  }
+  if (sprite.y < bounds.top) {
+    sprite.y = bounds.top;
+    return 'top';
+  }
+  if (sprite.y + sprite.height > bounds.bottom) {
+    sprite.y = bounds.bottom - sprite.height;
+    return 'bottom';
+  }
+  return null;
+}
+
+// wrapAroundScreen(sprite, app) -> void
+function wrapAroundScreen(sprite, app) {
+  if (sprite.x > app.screen.width) {
+    sprite.x = -sprite.width;
+  } else if (sprite.x + sprite.width < 0) {
+    sprite.x = app.screen.width;
+  }
+
+  if (sprite.y > app.screen.height) {
+    sprite.y = -sprite.height;
+  } else if (sprite.y + sprite.height < 0) {
+    sprite.y = app.screen.height;
+  }
+}
+
+// keepOnScreen(sprite, app) -> void
+function keepOnScreen(sprite, app) {
+  if (sprite.x < 0) sprite.x = 0;
+  if (sprite.y < 0) sprite.y = 0;
+  if (sprite.x + sprite.width > app.screen.width) {
+    sprite.x = app.screen.width - sprite.width;
+  }
+  if (sprite.y + sprite.height > app.screen.height) {
+    sprite.y = app.screen.height - sprite.height;
+  }
+}
+
+// ===== PHYSICS HELPERS =====
+
+// applyVelocity(sprite, velocity, delta) -> void
+// Initializes sprite.velocity if needed
+function applyVelocity(sprite, velocity, delta = 1) {
+  if (!sprite.velocity) {
+    sprite.velocity = { ...velocity };
+  }
+
+  sprite.x += sprite.velocity.x * delta;
+  sprite.y += sprite.velocity.y * delta;
+}
+
+// ===== UI HELPERS =====
+
+// createText(text, style, position) -> Text
+// style: {fontSize, fill, ...}, position: {x, y, anchor}
+function createText(text, style = {}, position = {}) {
+  const defaultStyle = {
+    fontSize: 24,
+    fill: 0xffffff,
+    ...style
+  };
+
+  const textObject = new PIXI.Text(text, defaultStyle);
+
+  if (position.x !== undefined) textObject.x = position.x;
+  if (position.y !== undefined) textObject.y = position.y;
+
+  if (position.anchor !== undefined) {
+    if (typeof position.anchor === 'number') {
+      textObject.anchor.set(position.anchor);
+    } else if (position.anchor.x !== undefined || position.anchor.y !== undefined) {
+      textObject.anchor.set(position.anchor.x || 0, position.anchor.y || 0);
+    }
+  }
+
+  return textObject;
+}
+
+// centerObject(object, app) -> void
+function centerObject(object, app) {
+  object.x = (app.screen.width - object.width) / 2;
+  object.y = (app.screen.height - object.height) / 2;
+}
+
+// createButton(text, position, onClick, style) -> Text
+// position: {x, y, anchor}, style: {fontSize, fill, hoverColor}
+function createButton(text, position, onClick, style = {}) {
+  const defaultStyle = {
+    fontSize: 24,
+    fill: 0xffffff,
+    ...style
+  };
+
+  const button = new PIXI.Text(text, defaultStyle);
+  button.x = position.x;
+  button.y = position.y;
+
+  if (position.anchor !== undefined) {
+    if (typeof position.anchor === 'number') {
+      button.anchor.set(position.anchor);
+    } else if (position.anchor.x !== undefined || position.anchor.y !== undefined) {
+      button.anchor.set(position.anchor.x || 0, position.anchor.y || 0);
+    }
+  } else {
+    button.anchor.set(0.5);
+  }
+
+  button.eventMode = 'static';
+  button.cursor = 'pointer';
+
+  button.on('pointerdown', onClick);
+
+  button.on('pointerover', () => {
+    button.style.fill = style.hoverColor || 0xffff00;
+  });
+
+  button.on('pointerout', () => {
+    button.style.fill = style.fill || 0xffffff;
+  });
+
+  return button;
+}
+
+// createRestartButton(app, position, onRestart) -> Text
+function createRestartButton(app, position = {}, onRestart) {
+  const x = position.x !== undefined ? position.x : app.screen.width / 2;
+  const y = position.y !== undefined ? position.y : app.screen.height / 2 + 60;
+
+  return createButton('Restart', { x, y, anchor: 0.5 }, onRestart, {
+    fontSize: 32,
+    fill: 0xffffff
+  });
+}
+
+// showGameOver(app, {title, score, onRestart}) -> Container
+function showGameOver(app, options = {}) {
+  const container = new PIXI.Container();
+
+  const background = new PIXI.Graphics();
+  background.beginFill(0x000000, 0.7);
+  background.drawRect(0, 0, app.screen.width, app.screen.height);
+  background.endFill();
+  container.addChild(background);
+
+  const gameOverText = createText(
+    options.title || 'Game Over',
+    { fontSize: 48, fill: 0xff0000 },
+    { x: app.screen.width / 2, y: app.screen.height / 2 - 50, anchor: 0.5 }
+  );
+  container.addChild(gameOverText);
+
+  if (options.score !== undefined) {
+    const scoreText = createText(
+      `Score: ${options.score}`,
+      { fontSize: 32, fill: 0xffffff },
+      { x: app.screen.width / 2, y: app.screen.height / 2, anchor: 0.5 }
+    );
+    container.addChild(scoreText);
+  }
+
+  if (options.onRestart) {
+    const restartButton = createRestartButton(app, {}, options.onRestart);
+    container.addChild(restartButton);
+  }
+
+  return container;
+}
+
+// ===== KEYBOARD INPUT =====
+
+const __keyboard = {
+  keys: {},
+  _initialized: false
+};
+
+(function initKeyboard() {
+  if (__keyboard._initialized) return;
+
+  window.addEventListener('keydown', (e) => {
+    __keyboard.keys[e.key] = true;
+  });
+
+  window.addEventListener('keyup', (e) => {
+    __keyboard.keys[e.key] = false;
+  });
+
+  __keyboard._initialized = true;
+})();
+
+// isKeyDown(key) -> boolean
+// Check if a key is currently pressed
+// Common keys: 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' ' (space), 'w', 'a', 's', 'd'
+function isKeyDown(key) {
+  return __keyboard.keys[key] || false;
+}
+
+// ===== DRAG AND DROP =====
+
+// makeDraggable(sprite, {dragLayer, onDragStart, onDrag, onDragEnd}) -> void
+// IMPORTANT: Sprite must be added to stage/container BEFORE calling this function
+// dragLayer: Container to move sprite to while dragging (optional, defaults to sprite.parent)
+// onDragEnd can return false to snap sprite back to original position
+function makeDraggable(sprite, options = {}) {
+  sprite.eventMode = 'static';
+  sprite.cursor = 'pointer';
+
+  let dragging = false;
+  let dragOffset = { x: 0, y: 0 };
+  let originalParent = null;
+  let originalPosition = { x: 0, y: 0 };
+  let dragLayer = options.dragLayer;
+
+  sprite.on('pointerdown', (event) => {
+    if (!dragLayer) {
+      dragLayer = sprite.parent;
+    }
+
+    dragging = true;
+    originalParent = sprite.parent;
+    originalPosition = { x: sprite.x, y: sprite.y };
+
+    const globalPosition = event.data.global;
+    const spriteGlobalPos = sprite.getGlobalPosition();
+
+    dragOffset.x = globalPosition.x - spriteGlobalPos.x;
+    dragOffset.y = globalPosition.y - spriteGlobalPos.y;
+
+    if (dragLayer && dragLayer !== sprite.parent) {
+      sprite.parent.removeChild(sprite);
+      dragLayer.addChild(sprite);
+      sprite.x = globalPosition.x - dragOffset.x;
+      sprite.y = globalPosition.y - dragOffset.y;
+    }
+
+    if (options.onDragStart) {
+      options.onDragStart(sprite, event);
+    }
+  });
+
+  const onMove = (event) => {
+    if (!dragging) return;
+
+    const globalPosition = event.data.global;
+    sprite.x = globalPosition.x - dragOffset.x;
+    sprite.y = globalPosition.y - dragOffset.y;
+
+    if (options.onDrag) {
+      options.onDrag(sprite, event);
+    }
+  };
+
+  const onEnd = (event) => {
+    if (!dragging) return;
+
+    dragging = false;
+
+    if (options.onDragEnd) {
+      const result = options.onDragEnd(sprite, event, originalParent, originalPosition);
+
+      if (result === false) {
+        if (dragLayer && dragLayer !== originalParent) {
+          sprite.parent.removeChild(sprite);
+          originalParent.addChild(sprite);
+          sprite.x = originalPosition.x;
+          sprite.y = originalPosition.y;
+        } else {
+          sprite.x = originalPosition.x;
+          sprite.y = originalPosition.y;
+        }
+      }
+    }
+  };
+
+  sprite.__dragHandlers = { onMove, onEnd };
+
+  const eventTarget = options.dragGroup || sprite.parent;
+  eventTarget.on('pointermove', onMove);
+  eventTarget.on('pointerup', onEnd);
+  eventTarget.on('pointerupoutside', onEnd);
+}
+
+// removeDraggable(sprite) -> void
+function removeDraggable(sprite) {
+  sprite.eventMode = 'auto';
+  sprite.cursor = 'default';
+  sprite.removeAllListeners('pointerdown');
+
+  if (sprite.__dragHandlers) {
+    const { onMove, onEnd } = sprite.__dragHandlers;
+    sprite.parent.off('pointermove', onMove);
+    sprite.parent.off('pointerup', onEnd);
+    sprite.parent.off('pointerupoutside', onEnd);
+    delete sprite.__dragHandlers;
+  }
+}
+
+// createDropZone(container, {onDrop, highlight}) -> void
+// onDrop(draggedSprite, dropZone, dragData) can return false to reject drop
+// highlight: {normalColor, hoverColor}
+function createDropZone(container, options = {}) {
+  container.__isDropZone = true;
+  container.__dropZoneOptions = options;
+
+  if (options.highlight) {
+    container.eventMode = 'static';
+
+    container.on('pointerover', () => {
+      if (options.highlight.hoverColor !== undefined) {
+        if (container instanceof PIXI.Graphics) {
+          container.tint = options.highlight.hoverColor;
+        } else if (container instanceof PIXI.Sprite) {
+          container.tint = options.highlight.hoverColor;
+        }
+      }
+    });
+
+    container.on('pointerout', () => {
+      if (options.highlight.normalColor !== undefined) {
+        if (container instanceof PIXI.Graphics) {
+          container.tint = options.highlight.normalColor;
+        } else if (container instanceof PIXI.Sprite) {
+          container.tint = options.highlight.normalColor;
+        }
+      }
+    });
+  }
+}
+
+// checkDropZones(draggedSprite, dropZones) -> Container|null
+function checkDropZones(draggedSprite, dropZones) {
+  const draggedBounds = draggedSprite.getBounds();
+
+  for (const zone of dropZones) {
+    const zoneBounds = zone.getBounds();
+    if (rectangleCollision(draggedBounds, zoneBounds)) {
+      return zone;
+    }
+  }
+
+  return null;
+}
+
+// snapToDropZone(sprite, dropZone, {offsetX, offsetY, animate}) -> void
+function snapToDropZone(sprite, dropZone, options = {}) {
+  const offsetX = options.offsetX || 0;
+  const offsetY = options.offsetY || 0;
+
+  if (sprite.parent !== dropZone) {
+    sprite.parent.removeChild(sprite);
+    dropZone.addChild(sprite);
+  }
+
+  if (options.animate) {
+    const targetX = offsetX;
+    const targetY = offsetY;
+
+    const animate = () => {
+      sprite.x = lerp(sprite.x, targetX, 0.2);
+      sprite.y = lerp(sprite.y, targetY, 0.2);
+
+      if (Math.abs(sprite.x - targetX) > 0.1 || Math.abs(sprite.y - targetY) > 0.1) {
+        requestAnimationFrame(animate);
+      } else {
+        sprite.x = targetX;
+        sprite.y = targetY;
+      }
+    };
+    animate();
+  } else {
+    sprite.x = offsetX;
+    sprite.y = offsetY;
+  }
+}
+
+// createDragManager(app, dragLayer) -> DragManager
+// Returns: {addDraggable(sprite, {onDragStart, onDrag, onDropSuccess, onDropFail}), addDropZone(container, options), removeDraggable(sprite), removeDropZone(container), clear()}
+function createDragManager(app, dragLayer) {
+  const manager = {
+    draggables: [],
+    dropZones: [],
+    currentDrag: null,
+
+    addDraggable(sprite, data = {}) {
+      sprite.__dragData = data;
+
+      makeDraggable(sprite, {
+        dragLayer: dragLayer,
+        dragGroup: app.stage,
+
+        onDragStart: (spr, event) => {
+          manager.currentDrag = spr;
+          if (data.onDragStart) data.onDragStart(spr, event);
+        },
+
+        onDrag: (spr, event) => {
+          manager.dropZones.forEach(zone => {
+            const bounds = spr.getBounds();
+            const zoneBounds = zone.getBounds();
+
+            if (rectangleCollision(bounds, zoneBounds)) {
+              if (zone.__dropZoneOptions?.highlight?.hoverColor) {
+                zone.tint = zone.__dropZoneOptions.highlight.hoverColor;
+              }
+            } else {
+              if (zone.__dropZoneOptions?.highlight?.normalColor !== undefined) {
+                zone.tint = zone.__dropZoneOptions.highlight.normalColor;
+              }
+            }
+          });
+
+          if (data.onDrag) data.onDrag(spr, event);
+        },
+
+        onDragEnd: (spr, event, originalParent, originalPosition) => {
+          const dropZone = checkDropZones(spr, manager.dropZones);
+
+          manager.dropZones.forEach(zone => {
+            if (zone.__dropZoneOptions?.highlight?.normalColor !== undefined) {
+              zone.tint = zone.__dropZoneOptions.highlight.normalColor;
+            }
+          });
+
+          if (dropZone) {
+            if (dropZone.__dropZoneOptions?.onDrop) {
+              const result = dropZone.__dropZoneOptions.onDrop(spr, dropZone, spr.__dragData);
+
+              if (result !== false && data.onDropSuccess) {
+                data.onDropSuccess(spr, dropZone);
+              }
+
+              manager.currentDrag = null;
+              return result;
+            }
+          }
+
+          if (data.onDropFail) {
+            data.onDropFail(spr, originalParent, originalPosition);
+          }
+
+          manager.currentDrag = null;
+          return false;
+        }
+      });
+
+      manager.draggables.push(sprite);
+    },
+
+    addDropZone(container, options = {}) {
+      createDropZone(container, options);
+      manager.dropZones.push(container);
+    },
+
+    removeDraggable(sprite) {
+      removeDraggable(sprite);
+      const index = manager.draggables.indexOf(sprite);
+      if (index > -1) {
+        manager.draggables.splice(index, 1);
+      }
+    },
+
+    removeDropZone(container) {
+      const index = manager.dropZones.indexOf(container);
+      if (index > -1) {
+        manager.dropZones.splice(index, 1);
+      }
+    },
+
+    clear() {
+      manager.draggables.forEach(sprite => removeDraggable(sprite));
+      manager.draggables = [];
+      manager.dropZones = [];
+      manager.currentDrag = null;
+    }
+  };
+
+  return manager;
+}
+
+// ===== UTILITY FUNCTIONS =====
+
+// randomRange(min, max) -> number
+function randomRange(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+// randomInt(min, max) -> number
+function randomInt(min, max) {
+  return Math.floor(randomRange(min, max + 1));
+}
+
+// randomChoice(array) -> any
+function randomChoice(array) {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+// distance(obj1, obj2) -> number
+function distance(obj1, obj2) {
+  const dx = obj1.x - obj2.x;
+  const dy = obj1.y - obj2.y;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+// angleBetween(obj1, obj2) -> number
+// Returns angle in radians
+function angleBetween(obj1, obj2) {
+  return Math.atan2(obj2.y - obj1.y, obj2.x - obj1.x);
+}
+
+// moveTowards(object, target, speed) -> void
+function moveTowards(object, target, speed) {
+  const angle = angleBetween(object, target);
+  object.x += Math.cos(angle) * speed;
+  object.y += Math.sin(angle) * speed;
+}
+
+// clamp(value, min, max) -> number
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+// lerp(start, end, t) -> number
+function lerp(start, end, t) {
+  return start + (end - start) * t;
+}
+
+
+// ===== ASSET MAP =====
+const __ASSET_MAP__ = {
+  "10ad3eae-aac0-4b93-a134-4111e851b012": {
+    "url": "https://storage.googleapis.com/scraper_ludo/user_images_prod/64caae245ad817bfe89bf37c5916c435.webp",
+    "width": 768,
+    "height": 768,
+    "description": "add it as a player"
+  },
+  "9c820480-d3cc-41f7-b828-791487e59524": {
+    "url": "https://storage.googleapis.com/scraper_ludo/user_images_prod/2721cf452b572235466bde69318ba6e6.webp",
+    "width": 768,
+    "height": 768,
+    "description": "replace the red obstacles with these obstacles and make them rotate"
+  },
+  "85dfad2d-65e3-4026-aae1-d40b3e9a4e3f": {
+    "url": "https://storage.googleapis.com/scraper_ludo/user_images_prod/20c1d113d085b5290a9111e6acea4739.webp",
+    "width": 768,
+    "height": 768,
+    "description": "replace this with the flying purple enemies and make them shoot slowly"
+  }
+};
+
+// ===== GAME CODE =====
+    const app = new PIXI.Application({
+  width: 800,
+  height: 600,
+  backgroundColor: 0x1099bb,
+  antialias: true,
+  resolution: 1 // ALWAYS force the resolution to 1 to prevent UI placement issues
+});
+document.body.appendChild(app.view);
+
+    const WIDTH = 800;
+const HEIGHT = 600;
+const PLAYER_Y = 300;
+const PLAYER_MIN_X = 50;
+const PLAYER_MAX_X = 750;
+const PLAYER_MIN_Y = 50;
+const PLAYER_MAX_Y = 550;
+const PLAYER_SPEED = 5;
+const PLAYER_ACCEL = 0.5;
+const BULLET_SPEED = 10;
+const MAX_BULLETS = 5;
+const ENEMY_SPAWN_INIT = 200;
+const ENEMY_SPAWN_MIN = 30;
+const ENEMY_DRONE_SPEED = 2;
+const ENEMY_SCOUT_SPEED = 4;
+const ENEMY_ZIGZAG_FRAMES = 60;
+const ENEMY_BULLET_SPEED = 5;
+const ENEMY_SCOUT_FIRE_RATE = 120; 
+const EXPLOSION_PARTICLES = 10;
+const EXPLOSION_LIFESPAN = 30;
+const PLAYER_LIVES = 3;
+const INVINCIBILITY_FRAMES = 60;
+const SCORE_POP_LIFESPAN = 30;
+const WAVE_TIME = 1800;
+const WAVE_SPAWN_DEC = 0.9;
+
+// Collision radii for circle-based collision detection
+const PLAYER_RADIUS = 20;
+const BULLET_RADIUS = 8;
+const ENEMY_DRONE_RADIUS = 18;
+const ENEMY_SCOUT_RADIUS = 25;
+const ENEMY_BULLET_RADIUS = 8;
+const UPGRADE_RADIUS = 12;
+
+const filters = {
+  blueGlow: new PIXI.filters.GlowFilter({distance:12, outerStrength:2, innerStrength:0, color:0x00cfff, quality:0.3}),
+  redGlow: new PIXI.filters.GlowFilter({distance:12, outerStrength:2, innerStrength:0, color:0xff0055, quality:0.3}),
+  purpleGlow: new PIXI.filters.GlowFilter({distance:12, outerStrength:2, innerStrength:0, color:0xaa66ff, quality:0.3}),
+  greenGlow: new PIXI.filters.GlowFilter({distance:8, outerStrength:2, innerStrength:0, color:0x22ff77, quality:0.3}),
+  yellowGlow: new PIXI.filters.GlowFilter({distance:8, outerStrength:2, innerStrength:0, color:0xffee55, quality:0.3}),
+  whiteGlow: new PIXI.filters.GlowFilter({distance:8, outerStrength:2, innerStrength:0, color:0xffffff, quality:0.3}),
+  grayGlow: new PIXI.filters.GlowFilter({distance:8, outerStrength:2, innerStrength:0, color:0x888899, quality:0.3})
+};
+
+function makeStarTexture() {
+  const g = new PIXI.Graphics();
+  g.beginFill(0xffffff, 1);
+  g.drawCircle(8,8,2);
+  g.endFill();
+  return app.renderer.generateTexture(g);
+}
+function makePlayerHeartTexture() {
+  const g = new PIXI.Graphics();
+  g.lineStyle(3,0x00cfff,1);
+  g.beginFill(0xffffff,1);
+  g.moveTo(12,0);
+  g.lineTo(-10,8);
+  g.lineTo(-5,0);
+  g.lineTo(-10,-8);
+  g.closePath();
+  g.endFill();
+  return app.renderer.generateTexture(g,undefined,1,new PIXI.Rectangle(-12,-10,24,20));
+}
+function makeBulletTexture() {
+  const g = new PIXI.Graphics();
+  g.lineStyle(2, 0x00cfff, 1);
+  g.beginFill(0x00cfff, 0.8);
+  g.drawRect(-2, -12, 4, 24);
+  g.endFill();
+  return app.renderer.generateTexture(g, undefined, 1, new PIXI.Rectangle(-2, -12, 4, 24));
+}
+function makeDroneTexture() {
+  const g = new PIXI.Graphics();
+  g.lineStyle(4,0xff0055,1);
+  g.beginFill(0x1a0000,1);
+  g.moveTo(-18,14);
+  g.lineTo(18,14);
+  g.lineTo(0,-18);
+  g.closePath();
+  g.endFill();
+  return app.renderer.generateTexture(g,undefined,1,new PIXI.Rectangle(-20,-18,40,32));
+}
+function makeEnemyBulletTexture() {
+  const g = new PIXI.Graphics();
+  g.lineStyle(2, 0xff0055, 1);
+  g.beginFill(0xff0055, 0.8);
+  g.drawRect(-12, -2, 24, 4);
+  g.endFill();
+  return app.renderer.generateTexture(g, undefined, 1, new PIXI.Rectangle(-12, -2, 24, 4));
+}
+function makeExplosionParticleTexture() {
+  const g = new PIXI.Graphics();
+  g.beginFill(0xffcc33,1);
+  g.drawCircle(0,0,3);
+  g.endFill();
+  return app.renderer.generateTexture(g,undefined,1,new PIXI.Rectangle(-3,-3,6,6));
+}
+function makeUpgradeTexture() {
+  const g = new PIXI.Graphics();
+  g.beginFill(0x22ff77, 1);
+  g.drawCircle(8, 8, 8);
+  g.endFill();
+  g.lineStyle(2, 0x00cc55, 1);
+  g.moveTo(8, 2);
+  g.lineTo(8, 14);
+  return app.renderer.generateTexture(g, undefined, 1, new PIXI.Rectangle(0, 0, 16, 16));
+}
+const textures = {
+  star: makeStarTexture(),
+  playerHeart: makePlayerHeartTexture(),
+  bullet: makeBulletTexture(),
+  drone: makeDroneTexture(),
+  enemyBullet: makeEnemyBulletTexture(),
+  explosion: makeExplosionParticleTexture(),
+  upgrade: makeUpgradeTexture()
+};
+class Starfield {
+  constructor() {
+    this.layers = [];
+    for(let l=0;l<3;++l) {
+      const stars = [];
+      const n = 30 + l*20;
+      for(let i=0;i<n;++i) {
+        const s = new PIXI.Sprite(textures.star);
+        s.x = Math.random()*WIDTH;
+        s.y = Math.random()*HEIGHT;
+        s.alpha = 0.6+0.3*Math.random();
+        s.speed = 0.6+0.6*l+Math.random()*0.3;
+        s.twinkle = 0.01+Math.random()*0.02;
+        s.baseAlpha = s.alpha;
+        s.phaseOffset = Math.random() * Math.PI * 2;
+        stars.push(s);
+      }
+      this.layers.push({stars, speed:1+l});
+    }
+    this.container = new PIXI.Container();
+    this.layers.forEach(layer=>layer.stars.forEach(s=>this.container.addChild(s)));
+  }
+  update() {
+    const time = performance.now() * 0.002;
+    for(const layer of this.layers) {
+      for(const s of layer.stars) {
+        s.x -= layer.speed;
+        if(s.x<-4) s.x=WIDTH+Math.random()*16;
+        s.alpha = s.baseAlpha+Math.sin(time+s.phaseOffset)*s.twinkle;
+      }
+    }
+  }
+}
+class Player {
+  constructor() {
+    this.sprite = PIXI.Sprite.from('https://storage.googleapis.com/scraper_ludo/user_images_prod/64caae245ad817bfe89bf37c5916c435.webp');
+    this.sprite.scale.set(0.15);
+    this.sprite.anchor.set(0.5);
+    this.sprite.filters = [filters.blueGlow];
+    this.sprite.x = 150;
+    this.sprite.y = PLAYER_Y;
+    this.vx = 0;
+    this.vy = 0;
+    this.baseY = PLAYER_Y;
+    this.bobT = 0;
+    this.bulletCooldown = 0;
+    this.fireLevel = 0;
+    this.damage = 1;
+    this.lives = PLAYER_LIVES;
+    this.invFrames = 0;
+    this.radius = PLAYER_RADIUS;
+    this.engineParticles = [];
+    this.engineContainer = new PIXI.ParticleContainer(20, { position: true, alpha: true, scale: true, tint: true });
+    for(let i=0;i<10;++i) {
+      const p = new PIXI.Sprite(textures.explosion);
+      p.alpha=0;
+      this.engineParticles.push({sprite:p,life:0});
+      this.engineContainer.addChild(p);
+    }
+    this.container = new PIXI.Container();
+    this.container.addChild(this.engineContainer);
+    this.container.addChild(this.sprite);
+    this.shake = 0;
+  }
+  reset() {
+    this.sprite.x = 150;
+    this.sprite.y = PLAYER_Y;
+    this.vx = 0;
+    this.vy = 0;
+    this.baseY = PLAYER_Y;
+    this.bobT = 0;
+    this.bulletCooldown = 0;
+    this.fireLevel = 0;
+    this.damage = 1;
+    this.lives = PLAYER_LIVES;
+    this.invFrames = 0;
+    this.shake = 0;
+  }
+  update(keys) {
+    if(this.shake>0) {
+      this.shake--;
+      this.container.x = (Math.random()-0.5)*10;
+      this.container.y = (Math.random()-0.5)*6;
+    } else {
+      this.container.x = 0;
+      this.container.y = 0;
+    }
+    let target = 0;
+    if(keys['ArrowLeft']||keys['a']||keys['A']) target = -1;
+    if(keys['ArrowRight']||keys['d']||keys['D']) target = 1;
+    this.vx += target*PLAYER_ACCEL;
+    if(target===0) this.vx *= 0.8;
+    if(this.vx>PLAYER_SPEED) this.vx=PLAYER_SPEED;
+    if(this.vx<-PLAYER_SPEED) this.vx=-PLAYER_SPEED;
+    this.sprite.x += this.vx;
+    if(this.sprite.x<PLAYER_MIN_X) {this.sprite.x=PLAYER_MIN_X;this.vx=0;}
+    if(this.sprite.x>PLAYER_MAX_X) {this.sprite.x=PLAYER_MAX_X;this.vx=0;}
+    let targetVy = 0;
+    if(keys['ArrowUp']||keys['w']||keys['W']) targetVy = -1;
+    if(keys['ArrowDown']||keys['s']||keys['S']) targetVy = 1;
+    this.vy += targetVy*PLAYER_ACCEL;
+    if(targetVy===0) this.vy *= 0.8;
+    if(this.vy>PLAYER_SPEED) this.vy=PLAYER_SPEED;
+    if(this.vy<-PLAYER_SPEED) this.vy=-PLAYER_SPEED;
+    this.baseY += this.vy;
+    if(this.baseY<PLAYER_MIN_Y) {this.baseY=PLAYER_MIN_Y;this.vy=0;}
+    if(this.baseY>PLAYER_MAX_Y) {this.baseY=PLAYER_MAX_Y;this.vy=0;}
+    this.bobT += 0.08;
+    this.sprite.y = this.baseY + Math.sin(this.bobT)*5;
+    if(this.invFrames>0) {
+      this.invFrames--;
+      this.sprite.alpha = 0.4+0.3*Math.sin(this.invFrames*0.4);
+    } else {
+      this.sprite.alpha = 1;
+    }
+    for(const p of this.engineParticles) {
+      if(p.life>0) {
+        p.life--;
+        p.sprite.alpha = p.life/10;
+        p.sprite.x = this.sprite.x-20+Math.random()*6-3;
+        p.sprite.y = this.sprite.y+Math.sin(this.bobT+Math.random())*8+Math.random()*8-4;
+        p.sprite.scale.set(0.7+Math.random()*0.4);
+        p.sprite.tint = 0xffee55+Math.floor(Math.random()*0x22);
+      } else {
+        if(Math.random()<0.4) {
+          p.life = 10;
+          p.sprite.alpha = 1;
+        } else {
+          p.sprite.alpha = 0;
+        }
+      }
+    }
+  }
+  hit() {
+    this.lives--;
+    this.invFrames = INVINCIBILITY_FRAMES;
+    this.shake = 10;
+    if (this.lives <= 0) {
+      this.destroyed = true;
+    }
+  }
+  canBeHit() {
+    return this.invFrames===0;
+  }
+  isDestroyed() {
+    return this.destroyed || false;
+  }
+}
+class Upgrade {
+  constructor() {
+    this.sprite = new PIXI.Sprite(textures.upgrade);
+    this.sprite.anchor.set(0.5);
+    this.sprite.filters = [filters.greenGlow];
+    this.active = false;
+    this.sprite.visible = false;
+    this.radius = UPGRADE_RADIUS;
+    this.phaseOffset = Math.random() * Math.PI * 2;
+  }
+  spawn(x, y) {
+    this.sprite.x = x;
+    this.sprite.y = y;
+    this.sprite.visible = true;
+    this.sprite.rotation = 0;
+    this.active = true;
+  }
+  update() {
+    if (!this.active) return;
+    this.sprite.rotation += 0.1;
+    this.sprite.y += Math.sin(performance.now() * 0.005 + this.phaseOffset) * 0.5;
+    this.sprite.x -= 1;
+    if (this.sprite.x < -20) {
+      this.active = false;
+      this.sprite.visible = false;
+    }
+  }
+  deactivate() {
+    this.active = false;
+    this.sprite.visible = false;
+  }
+}
+class UpgradePool {
+  constructor(container) {
+    this.pool = [];
+    this.container = container;
+    for (let i = 0; i < 5; ++i) {
+      const u = new Upgrade();
+      this.pool.push(u);
+      this.container.addChild(u.sprite);
+    }
+  }
+  spawn(x, y) {
+    for (const u of this.pool) {
+      if (!u.active) {
+        u.spawn(x, y);
+        return;
+      }
+    }
+  }
+  update() {
+    for (const u of this.pool) {
+      if (u.active) u.update();
+    }
+  }
+  get actives() {
+    return this.pool.filter(u => u.active);
+  }
+}
+class Bullet {
+  constructor() {
+    this.sprite = new PIXI.Sprite(textures.bullet);
+    this.sprite.anchor.set(0.5);
+    this.sprite.rotation = Math.PI / 2;
+    this.sprite.filters = [filters.blueGlow];
+    this.sprite.visible = false;
+    this.active = false;
+    this.radius = BULLET_RADIUS;
+  }
+  fire(x,y) {
+    this.sprite.x = x+20;
+    this.sprite.y = y;
+    this.sprite.visible = true;
+    this.active = true;
+  }
+  update() {
+    if(!this.active) return;
+    this.sprite.x += BULLET_SPEED;
+    if(this.sprite.x>WIDTH+20) {
+      this.active=false;
+      this.sprite.visible = false;
+    }
+  }
+  deactivate() {
+    this.active = false;
+    this.sprite.visible = false;
+  }
+}
+class BulletPool {
+  constructor(container) {
+    this.pool = [];
+    this.container = container;
+    this._activeCount = 0;
+    for(let i=0;i<MAX_BULLETS;++i) {
+      const b = new Bullet();
+      this.pool.push(b);
+      this.container.addChild(b.sprite);
+    }
+  }
+  fire(x,y) {
+    for(const b of this.pool) {
+      if(!b.active) {
+        b.fire(x,y);
+        this._activeCount++;
+        break;
+      }
+    }
+  }
+  update() {
+    this._activeCount = 0;
+    for(const b of this.pool) {
+      if(b.active) {
+        b.update();
+        if(b.active) this._activeCount++;
+      }
+    }
+  }
+  get actives() {
+    return this.pool.filter(b=>b.active);
+  }
+}
+class EnemyBullet {
+  constructor() {
+    this.sprite = new PIXI.Sprite(textures.enemyBullet);
+    this.sprite.anchor.set(0.5);
+    this.sprite.filters = [filters.redGlow];
+    this.sprite.visible = false;
+    this.active = false;
+    this.radius = ENEMY_BULLET_RADIUS;
+  }
+  fire(x,y) {
+    this.sprite.x = x-20;
+    this.sprite.y = y;
+    this.sprite.visible = true;
+    this.active = true;
+  }
+  update() {
+    if(!this.active) return;
+    this.sprite.x -= ENEMY_BULLET_SPEED;
+    if(this.sprite.x<-20) {
+      this.active=false;
+      this.sprite.visible = false;
+    }
+  }
+  deactivate() {
+    this.active = false;
+    this.sprite.visible = false;
+  }
+}
+class EnemyBulletPool {
+  constructor(container) {
+    this.pool = [];
+    this.container = container;
+    for(let i=0;i<20;++i) { 
+      const b = new EnemyBullet();
+      this.pool.push(b);
+      this.container.addChild(b.sprite);
+    }
+  }
+  fire(x,y) {
+    for(const b of this.pool) {
+      if(!b.active) {
+        b.fire(x,y);
+        break;
+      }
+    }
+  }
+  update() {
+    for(const b of this.pool) {
+      if(b.active) b.update();
+    }
+  }
+  get actives() {
+    return this.pool.filter(b=>b.active);
+  }
+}
+class Enemy {
+  constructor(type) {
+    this.type = type;
+    if(type === 'drone') {
+      this.sprite = PIXI.Sprite.from('https://storage.googleapis.com/scraper_ludo/user_images_prod/2721cf452b572235466bde69318ba6e6.webp');
+      this.radius = ENEMY_DRONE_RADIUS;
+    } else { 
+      this.sprite = PIXI.Sprite.from('https://storage.googleapis.com/scraper_ludo/user_images_prod/20c1d113d085b5290a9111e6acea4739.webp');
+      this.radius = ENEMY_SCOUT_RADIUS;
+    }
+    this.sprite.anchor.set(0.5);
+    this.sprite.visible = false;
+    if(type==='drone') {
+      this.sprite.filters = [filters.redGlow];
+    } else {
+      this.sprite.filters = [filters.purpleGlow];
+      this.zigzag = {dir:1, timer:ENEMY_ZIGZAG_FRAMES};
+      this.shootCooldown = 0;
+    }
+    this.active = false;
+  }
+  spawn(x,y,speed) {
+    this.sprite.x = x;
+    this.sprite.y = y;
+    this.sprite.visible = true;
+    if(this.type === 'drone') {
+      this.sprite.scale.set(0.02 + Math.random() * 0.08);
+    } else { 
+      this.sprite.scale.set(0.15); 
+      this.shootCooldown = ENEMY_SCOUT_FIRE_RATE + Math.random() * ENEMY_SCOUT_FIRE_RATE;
+    }
+    this.speed = speed;
+    this.hp = this.type === 'drone' ? 1 : 2;
+    this.active = true;
+    if(this.type==='scout') {
+      this.zigzag = {dir:1, timer:ENEMY_ZIGZAG_FRAMES};
+    }
+  }
+  update() {
+    if(!this.active) return;
+    this.sprite.x -= this.speed;
+    if(this.type === 'drone') {
+      this.sprite.rotation += 0.05;
+    }
+    if(this.type==='scout') {
+      this.zigzag.timer--;
+      if(this.zigzag.timer<=0) {
+        this.zigzag.dir*=-1;
+        this.zigzag.timer=ENEMY_ZIGZAG_FRAMES;
+      }
+      this.sprite.y += this.zigzag.dir*2;
+      if(this.sprite.y<100) this.sprite.y=100;
+      if(this.sprite.y>500) this.sprite.y=500;
+      this.shootCooldown--;
+    }
+    if(this.sprite.x<-30) {
+      this.active=false;
+      this.sprite.visible = false;
+    }
+  }
+  deactivate() {
+    this.active=false;
+    this.sprite.visible = false;
+  }
+}
+class EnemyPool {
+  constructor(container) {
+    this.pool = [];
+    this.container = container;
+    for(let i=0;i<20;++i) {
+      const e = new Enemy(i%2===0?'drone':'scout');
+      this.pool.push(e);
+      this.container.addChild(e.sprite);
+    }
+  }
+  spawn(type,x,y,speed) {
+    for(const e of this.pool) {
+      if(!e.active && e.type===type) {
+        e.spawn(x,y,speed);
+        break;
+      }
+    }
+  }
+  update() {
+    for(const e of this.pool) {
+      if(e.active) e.update();
+    }
+  }
+  get actives() {
+    return this.pool.filter(e=>e.active);
+  }
+}
+class Explosion {
+  constructor(container) {
+    this.particles = [];
+    this.container = container;
+    for(let i=0;i<EXPLOSION_PARTICLES;++i) {
+      const s = new PIXI.Sprite(textures.explosion);
+      s.anchor.set(0.5);
+      s.alpha=0;
+      this.particles.push({sprite:s,life:0,vx:0,vy:0});
+      this.container.addChild(s);
+    }
+    this.active = false;
+    this.t = 0;
+  }
+  trigger(x,y) {
+    this.active = true;
+    this.t = 0;
+    for(const p of this.particles) {
+      p.sprite.x = x;
+      p.sprite.y = y;
+      p.life = EXPLOSION_LIFESPAN;
+      const a = Math.random()*Math.PI*2;
+      const v = 2+Math.random()*2;
+      p.vx = Math.cos(a)*v;
+      p.vy = Math.sin(a)*v;
+      p.sprite.alpha = 1;
+      p.sprite.scale.set(0.6+Math.random()*0.5);
+      p.sprite.tint = 0xff9900+Math.floor(Math.random()*0x5500);
+    }
+  }
+  update() {
+    if(!this.active) return;
+    let alive = false;
+    for(const p of this.particles) {
+      if(p.life>0) {
+        p.life--;
+        p.sprite.x += p.vx;
+        p.sprite.y += p.vy;
+        p.sprite.alpha = p.life/EXPLOSION_LIFESPAN;
+        alive = true;
+      } else {
+        p.sprite.alpha = 0;
+      }
+    }
+    if(!alive) this.active = false;
+  }
+}
+class ExplosionPool {
+  constructor(container) {
+    this.pool = [];
+    this.container = container;
+    for(let i=0;i<8;++i) {
+      const e = new Explosion(this.container);
+      this.pool.push(e);
+    }
+  }
+  trigger(x,y) {
+    for(const e of this.pool) {
+      if(!e.active) {
+        e.trigger(x,y);
+        break;
+      }
+    }
+  }
+  update() {
+    for(const e of this.pool) {
+      if(e.active) e.update();
+    }
+  }
+}
+class ScorePop {
+  constructor(container) {
+    this.text = new PIXI.Text('',{fontFamily:'monospace',fontSize:32,fill:0xffffff,stroke:0xffff00,strokeThickness:4});
+    this.text.anchor.set(0.5);
+    this.text.filters = [filters.yellowGlow];
+    this.life = 0;
+    this.pulseT = 0;
+    this.container = container;
+    this.container.addChild(this.text);
+  }
+  pop(x,y,score) {
+    this.text.x = x;
+    this.text.y = y;
+    this.text.text = '+'+score;
+    this.life = SCORE_POP_LIFESPAN;
+    this.pulseT = 0;
+    this.text.alpha = 1;
+    this.text.scale.set(1);
+  }
+  update() {
+    if(this.life>0) {
+      this.pulseT += 1;
+      this.text.scale.set(1 + Math.sin(this.pulseT * 0.2) * 0.3);
+      this.text.y -= 1;
+      this.text.alpha = this.life/SCORE_POP_LIFESPAN;
+      this.life--;
+    } else {
+      this.text.alpha = 0;
+      this.text.scale.set(1);
+    }
+  }
+}
+class ScorePopPool {
+  constructor(container) {
+    this.pool = [];
+    for(let i=0;i<6;++i) {
+      this.pool.push(new ScorePop(container));
+    }
+  }
+  pop(x,y,score) {
+    for(const p of this.pool) {
+      if(p.life<=0) {
+        p.pop(x,y,score);
+        break;
+      }
+    }
+  }
+  update() {
+    for(const p of this.pool) {
+      if(p.life > 0) p.update();
+    }
+  }
+}
+class HUD {
+  constructor(stage) {
+    this.container = new PIXI.Container();
+    stage.addChild(this.container);
+    this.scoreText = new PIXI.Text('SCORE: 0000',{fontFamily:'monospace',fontSize:28,fill:0x00ff99,stroke:0x003300,strokeThickness:4});
+    this.scoreText.x = 18;
+    this.scoreText.y = 14;
+    this.scoreText.filters = [filters.greenGlow];
+    this.container.addChild(this.scoreText);
+    this.hearts = [];
+    for(let i=0;i<PLAYER_LIVES;++i) {
+      const h = new PIXI.Sprite(textures.playerHeart);
+      h.x = WIDTH-40-38*i;
+      h.y = 28;
+      h.anchor.set(0.5);
+      h.filters = [filters.blueGlow];
+      this.hearts.push(h);
+      this.container.addChild(h);
+    }
+    this.waveText = new PIXI.Text('WAVE 1',{fontFamily:'monospace',fontSize:22,fill:0x66aaff,stroke:0x001144,strokeThickness:4});
+    this.waveText.anchor.set(0.5);
+    this.waveText.filters = [filters.purpleGlow];
+    this.waveText.x = WIDTH/2;
+    this.waveText.y = HEIGHT-28;
+    this.container.addChild(this.waveText);
+    this.waveBar = new PIXI.Graphics();
+    this.container.addChild(this.waveBar);
+  }
+  setScore(score) {
+    this.scoreText.text = 'SCORE: '+score.toString().padStart(4,'0');
+  }
+  setLives(lives) {
+    for(let i=0;i<this.hearts.length;++i) {
+      if(i<lives) {
+        this.hearts[i].alpha=1;
+        this.hearts[i].filters=[filters.blueGlow];
+        this.hearts[i].tint=0xffffff;
+      } else {
+        this.hearts[i].alpha=0.5;
+        this.hearts[i].filters=[filters.grayGlow];
+        this.hearts[i].tint=0x999999;
+      }
+    }
+  }
+  setWave(wave) {
+    this.waveText.text = 'WAVE '+wave;
+    this.waveText.scale.set(1.1+0.1*Math.sin(performance.now()*0.01));
+  }
+  setWaveBar(progress) {
+    this.waveBar.clear();
+    this.waveBar.beginFill(0x222277,0.3);
+    this.waveBar.drawRect(WIDTH/2-100,HEIGHT-16,200,8);
+    this.waveBar.endFill();
+    this.waveBar.beginFill(0x66aaff,0.7);
+    this.waveBar.drawRect(WIDTH/2-100,HEIGHT-16,200*progress,8);
+    this.waveBar.endFill();
+  }
+  show() {this.container.visible=true;}
+  hide() {this.container.visible=false;}
+}
+class OverlayFlash {
+  constructor(stage) {
+    this.g = new PIXI.Graphics();
+    this.g.alpha=0;
+    stage.addChild(this.g);
+    this.t = 0;
+  }
+  flash() {
+    this.t = 10;
+    this.g.alpha=1;
+  }
+  update() {
+    if(this.t>0) {
+      this.t--;
+      this.g.clear();
+      this.g.beginFill(0xffffff,0.8*this.t/10);
+      this.g.drawRect(0,0,WIDTH,HEIGHT);
+      this.g.endFill();
+      this.g.alpha = this.t/10;
+    } else {
+      this.g.alpha=0;
+      this.g.clear();
+    }
+  }
+}
+class TitleScreen {
+  constructor(stage) {
+    this.container = new PIXI.Container();
+    stage.addChild(this.container);
+    this.title = new PIXI.Text('Space Shooter',{fontFamily:'monospace',fontSize:56,fill:0x00cfff,stroke:0x003366,strokeThickness:8});
+    this.title.anchor.set(0.5);
+    this.title.x = WIDTH/2;
+    this.title.y = HEIGHT/2-60;
+    this.title.filters = [filters.blueGlow];
+    this.container.addChild(this.title);
+    this.subtitle = new PIXI.Text('Press ENTER to Launch',{fontFamily:'monospace',fontSize:26,fill:0xffffff,stroke:0x003366,strokeThickness:4});
+    this.subtitle.anchor.set(0.5);
+    this.subtitle.x = WIDTH/2;
+    this.subtitle.y = HEIGHT/2+20;
+    this.subtitle.filters = [filters.whiteGlow];
+    this.container.addChild(this.subtitle);
+    this.ship = PIXI.Sprite.from('https://storage.googleapis.com/scraper_ludo/user_images_prod/64caae245ad817bfe89bf37c5916c435.webp');
+    this.ship.scale.set(0.15);
+    this.ship.anchor.set(0.5);
+    this.ship.x = WIDTH/2;
+    this.ship.y = HEIGHT/2+100;
+    this.ship.filters = [filters.blueGlow];
+    this.container.addChild(this.ship);
+    this.t = 0;
+  }
+  update() {
+    this.t += 0.08;
+    this.title.scale.set(1.08+0.06*Math.sin(this.t));
+    this.subtitle.alpha = 0.7+0.3*Math.sin(this.t*1.7);
+    this.ship.y = HEIGHT/2+100+Math.sin(this.t)*8;
+    this.ship.rotation = Math.sin(this.t*0.5)*0.08;
+  }
+  show() {this.container.visible=true;}
+  hide() {this.container.visible=false;}
+}
+class GameOverScreen {
+  constructor(stage) {
+    this.container = new PIXI.Container();
+    stage.addChild(this.container);
+    this.overlay = new PIXI.Graphics();
+    this.overlay.beginFill(0x000000,0.7);
+    this.overlay.drawRect(0,0,WIDTH,HEIGHT);
+    this.overlay.endFill();
+    this.container.addChild(this.overlay);
+    this.text = new PIXI.Text('GAME OVER',{fontFamily:'monospace',fontSize:48,fill:0xffffff,stroke:0x003366,strokeThickness:6});
+    this.text.anchor.set(0.5);
+    this.text.x = WIDTH/2;
+    this.text.y = HEIGHT/2-40;
+    this.text.filters = [filters.whiteGlow];
+    this.container.addChild(this.text);
+    this.scoreText = new PIXI.Text('Final Score: 0000',{fontFamily:'monospace',fontSize:32,fill:0x00ff99,stroke:0x003300,strokeThickness:4});
+    this.scoreText.anchor.set(0.5);
+    this.scoreText.x = WIDTH/2;
+    this.scoreText.y = HEIGHT/2+10;
+    this.scoreText.filters = [filters.greenGlow];
+    this.container.addChild(this.scoreText);
+    this.highText = new PIXI.Text('High Score: 0000',{fontFamily:'monospace',fontSize:24,fill:0xffee66,stroke:0x003300,strokeThickness:3});
+    this.highText.anchor.set(0.5);
+    this.highText.x = WIDTH/2;
+    this.highText.y = HEIGHT/2+50;
+    this.highText.filters = [filters.yellowGlow];
+    this.container.addChild(this.highText);
+    this.restartText = new PIXI.Text('Press ENTER to Restart',{fontFamily:'monospace',fontSize:22,fill:0xffffff,stroke:0x003366,strokeThickness:3});
+    this.restartText.anchor.set(0.5);
+    this.restartText.x = WIDTH/2;
+    this.restartText.y = HEIGHT/2+100;
+    this.restartText.filters = [filters.whiteGlow];
+    this.container.addChild(this.restartText);
+  }
+  setScore(score,high) {
+    this.scoreText.text = 'Final Score: '+score.toString().padStart(4,'0');
+    this.highText.text = 'High Score: '+high.toString().padStart(4,'0');
+  }
+  show() {this.container.visible=true;}
+  hide() {this.container.visible=false;}
+}
+class PauseScreen {
+  constructor(stage) {
+    this.container = new PIXI.Container();
+    stage.addChild(this.container);
+    this.overlay = new PIXI.Graphics();
+    this.overlay.beginFill(0x000000,0.55);
+    this.overlay.drawRect(0,0,WIDTH,HEIGHT);
+    this.overlay.endFill();
+    this.container.addChild(this.overlay);
+    this.text = new PIXI.Text('PAUSED',{fontFamily:'monospace',fontSize:48,fill:0xffffff,stroke:0x003366,strokeThickness:6});
+    this.text.anchor.set(0.5);
+    this.text.x = WIDTH/2;
+    this.text.y = HEIGHT/2-20;
+    this.text.filters = [filters.whiteGlow];
+    this.container.addChild(this.text);
+    this.subtitle = new PIXI.Text('Press P to Resume',{fontFamily:'monospace',fontSize:22,fill:0xffffff,stroke:0x003366,strokeThickness:3});
+    this.subtitle.anchor.set(0.5);
+    this.subtitle.x = WIDTH/2;
+    this.subtitle.y = HEIGHT/2+38;
+    this.subtitle.filters = [filters.whiteGlow];
+    this.container.addChild(this.subtitle);
+  }
+  show() {this.container.visible=true;}
+  hide() {this.container.visible=false;}
+}
+class Game {
+  constructor() {
+    this.state = 'title';
+    this.stage = app.stage;
+    this.keys = {};
+    this.starfield = new Starfield();
+    this.stage.addChild(this.starfield.container);
+    this.player = new Player();
+    this.stage.addChild(this.player.container);
+    this.bulletContainer = new PIXI.Container();
+    this.stage.addChild(this.bulletContainer);
+    this.bullets = new BulletPool(this.bulletContainer);
+    this.enemyBulletContainer = new PIXI.Container();
+    this.stage.addChild(this.enemyBulletContainer);
+    this.enemyBullets = new EnemyBulletPool(this.enemyBulletContainer);
+    this.enemyContainer = new PIXI.Container();
+    this.stage.addChild(this.enemyContainer);
+    this.enemies = new EnemyPool(this.enemyContainer);
+    this.upgradeContainer = new PIXI.Container();
+    this.stage.addChild(this.upgradeContainer);
+    this.upgrades = new UpgradePool(this.upgradeContainer);
+    this.explosionContainer = new PIXI.ParticleContainer(100, { position: true, alpha: true, scale: true, tint: true });
+    this.stage.addChild(this.explosionContainer);
+    this.explosions = new ExplosionPool(this.explosionContainer);
+    this.scorePopContainer = new PIXI.Container();
+    this.stage.addChild(this.scorePopContainer);
+    this.scorePops = new ScorePopPool(this.scorePopContainer);
+    this.hud = new HUD(this.stage);
+    this.flash = new OverlayFlash(this.stage);
+    this.titleScreen = new TitleScreen(this.stage);
+    this.gameOverScreen = new GameOverScreen(this.stage);
+    this.pauseScreen = new PauseScreen(this.stage);
+    this.pauseScreen.hide();
+    this.score = 0;
+    this.wave = 1;
+    this.waveTimer = 0;
+    this.enemySpawnTimer = 0;
+    this.enemySpawnInterval = ENEMY_SPAWN_INIT;
+    this.highScore = parseInt(localStorage.getItem('nebula_highscore')||'0');
+    this.gameEnded = false;
+    this.screenShakeFrames = 0; 
+    this.setupInput();
+    this.setState('title');
+  }
+  setupInput() {
+    window.addEventListener('keydown',e=>{
+      this.keys[e.key] = true;
+      if((e.code==='KeyP' || e.key==='p' || e.key==='P') && (this.state==='playing' || this.state==='paused')) {
+        e.preventDefault();
+        if(this.state==='playing') {
+          this.setState('paused');
+        } else if(this.state==='paused') {
+          this.setState('playing');
+        }
+        return;
+      }
+      if(this.state==='title' && e.key==='Enter') {
+        this.startGame();
+      }
+      if(this.state==='gameover' && e.key==='Enter') {
+        this.restartGame();
+      }
+    });
+    window.addEventListener('keyup',e=>{
+      this.keys[e.key] = false;
+    });
+  }
+  setState(state) {
+    this.state = state;
+    if(state==='title') {
+      this.titleScreen.show();
+      this.hud.hide();
+      this.gameOverScreen.hide();
+      this.player.container.visible=false;
+      this.enemyContainer.visible=false;
+      this.bulletContainer.visible=false;
+      this.upgradeContainer.visible=false;
+      this.explosionContainer.visible=false;
+      this.scorePopContainer.visible=false;
+    }
+    if(state==='playing') {
+      this.titleScreen.hide();
+      this.hud.show();
+      this.gameOverScreen.hide();
+      this.pauseScreen.hide();
+      this.player.container.visible=true;
+      this.enemyContainer.visible=true;
+      this.bulletContainer.visible=true;
+      this.enemyBulletContainer.visible=true;
+      this.upgradeContainer.visible=true;
+      this.explosionContainer.visible=true;
+      this.scorePopContainer.visible=true;
+    }
+    if(state==='gameover') {
+      this.titleScreen.hide();
+      this.hud.hide();
+      this.gameOverScreen.show();
+      this.pauseScreen.hide();
+      this.player.container.visible=false;
+      this.enemyContainer.visible=false;
+      this.bulletContainer.visible=false;
+      this.upgradeContainer.visible=false;
+      this.explosionContainer.visible=true;
+      this.scorePopContainer.visible=true;
+    }
+    if(state==='paused') {
+      this.titleScreen.hide();
+      this.hud.show();
+      this.gameOverScreen.hide();
+      this.pauseScreen.show();
+    }
+  }
+  startGame() {
+    this.score = 0;
+    this.wave = 1;
+    this.waveTimer = 0;
+    this.enemySpawnTimer = 0;
+    this.enemySpawnInterval = ENEMY_SPAWN_INIT;
+    this.player.reset();
+    this.player.destroyed = false;
+    for(const e of this.enemies.pool) e.deactivate();
+    for(const b of this.bullets.pool) b.deactivate();
+    for(const eb of this.enemyBullets.pool) eb.deactivate(); 
+    for(const u of this.upgrades.pool) u.deactivate();
+    this.gameEnded = false;
+    this.setState('playing');
+    this.hud.setScore(this.score);
+    this.hud.setLives(this.player.lives);
+    this.hud.setWave(this.wave);
+    this.hud.setWaveBar(0);
+  }
+  restartGame() {
+    this.startGame();
+  }
+  gameOver() {
+    if(!this.gameEnded) {
+      this.gameEnded = true;
+      if(this.score>this.highScore) {
+        this.highScore=this.score;
+        localStorage.setItem('nebula_highscore',this.highScore);
+      }
+      this.gameOverScreen.setScore(this.score,this.highScore);
+      this.setState('gameover');
+    }
+  }
+  triggerScreenShake(frames) {
+    this.screenShakeFrames = frames;
+  }
+  update(delta) {
+    if (this.screenShakeFrames > 0) {
+      this.screenShakeFrames--;
+      this.stage.x = (Math.random() - 0.5) * 8; 
+      this.stage.y = (Math.random() - 0.5) * 8;
+    } else {
+      this.stage.x = 0;
+      this.stage.y = 0;
+    }
+    this.starfield.update();
+    if(this.state==='title') {
+      this.titleScreen.update();
+      return;
+    }
+    if(this.state==='paused') {
+      this.pauseScreen.show();
+      return;
+    }
+    if(this.state==='gameover') {
+      this.explosions.update();
+      this.scorePops.update();
+      this.flash.update();
+      return;
+    }
+    if(this.state==='playing') {
+      if (this.player.isDestroyed()) {
+        this.gameOver();
+        return;
+      }
+      this.player.update(this.keys);
+      this.bullets.update();
+      this.enemies.update();
+      this.enemyBullets.update(); 
+      this.upgrades.update();
+      this.explosions.update();
+      this.scorePops.update();
+      this.flash.update();
+      this.waveTimer++;
+      if(this.waveTimer>=WAVE_TIME) {
+        this.wave++;
+        this.waveTimer=0;
+        this.enemySpawnInterval = Math.max(Math.floor(this.enemySpawnInterval*WAVE_SPAWN_DEC),ENEMY_SPAWN_MIN);
+        this.hud.setWave(this.wave);
+      }
+      this.hud.setWaveBar(this.waveTimer/WAVE_TIME);
+      this.hud.setWave(this.wave);
+      this.enemySpawnTimer++;
+      if(this.enemySpawnTimer>=this.enemySpawnInterval) {
+        this.enemySpawnTimer=0;
+        let n = 1+Math.floor(this.wave/2);
+        n = Math.min(n,6);
+        for(let i=0;i<n;++i) {
+          let type = 'drone';
+          if(this.wave>=3 && Math.random()<0.3+(this.wave-3)*0.1) type='scout';
+          let y = 100+Math.random()*400;
+          let x = WIDTH+30+i*32;
+          let speed = type==='drone'?ENEMY_DRONE_SPEED+0.05*this.wave:ENEMY_SCOUT_SPEED+0.1*this.wave;
+          this.enemies.spawn(type,x,y,speed);
+        }
+      }
+      // Firing - use cached active count
+      if(this.keys[' ']) {
+        if(this.player.bulletCooldown<=0 && this.bullets._activeCount<MAX_BULLETS) {
+          this.bullets.fire(this.player.sprite.x,this.player.sprite.y);
+          this.player.bulletCooldown = Math.max(8, 60 - 12 * this.player.fireLevel);
+        }
+      }
+      if(this.player.bulletCooldown>0) this.player.bulletCooldown--;
+      
+      // Enemy shooting - iterate pool directly
+      for(const e of this.enemies.pool) {
+        if(e.active && e.type === 'scout' && e.sprite.x < WIDTH - 100 && e.shootCooldown <= 0) {
+          this.enemyBullets.fire(e.sprite.x, e.sprite.y);
+          e.shootCooldown = ENEMY_SCOUT_FIRE_RATE + Math.random() * ENEMY_SCOUT_FIRE_RATE; 
+        }
+      }
+      
+      // Cache player position for collision checks
+      const playerX = this.player.sprite.x;
+      const playerY = this.player.sprite.y;
+      const playerRadius = this.player.radius;
+      
+      // Bullet vs Enemy collision using circle collision
+      for(const b of this.bullets.pool) {
+        if(!b.active) continue;
+        const bx = b.sprite.x;
+        const by = b.sprite.y;
+        const br = b.radius;
+        
+        for(const e of this.enemies.pool) {
+          if(!e.active || e.hp <= 0) continue;
+          
+          if(circleCollision(b.sprite, e.sprite)) {
+            e.hp -= this.player.damage;
+            if (e.hp <= 0) {
+              e.deactivate();
+              b.deactivate();
+              this.explosions.trigger(e.sprite.x,e.sprite.y);
+              const points = (e.type === 'drone' ? 10 : 20) + 2 * this.wave;
+              this.score += points;
+              this.hud.setScore(this.score);
+              this.scorePops.pop(e.sprite.x,e.sprite.y,points);
+              if (e.type === 'scout' && Math.random() < 0.25) {
+                this.upgrades.spawn(e.sprite.x, e.sprite.y);
+              }
+              this.triggerScreenShake(5); 
+            } else {
+              b.deactivate();
+            }
+            break;
+          }
+        }
+      }
+      
+      // Player vs Enemy collision
+      for(const e of this.enemies.pool) {
+        if(!e.active || e.hp <= 0) continue;
+        
+        if(circleCollision(this.player.sprite, e.sprite)) {
+          if(this.player.canBeHit()) {
+            this.player.hit();
+            this.hud.setLives(this.player.lives);
+            this.flash.flash();
+            this.explosions.trigger(playerX, playerY);
+          }
+          e.hp = 0;
+          e.deactivate();
+          this.explosions.trigger(e.sprite.x,e.sprite.y);
+        }
+      }
+      
+      // Player vs Enemy Bullet collision
+      for(const eb of this.enemyBullets.pool) {
+        if(!eb.active) continue;
+        
+        if(circleCollision(this.player.sprite, eb.sprite)) {
+          if(this.player.canBeHit()) {
+            this.player.hit();
+            this.hud.setLives(this.player.lives);
+            this.flash.flash();
+            this.explosions.trigger(playerX, playerY);
+          }
+          eb.deactivate();
+          break;
+        }
+      }
+      
+      // Player vs Upgrade collision
+      for (const u of this.upgrades.pool) {
+        if(!u.active) continue;
+        
+        if(circleCollision(this.player.sprite, u.sprite)) {
+          u.deactivate();
+          this.player.fireLevel++;
+          this.player.damage++;
+          this.score += 50;
+          this.hud.setScore(this.score);
+          this.scorePops.pop(u.sprite.x, u.sprite.y, 50);
+          this.explosions.trigger(u.sprite.x, u.sprite.y);
+          this.triggerScreenShake(2);
+          break;
+        }
+      }
+    }
+  }
+}
+
+    
+// Preload all assets, then start the game
+preloadAssets(__ASSET_MAP__).then(() => {
+  let game = new Game(app); // Create the game instance
+  game.app = app;
+  if (game.setup) game.setup();
+  app.ticker.add((delta) => {
+    game.update(delta);
+  });
+});
+
+    </script>
+</body>
+</html>

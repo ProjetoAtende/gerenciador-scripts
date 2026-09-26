@@ -1,0 +1,43 @@
+"Trata-se de manifestação registrada na Ouvidoria sob o protocolo nº 2026/00046797, apresentada pelo perito judicial Sr. Cleudeir Nunes Eler em 15 de abril de 2026, na qual relata dificuldades de acesso ao sistema eproc, ausência de retorno a solicitações anteriores de suporte e impossibilidade de visualização e movimentação processual, destacando a urgência em razão de prazos judiciais.
+
+Em análise à demanda, verificou-se que os chamados anteriormente registrados (nº 82413618 e nº 82411280) foram devidamente respondidos com encaminhamento de solução ao usuário.
+
+Do ponto de vista técnico, identificou-se que a dificuldade de acesso estava relacionada à utilização incorreta do login, tendo o usuário informado o CPF no campo “Usuário”, enquanto o sistema exige a utilização da sigla profissional de perito (CREASP0601676386) para autenticação.
+
+Adicionalmente, constatou-se que a impossibilidade de visualização integral do processo nº 40002933720258260288 decorria da ausência de vínculo formal do perito aos autos, o qual somente foi realizado pela unidade judicial em 23 de abril de 2026.
+
+Em 24 de abril de 2026, às 11h17, foi realizado contato telefônico com o usuário, ocasião em que foram prestadas orientações quanto à forma correta de acesso ao sistema e esclarecido o procedimento de vinculação processual. Após tais orientações, verificou-se a regularização do acesso e da atuação do perito no processo.
+
+Dessa forma, conclui-se que a demanda foi devidamente solucionada, tendo sido sanadas as inconsistências de acesso e de vinculação processual.
+
+Como medida de aprimoramento, sugere-se o reforço de orientações às unidades judiciais quanto à necessidade de vinculação do perito no momento da nomeação, bem como a melhoria das mensagens de erro do sistema, de modo a orientar o uso da sigla profissional em substituição ao CPF.
+
+É o que nos cumpre informar."
+
+"Trata-se de manifestação registrada na Ouvidoria pelo advogado Dr. Ricardo Montero Alvarez, na qual relata dificuldades para acesso ao sistema eproc, bem como insatisfação quanto ao atendimento prestado pelos canais de suporte, tendo registrado o chamado nº 81811972.
+
+A reclamação foi formalizada em 14 de abril de 2026. Inicialmente, foram realizadas tentativas de contato telefônico por meio do número informado, sem êxito.
+
+Posteriormente, em 17 de abril de 2026, foi encaminhado correio eletrônico ao usuário, nos endereços disponíveis, contendo esclarecimentos acerca do atendimento. Na ocasião, foi informado que o chamado já havia sido respondido e se encontrava aguardando aceite, bem como foram encaminhadas as credenciais de acesso ao sistema. Também foi confirmada a regularidade da autenticação em dois fatores e solicitada validação quanto à necessidade de eventual atualização do endereço de e-mail cadastrado.
+
+Em 24 de abril de 2026, foi encaminhado novo e-mail reiterando as informações anteriormente prestadas e colocando a equipe à disposição para atendimento direcionado, caso necessário.
+
+Na mesma data, o Dr. Ricardo respondeu à mensagem informando que havia conseguido acessar o sistema e que não havia necessidade de alteração do endereço de e-mail cadastrado.
+
+Dessa forma, considerando a confirmação do próprio usuário quanto à regularização do acesso, registra-se o encerramento da demanda.
+
+É o que nos cumpre informar."
+
+"Trata-se de manifestação na qual o usuário relata dificuldade para interposição de Agravo de Instrumento, em razão de erro relacionado à identificação do Juízo de origem no sistema eproc.
+
+Em atenção à demanda, foi realizado contato telefônico com o usuário, ocasião em que, mediante suporte assistido, foi possível efetuar com sucesso o protocolo do Agravo de Instrumento nº 4039900-14.2026.8.26.0000.
+
+Durante a análise, identificou-se que a inconsistência está relacionada à utilização da opção “Apoio por Inteligência Artificial” no momento da interposição do recurso. Nesses casos, o sistema apresenta a mensagem “Informe o Juízo em que se encontra o processo informado”, sem disponibilizar o campo correspondente para preenchimento, quando o comportamento esperado seria o preenchimento automático dessa informação.
+
+Como medida alternativa, foi orientado ao usuário que desmarque a referida opção, permitindo que o sistema preencha automaticamente os dados do Juízo com base no processo de origem, viabilizando o prosseguimento do peticionamento.
+
+Ressalta-se, ainda, que a situação encontra-se em tratamento pela equipe técnica, tendo o chamado do usuário sido devidamente vinculado a chamado global para acompanhamento e posterior correção sistêmica.
+
+Dessa forma, registra-se que a demanda foi solucionada por meio de orientação técnica, permanecendo o caso sob monitoramento para ajuste definitivo.
+
+É o que nos cumpre informar."

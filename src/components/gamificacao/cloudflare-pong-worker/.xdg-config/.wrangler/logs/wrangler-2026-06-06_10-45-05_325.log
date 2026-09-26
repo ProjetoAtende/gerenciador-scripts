@@ -1,0 +1,189 @@
+
+--- 2026-06-06T10:45:05.565Z debug
+🪵  Writing logs to "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-pong-worker\.xdg-config\.wrangler\logs\wrangler-2026-06-06_10-45-05_325.log"
+---
+
+--- 2026-06-06T10:45:05.565Z debug
+.env file not found at "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-pong-worker\.env". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T10:45:05.566Z debug
+.env file not found at "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-pong-worker\.env.local". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T10:45:05.575Z log
+
+ ⛅️ wrangler 4.98.0
+───────────────────
+---
+
+--- 2026-06-06T10:45:05.602Z log
+Attempting to login via OAuth...
+---
+
+--- 2026-06-06T10:45:05.605Z debug
+Metrics dispatcher: Posting data {"deviceId":"f7f0257a-3ec3-4eea-8c31-e82c4293e199","event":"wrangler command started","timestamp":1780742705604,"properties":{"amplitude_session_id":1780742705584,"amplitude_event_id":0,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"jsonc","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":"vscode-copilot-agent","argsUsed":[],"argsCombination":"","sanitizedCommand":"deployments list","sanitizedArgs":{},"currentAgentSkillsInstalled":"manual"}}
+---
+
+--- 2026-06-06T10:45:05.612Z debug
+Metrics dispatcher: Posting data {"deviceId":"f7f0257a-3ec3-4eea-8c31-e82c4293e199","event":"list versioned deployments","timestamp":1780742705612,"properties":{"amplitude_session_id":1780742705600,"amplitude_event_id":0,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"none","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":"vscode-copilot-agent","category":"Workers","os":"win32:x64","json":false,"currentAgentSkillsInstalled":"manual"}}
+---
+
+--- 2026-06-06T10:45:05.656Z log
+Opening a link in your default browser: https://dash.cloudflare.com/oauth2/auth?response_type=code&client_id=54d11594-84e4-41aa-b438-e81b8fa78ee7&redirect_uri=http%3A%2F%2Flocalhost%3A8976%2Foauth%2Fcallback&scope=account%3Aread%20user%3Aread%20workers%3Awrite%20workers_kv%3Awrite%20workers_routes%3Awrite%20workers_scripts%3Awrite%20workers_tail%3Aread%20d1%3Awrite%20pages%3Awrite%20zone%3Aread%20ssl_certs%3Awrite%20ai%3Awrite%20ai-search%3Awrite%20ai-search%3Arun%20websearch.run%20agent-memory%3Awrite%20queues%3Awrite%20pipelines%3Awrite%20secrets_store%3Awrite%20artifacts%3Awrite%20flagship%3Awrite%20containers%3Awrite%20cloudchamber%3Awrite%20connectivity%3Aadmin%20email_routing%3Awrite%20email_sending%3Awrite%20browser%3Awrite%20offline_access&state=9g.CwPoWN614zkf9vt~WsTJBQSkBfDyG&code_challenge=2fBpny465fF2JPlFVvpSC6G4sCOMs5aQqZA6qrxb68k&code_challenge_method=S256
+---
+
+--- 2026-06-06T10:45:32.104Z debug
+fetching auth token grant_type=authorization_code
+---
+
+--- 2026-06-06T10:45:32.104Z debug
+Checking if domain has Access enabled: dash.cloudflare.com
+---
+
+--- 2026-06-06T10:45:32.105Z debug
+Access switch not cached for: dash.cloudflare.com
+---
+
+--- 2026-06-06T10:45:32.184Z debug
+Caching access switch for: dash.cloudflare.com
+---
+
+--- 2026-06-06T10:45:32.184Z debug
+Fetching auth token from https://dash.cloudflare.com/oauth2/token
+---
+
+--- 2026-06-06T10:45:32.862Z log
+Successfully logged in.
+---
+
+--- 2026-06-06T10:45:32.871Z debug
+-- START CF API REQUEST: GET https://api.cloudflare.com/client/v4/accounts
+---
+
+--- 2026-06-06T10:45:32.871Z debug
+QUERY STRING: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T10:45:32.871Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T10:45:32.871Z debug
+INIT: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T10:45:32.872Z debug
+-- END CF API REQUEST
+---
+
+--- 2026-06-06T10:45:32.873Z debug
+-- START CF API REQUEST: GET https://api.cloudflare.com/client/v4/memberships
+---
+
+--- 2026-06-06T10:45:32.873Z debug
+QUERY STRING: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T10:45:32.873Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T10:45:32.874Z debug
+INIT: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T10:45:32.874Z debug
+-- END CF API REQUEST
+---
+
+--- 2026-06-06T10:45:33.278Z debug
+-- START CF API RESPONSE: OK 200
+---
+
+--- 2026-06-06T10:45:33.279Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T10:45:33.279Z debug
+RESPONSE: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T10:45:33.279Z debug
+-- END CF API RESPONSE
+---
+
+--- 2026-06-06T10:45:33.344Z debug
+-- START CF API RESPONSE: OK 200
+---
+
+--- 2026-06-06T10:45:33.344Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T10:45:33.344Z debug
+RESPONSE: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T10:45:33.344Z debug
+-- END CF API RESPONSE
+---
+
+--- 2026-06-06T10:45:33.345Z debug
+Saving to cache: {"account":{"id":"f5b30344beeaef6e365cde5bd79ee8c0","name":"David.pestilli@outlook.com's Account"}}
+---
+
+--- 2026-06-06T10:45:33.349Z debug
+-- START CF API REQUEST: GET https://api.cloudflare.com/client/v4/accounts/f5b30344beeaef6e365cde5bd79ee8c0/workers/scripts/arena-pong-worker/deployments
+---
+
+--- 2026-06-06T10:45:33.349Z debug
+QUERY STRING: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T10:45:33.349Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T10:45:33.349Z debug
+INIT: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T10:45:33.349Z debug
+-- END CF API REQUEST
+---
+
+--- 2026-06-06T10:45:34.106Z debug
+-- START CF API RESPONSE: Not Found 404
+---
+
+--- 2026-06-06T10:45:34.107Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T10:45:34.107Z debug
+RESPONSE: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-06-06T10:45:34.107Z debug
+-- END CF API RESPONSE
+---
+
+--- 2026-06-06T10:45:34.108Z log
+
+---
+
+--- 2026-06-06T10:45:34.174Z error
+X [ERROR] A request to the Cloudflare API (/accounts/f5b30344beeaef6e365cde5bd79ee8c0/workers/scripts/arena-pong-worker/deployments) failed.
+
+  This Worker does not exist on your account. [code: 10007]
+  
+  If you think this is a bug, please open an issue at:
+  https://github.com/cloudflare/workers-sdk/issues/new/choose
+
+
+---
+
+--- 2026-06-06T10:45:34.175Z debug
+Metrics dispatcher: Posting data {"deviceId":"f7f0257a-3ec3-4eea-8c31-e82c4293e199","event":"wrangler command errored","timestamp":1780742734175,"properties":{"amplitude_session_id":1780742705584,"amplitude_event_id":1,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"jsonc","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":"vscode-copilot-agent","argsUsed":[],"argsCombination":"","sanitizedCommand":"deployments list","sanitizedArgs":{},"durationMs":28539,"errorType":"APIError","currentAgentSkillsInstalled":"manual"}}
+---

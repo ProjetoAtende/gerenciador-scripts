@@ -1,0 +1,41 @@
+node_modules
+.env
+.env.*
+!.env.example
+dist
+
+# Dump de produção (~70MB) — manter só local; ver docs/MEMORIA (deploy Git)
+supabase/seed.sql
+
+# Legado (scripts/docs com tokens históricos) — manter só no disco local
+archive/
+
+# Dumps e migrations legadas (podem conter chaves em SQL antigo)
+supabase/schema_dump.sql
+supabase/schema_local.sql
+supabase/migrations_legacy/*
+!supabase/migrations_legacy/README.md
+
+# Legado pesado (não usado no front Atende)
+public/sprites/gamificacao/
+assets/models/
+reports
+.codex-*
+temp_*.json
+.env.local.docker
+temp/
+robo_global/artifacts/
+robo_global/.profile/
+robo_global/.profile-fallback-debug/
+robo_rejeites/.profile/
+robo_rejeites/.profile-fallback-debug/
+robo_rejeites/artifacts/
+robo_smax_status/.profile/
+robo_smax_status/.profile-fallback-debug/
+robo_smax_status/artifacts/
+robo_tickets_antigos/.profile/
+robo_tickets_antigos/.profile-fallback/
+robo_tickets_antigos/artifacts/
+robo_oraculo_smax_sync/.profile/
+robo_oraculo_smax_sync/.profile-fallback-debug/
+robo_oraculo_smax_sync/artifacts/

@@ -1,0 +1,518 @@
+// Configurações do Supabase
+const SUPABASE_URL = 'https://rdkvvigjmowtvhxqlrnp.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJka3Z2aWdqbW93dHZoeHFscm5wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIxNjkwODQsImV4cCI6MjA1Nzc0NTA4NH0.pFn1faGoWsapclNIjVhnD8A754DMiY7dZL9Ig0lDMQ4';
+const SENDER_EMAIL = 'exsypher0@gmail.com';
+
+/**
+ * Função principal que processa emails de chamados
+ * Executada automaticamente pelo trigger a cada 15 minutos
+ */
+function processarChamados() {
+  try {
+    
+    console.log('Iniciando processamento de chamados...');
+    
+    // Busca emails não lidos com label 'Chamados-Sistema'
+    const label = GmailApp.getUserLabelByName('Chamados-Sistema');
+    if (!label) {
+      console.log('Label "Chamados-Sistema" não encontrada. Crie o filtro primeiro.');
+      return;
+    }
+    
+    const threads = label.getThreads();
+    const emailsNaoLidos = threads.filter(thread => thread.isUnread());
+    
+    console.log(`Encontrados ${emailsNaoLidos.length} emails não lidos`);
+    
+    for (const thread of emailsNaoLidos) {
+      const messages = thread.getMessages();
+      
+      for (const message of messages) {
+        if (message.isUnread()) {
+          processarEmail(message);
+          message.markRead(); // Marca como lido após processar
+        }
+      }
+    }
+    
+    console.log('Processamento concluído');
+    
+  } catch (error) {
+    console.error('Erro no processamento:', error);
+    enviarEmailErro(error);
+  }
+}
+
+/**
+ * Processa um email individual
+ */
+function processarEmail(message) {
+  try {
+    const assunto = message.getSubject();
+    const corpoHtml = message.getBody(); // Pega o HTML do email
+    const remetente = message.getFrom();
+    
+    console.log(`Processando email: ${assunto}`);
+    
+    // Verifica se é um email de chamado válido
+    if (!assunto.includes('[CHAMADO]')) {
+      console.log('Email não é um chamado válido');
+      return;
+    }
+    
+    // Extrai dados do email
+    const dadosChamado = extrairDadosHTML(assunto, corpoHtml);
+    
+    if (!dadosChamado) {
+      console.log('Não foi possível extrair dados do email');
+      return;
+    }
+    
+    // Verifica se já existe no Supabase
+    const chamadoExistente = verificarChamadoExiste(dadosChamado.numero_chamado);
+    
+    if (chamadoExistente) {
+      console.log(`Chamado ${dadosChamado.numero_chamado} já existe no sistema - inserindo como reabertura`);
+      
+      // Marca como reabertura e insere na fila central
+      const dadosReabertura = {
+        ...dadosChamado,
+        is_reopened: true
+      };
+      
+      const sucesso = inserirTicketSupabase(dadosReabertura);
+      
+      if (sucesso) {
+        console.log(`Chamado ${dadosChamado.numero_chamado} inserido como reabertura na fila central`);
+      } else {
+        console.log(`Erro ao inserir reabertura do chamado ${dadosChamado.numero_chamado}`);
+      }
+      return;
+    }
+    
+    // Insere no Supabase
+    const sucesso = inserirTicketSupabase(dadosChamado);
+    
+    if (sucesso) {
+      console.log(`Chamado ${dadosChamado.numero_chamado} inserido com sucesso`);
+    } else {
+      console.log(`Erro ao inserir chamado ${dadosChamado.numero_chamado}`);
+    }
+    
+  } catch (error) {
+    console.error('Erro ao processar email:', error);
+  }
+}
+
+/**
+ * Extrai um campo do HTML usando múltiplos padrões
+ * @param {string} htmlLimpo - HTML já processado e limpo
+ * @param {string} nomeCampo - Nome do campo a ser extraído (ex: "Data de Abertura", "Email")
+ * @param {boolean} textoLongo - Se true, captura texto mais longo (para descrições)
+ * @returns {string|null} - Valor extraído ou null
+ */
+function extrairCampoHTML(htmlLimpo, nomeCampo, textoLongo = false) {
+  try {
+    // Prepara o nome do campo para regex (escapa caracteres especiais)
+    const campoEscapado = nomeCampo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // Define o padrão de captura baseado no tipo de conteúdo
+    const padraoCaptura = textoLongo ? '([\\s\\S]{1,2000}?)' : '([^<>]{1,500}?)';
+
+    // Lista de padrões a serem testados (do mais específico ao mais genérico)
+    const padroes = [
+      // Padrão 1: Estrutura com <span> (formato antigo)
+      new RegExp(campoEscapado + ':.*?<\\/span>.*?<span[^>]*>' + padraoCaptura + '<\\/span>', 'i'),
+
+      // Padrão 2: Estrutura de tabela com <td>
+      new RegExp(campoEscapado + ':\\s*<\\/td>\\s*<td[^>]*>' + padraoCaptura + '<\\/td>', 'i'),
+
+      // Padrão 3: Campo seguido diretamente por valor (qualquer tag)
+      new RegExp(campoEscapado + ':[^<]*<[^>]+>' + padraoCaptura + '<\\/', 'i'),
+
+      // Padrão 4: Campo seguido de valor com espaços (dentro de tags)
+      new RegExp(campoEscapado + ':\\s*<[^>]*>\\s*' + padraoCaptura + '\\s*<', 'i'),
+
+      // Padrão 5: Campo seguido de valor sem tags específicas (mais genérico)
+      new RegExp(campoEscapado + ':\\s*' + padraoCaptura + '(?:<|\\s{2,}|Atenciosamente)', 'i'),
+
+      // Padrão 6: Para descrições longas - captura até encontrar palavras-chave de fim
+      textoLongo ? new RegExp(campoEscapado + ':\\s*' + padraoCaptura + '(?:Atenciosamente|Enviado automaticamente|Suporte)', 'i') : null
+    ].filter(p => p !== null);
+
+    // Tenta cada padrão até encontrar um match
+    for (const padrao of padroes) {
+      const match = htmlLimpo.match(padrao);
+      if (match && match[1]) {
+        let valor = match[1].trim();
+
+        // Remove tags HTML que possam ter sobrado
+        valor = valor.replace(/<[^>]*>/g, '').trim();
+
+        // Decodifica entidades HTML
+        valor = decodificarHTML(valor);
+
+        // Remove espaços múltiplos
+        valor = valor.replace(/\s+/g, ' ').trim();
+
+        // Verifica se o valor extraído não é vazio ou muito curto
+        if (valor && valor.length > 0) {
+          console.log(`Campo "${nomeCampo}" extraído com sucesso: ${valor.substring(0, 50)}${valor.length > 50 ? '...' : ''}`);
+          return valor;
+        }
+      }
+    }
+
+    // Se chegou aqui, nenhum padrão funcionou
+    console.log(`Aviso: Campo "${nomeCampo}" não encontrado no HTML`);
+    return null;
+
+  } catch (error) {
+    console.error(`Erro ao extrair campo "${nomeCampo}":`, error);
+    return null;
+  }
+}
+
+/**
+ * Extrai dados do assunto e corpo HTML do email
+ */
+function extrairDadosHTML(assunto, corpoHtml) {
+  try {
+    // Extrai número do chamado do assunto
+    // Formato: [CHAMADO] # - #60248924: eproc Público Externo
+    const matchAssunto = assunto.match(/\[CHAMADO\].*?#(\d+)/);
+
+    if (!matchAssunto) {
+      console.log('Formato do assunto inválido:', assunto);
+      return null;
+    }
+
+    const numeroChamado = matchAssunto[1];
+    console.log(`Número do chamado extraído: ${numeroChamado}`);
+
+    // Remove quebras de linha e espaços extras do HTML para facilitar parsing
+    const htmlLimpo = corpoHtml.replace(/\s+/g, ' ').replace(/\n/g, ' ');
+
+    // Log de debug: mostra trecho do HTML para diagnóstico
+    console.log(`Preview HTML (primeiros 500 chars): ${htmlLimpo.substring(0, 500)}...`);
+
+    // Extrai Data de Abertura - com múltiplos padrões
+    let dataAbertura = null;
+    dataAbertura = extrairCampoHTML(htmlLimpo, 'Data de Abertura');
+
+    // Extrai Grupo Solucionador - com múltiplos padrões
+    let gse = null;
+    gse = extrairCampoHTML(htmlLimpo, 'Grupo Solucionador');
+
+    // Extrai Descrição - com múltiplos padrões
+    let descricao = null;
+    descricao = extrairCampoHTML(htmlLimpo, 'Descrição', true); // true = permite texto longo
+    if (descricao) {
+      // Remove tags HTML mas mantém quebras de linha
+      descricao = descricao.replace(/<\/p>/g, '\n').replace(/<br[^>]*>/g, '\n');
+      descricao = descricao.replace(/<[^>]*>/g, '').trim();
+      // Remove múltiplas quebras de linha
+      descricao = descricao.replace(/\n\s*\n/g, '\n').trim();
+    }
+
+    // Extrai Email do usuário - com múltiplos padrões
+    let emailUsuario = null;
+    emailUsuario = extrairCampoHTML(htmlLimpo, 'Email');
+
+    // Extrai Status VIP do usuário (mantém lógica anterior)
+    let isVipUsuario = false;
+    const usuarioInfo = extrairCampoHTML(htmlLimpo, 'Usuário');
+    if (usuarioInfo) {
+      const usuarioDecodificado = decodificarHTML(usuarioInfo);
+
+      // Verifica se contém VIP (indica usuário VIP)
+      if (usuarioDecodificado.includes('VIP')) {
+        isVipUsuario = true;
+      }
+    }
+
+    // Determina se é VIP com base no email e no campo usuário
+    let isVip = isVipUsuario; // Começa com a lógica anterior
+    
+    if (emailUsuario) {
+      const emailLower = emailUsuario.toLowerCase();
+      
+      // Lista de emails VIP específicos (sincronizada com emails.txt)
+      const emailsVipEspecificos = [
+        'lamorim@sp.gov.br','ndeliberali@sp.gov.br','epreis@sp.gov.br','abocafoli@sp.gov.br','asocampos@sp.gov.br','eliasilva@sp.gov.br','dmigoto@sp.gov.br','vcarbonieri@sp.gov.br','abraaog@tjsp.jus.br','ahoroiwa@tjsp.jus.br','adrianams@tjsp.jus.br','afpaula@tjsp.jus.br','adrianazovedilopes@tjsp.jus.br','adominguito@tjsp.jus.br','agnicolau@tjsp.jus.br','akvint@tjsp.jus.br','aleocidiomv@tjsp.jus.br','alessandrabraz@tjsp.jus.br','alessandramc@tjsp.jus.br','apiasecki@tjsp.jus.br','ayeiri@tjsp.jus.br','abfreitas@tjsp.jus.br','alexbs@tjsp.jus.br','abubak@tjsp.jus.br','amarcusso@tjsp.jus.br','atiroel@tjsp.jus.br','alinenakamura@tjsp.jus.br','alineo@tjsp.jus.br','aliner@tjsp.jus.br','alinia.almeida@tjsp.jus.br','akameya@tjsp.jus.br','amiras@tjsp.jus.br','aalmeida4@tjsp.jus.br','anmartins@tjsp.jus.br','aclopes@tjsp.jus.br','anacguerra@tjsp.jus.br','anadeoliveira@tjsp.jus.br','adino@tjsp.jus.br','andersonrosa@tjsp.jus.br','afnegreiros@tjsp.jus.br','akaplar@tjsp.jus.br','andremoraes@tjsp.jus.br','afalseti@tjsp.jus.br','andreabueno@tjsp.jus.br','andreagf@tjsp.jus.br','andreape@tjsp.jus.br','andreamasumoto@tjsp.jus.br','andreiaamaral@tjsp.jus.br','aquintino@tjsp.jus.br','anelisas@tjsp.jus.br','antoniob@tjsp.jus.br','aluque@tjsp.jus.br','aladislau@tjsp.jus.br','antoniosousa@tjsp.jus.br','abispo1@tjsp.jus.br','apozzer@tjsp.jus.br','auricelios@tjsp.jus.br','beatrizsi@tjsp.jus.br','bbarros@tjsp.jus.br','brunaso@tjsp.jus.br','brusantos@tjsp.jus.br','bccrenno@tjsp.jus.br','bamaro@tjsp.jus.br','bpires@tjsp.jus.br','bdomingues@tjsp.jus.br','brunof@tjsp.jus.br','brferreira@tjsp.jus.br','crcura@tjsp.jus.br','camilatoledo@tjsp.jus.br','cbertholdo@tjsp.jus.br','camillad@tjsp.jus.br','carlacarvalho@tjsp.jus.br','carladazzi@tjsp.jus.br','carlanavarro@tjsp.jus.br','cpastore@tjsp.jus.br','carlose@tjsp.jus.br','carlosea@tjsp.jus.br','carlosnascimento@tjsp.jus.br','cthyago@tjsp.jus.br','carlosy@tjsp.jus.br','carolinacm@tjsp.jus.br','cavalverde@tjsp.jus.br','crterra@tjsp.jus.br','cvictor@tjsp.jus.br','crkiyomoto@tjsp.jus.br','coliverio@tjsp.jus.br','ctavares@tjsp.jus.br','celioj@tjsp.jus.br','cantunes@tjsp.jus.br','claudia.alves@tjsp.jus.br','claudiaas@tjsp.jus.br','ccavalcanti@tjsp.jus.br','cmeneghin@tjsp.jus.br','clcruz@tjsp.jus.br','clebero@tjsp.jus.br','cleber.silva@tjsp.jus.br','cmiura@tjsp.jus.br','cateixeira@tjsp.jus.br','cleversons@tjsp.jus.br','cbasoukosi@tjsp.jus.br','cristianesantiagolop@tjsp.jus.br','cristianez@tjsp.jus.br','cristianof@tjsp.jus.br','cgdalmeida@tjsp.jus.br','chseu@tjsp.jus.br','ctejo@tjsp.jus.br','cyntias@tjsp.jus.br','dsmacruz@tjsp.jus.br','dabustamante@tjsp.jus.br','daniel.am@tjsp.jus.br','danielbrunosilva@tjsp.jus.br','daoliveira@tjsp.jus.br','danielr@tjsp.jus.br','dsiqueira@tjsp.jus.br','dshinzato@tjsp.jus.br','danielasil@tjsp.jus.br','daniloa@tjsp.jus.br','danilogarcia@tjsp.jus.br','danilofurtado@tjsp.jus.br','dcardone@tjsp.jus.br','dneto@tjsp.jus.br','deborar@tjsp.jus.br','deborafro@tjsp.jus.br','deufrasio@tjsp.jus.br','deisedc@tjsp.jus.br','dkuchartscik@tjsp.jus.br','demarcal@tjsp.jus.br','dennysm@tjsp.jus.br','dimasf@tjsp.jus.br','disnaela@tjsp.jus.br','doserafim@tjsp.jus.br','edersond@tjsp.jus.br','edgarf@tjsp.jus.br','erolim@tjsp.jus.br','edineidec@tjsp.jus.br','edmaram@tjsp.jus.br','ewalvarenga@tjsp.jus.br','esantos5@tjsp.jus.br','eneto@tjsp.jus.br','ecpace@tjsp.jus.br','elainetakata@tjsp.jus.br','elainemsf@tjsp.jus.br','elainepereira@tjsp.jus.br','eflacon@tjsp.jus.br','eldaniel@tjsp.jus.br','ezanluqui@tjsp.jus.br','ekono@tjsp.jus.br','elomf@tjsp.jus.br','emersons@tjsp.jus.br','emersonf@tjsp.jus.br','eschicoli@tjsp.jus.br','emersonmartins@tjsp.jus.br','emersont@tjsp.jus.br','ericlima@tjsp.jus.br','enakazone@tjsp.jus.br','ericklima@tjsp.jus.br','ericsonm@tjsp.jus.br','erikagt@tjsp.jus.br','erikapds@tjsp.jus.br','esnogueira@tjsp.jus.br','evanaldol@tjsp.jus.br','evellyns@tjsp.jus.br','emesquita@tjsp.jus.br','etakao@tjsp.jus.br','falberti@tjsp.jus.br','fabianasouza@tjsp.jus.br','fabianadasilva@tjsp.jus.br','fabianamoura@tjsp.jus.br','fgouveia@tjsp.jus.br','fareis@tjsp.jus.br','fcoelho@tjsp.jus.br','fderger@tjsp.jus.br','fdavidson@tjsp.jus.br','fmariano@tjsp.jus.br','fafcsilva@tjsp.jus.br','fsiqueira@tjsp.jus.br','felipesoares@tjsp.jus.br','felipejn@tjsp.jus.br','fsimoes@tjsp.jus.br','fcfolli@tjsp.jus.br','fernandocf@tjsp.jus.br','fernando.santos@tjsp.jus.br','fpassos@tjsp.jus.br','ffortini@tjsp.jus.br','fmeloni@tjsp.jus.br','flaviarp@tjsp.jus.br','flsantos@tjsp.jus.br','fzaim@tjsp.jus.br','flrocha@tjsp.jus.br','gabrieljunior@tjsp.jus.br','ggimenez@tjsp.jus.br','gefilho@tjsp.jus.br','gmfarah@tjsp.jus.br','gesseb@tjsp.jus.br','gilb@tjsp.jus.br','gbellotto@tjsp.jus.br','gisselles@tjsp.jus.br','guilhermeb@tjsp.jus.br','guilhermecunha@tjsp.jus.br','goiye@tjsp.jus.br','godias@tjsp.jus.br','gustavotg@tjsp.jus.br','hgandriol@tjsp.jus.br','hyamamoto@tjsp.jus.br','hacalabrese@tjsp.jus.br','hfaisca@tjsp.jus.br','hgalhardo@tjsp.jus.br','hvicente@tjsp.jus.br','hugoms@tjsp.jus.br','ivaneidep@tjsp.jus.br','ipscarvalho@tjsp.jus.br','jmaranhao@tjsp.jus.br','jsakamoto@tjsp.jus.br','jaquelinen@tjsp.jus.br','jschroder@tjsp.jus.br','jeffersona@tjsp.jus.br','jchar@tjsp.jus.br','jesuinob@tjsp.jus.br','jnakanishi@tjsp.jus.br','jbfagundes@tjsp.jus.br','jartilha@tjsp.jus.br','joaojunior@tjsp.jus.br','joaosantiago@tjsp.jus.br','joelmas@tjsp.jus.br','joicecf@tjsp.jus.br','jkang@tjsp.jus.br','jorgeconceicao@tjsp.jus.br','joseclaudino@tjsp.jus.br','jcavallo@tjsp.jus.br','jcavalcanti1@tjsp.jus.br','josepavanelli@tjsp.jus.br','jbpenninck@tjsp.jus.br','jmasson@tjsp.jus.br','julianasouza@tjsp.jus.br','jschultz@tjsp.jus.br','jdelbon@tjsp.jus.br','julianaq@tjsp.jus.br','julianag@tjsp.jus.br','julianasb@tjsp.jus.br','juliannab@tjsp.jus.br','kfocante@tjsp.jus.br','ksato@tjsp.jus.br','ktaglione@tjsp.jus.br','kfarhat@tjsp.jus.br','katiab@tjsp.jus.br','kcarvalho@tjsp.jus.br','keilar@tjsp.jus.br','kellycds@tjsp.jus.br','ktersano@tjsp.jus.br','klausp@tjsp.jus.br','ladytk@tjsp.jus.br','lmoromizato@tjsp.jus.br','lcrispin@tjsp.jus.br','lmoura2@tjsp.jus.br','lrosa@tjsp.jus.br','lribeiro1@tjsp.jus.br','lbarros2@tjsp.jus.br','lenunes@tjsp.jus.br','levic@tjsp.jus.br','ligiapl@tjsp.jus.br','lilianalmeida@tjsp.jus.br','lcmarques@tjsp.jus.br','lishii@tjsp.jus.br','lilianeac@tjsp.jus.br','lilianetm@tjsp.jus.br','lisianis@tjsp.jus.br','luanasilva@tjsp.jus.br','luanappm@tjsp.jus.br','lucaspalma@tjsp.jus.br','lrezende@tjsp.jus.br','luciana.domingos@tjsp.jus.br','lucianasiqueira@tjsp.jus.br','llcarvalho@tjsp.jus.br','ligne@tjsp.jus.br','lnogueira@tjsp.jus.br','luciennef@tjsp.jus.br','lucimaram@tjsp.jus.br','lestevam@tjsp.jus.br','luisguimaraes@tjsp.jus.br','luismaia@tjsp.jus.br','lfcardoso@tjsp.jus.br','lconstantino@tjsp.jus.br','luizandrade@tjsp.jus.br','lmastropietro@tjsp.jus.br','lfguimaraes@tjsp.jus.br','ltoloza@tjsp.jus.br','lmaki@tjsp.jus.br','luizafs@tjsp.jus.br','mcabreu@tjsp.jus.br','marasilva@tjsp.jus.br','mpizzorusso@tjsp.jus.br','mpadilha@tjsp.jus.br','mabarbosa@tjsp.jus.br','marcelorocha@tjsp.jus.br','mjacintho@tjsp.jus.br','msilva24@tjsp.jus.br','marcelodantas@tjsp.jus.br','mrieger@tjsp.jus.br','mclopes@tjsp.jus.br','mgenovese@tjsp.jus.br','mcaxias@tjsp.jus.br','marciaami@tjsp.jus.br','mfrancisquetti@tjsp.jus.br','mtokinari@tjsp.jus.br','marco.da@tjsp.jus.br','mvisconti@tjsp.jus.br','maguislande@tjsp.jus.br','marcoi@tjsp.jus.br','marcoro@tjsp.jus.br','marcocesards@tjsp.jus.br','marcossanches@tjsp.jus.br','marcosrossetto@tjsp.jus.br','mariaapsantos@tjsp.jus.br','mtorres@tjsp.jus.br','masimao@tjsp.jus.br','mcabbati@tjsp.jus.br','mdcastro@tjsp.jus.br','mcpspereira@tjsp.jus.br','mfabbati@tjsp.jus.br','miferreira@tjsp.jus.br','mariamarques@tjsp.jus.br','mariaadami@tjsp.jus.br','mrmsilveira@tjsp.jus.br','mtdiniz@tjsp.jus.br','marianamluz@tjsp.jus.br','mariane@tjsp.jus.br','mariojeffersonferrei@tjsp.jus.br','mariostivaljunior@tjsp.jus.br','marlys@tjsp.jus.br','maurad@tjsp.jus.br','mablas@tjsp.jus.br','mauriciogomes@tjsp.jus.br','mdiogoct@tjsp.jus.br','mgermano@tjsp.jus.br','michaeld@tjsp.jus.br','mgasparino@tjsp.jus.br','mgraca@tjsp.jus.br','michelles@tjsp.jus.br','mdelboni@tjsp.jus.br','mofranzao@tjsp.jus.br','nveloso@tjsp.jus.br','npmattos@tjsp.jus.br','nataliamizuta@tjsp.jus.br','nsuzuki@tjsp.jus.br','nfrodrigues@tjsp.jus.br','nboni@tjsp.jus.br','nafujihara@tjsp.jus.br','nilsonalmeida@tjsp.jus.br','nishikawa@tjsp.jus.br','nfukumoto@tjsp.jus.br','odeiltonjm@tjsp.jus.br','odracij@tjsp.jus.br','patriciaferreira@tjsp.jus.br','patriciapucci@tjsp.jus.br','palbano@tjsp.jus.br','pmanente@tjsp.jus.br','pmaeda@tjsp.jus.br','pdivino@tjsp.jus.br','pmamedio@tjsp.jus.br','purbano@tjsp.jus.br','plouback@tjsp.jus.br','paulofsilva@tjsp.jus.br','paulohnogueira@tjsp.jus.br','ppacanaro@tjsp.jus.br','pedrofernandes@tjsp.jus.br','phslisse@tjsp.jus.br','pioliveira@tjsp.jus.br','pedrorodrigues@tjsp.jus.br','palcid@tjsp.jus.br','priscillaaugusto@tjsp.jus.br','pcezar@tjsp.jus.br','prmedeiros@tjsp.jus.br','psvince@tjsp.jus.br','raraujo3@tjsp.jus.br','rafaelaamerico@tjsp.jus.br','raimundap@tjsp.jus.br','raquelm@tjsp.jus.br','rklacerda@tjsp.jus.br','rpaes@tjsp.jus.br','rcsmendonca@tjsp.jus.br','rkoshiyama@tjsp.jus.br','ralmeida@tjsp.jus.br','renanguimaraes@tjsp.jus.br','rberni@tjsp.jus.br','rsandroni@tjsp.jus.br','rkairuz@tjsp.jus.br','renatarubia@tjsp.jus.br','rtalib@tjsp.jus.br','renatodos@tjsp.jus.br','rtakaki@tjsp.jus.br','rrodriguez@tjsp.jus.br','rtmartins@tjsp.jus.br','robertoc@tjsp.jus.br','rlsilva@tjsp.jus.br','rodolfoo@tjsp.jus.br','rlagesm@tjsp.jus.br','rocmsantos@tjsp.jus.br','rodrigot@tjsp.jus.br','rsrangel@tjsp.jus.br','rbissoli@tjsp.jus.br','rdesouza@tjsp.jus.br','rvrcampos@tjsp.jus.br','rsilva18@tjsp.jus.br','rosangelasanches@tjsp.jus.br','rshirakawa@tjsp.jus.br','rmarinoto@tjsp.jus.br','rbrunelli@tjsp.jus.br','rpena@tjsp.jus.br','rubensfilho@tjsp.jus.br','slhamas@tjsp.jus.br','sandersons@tjsp.jus.br','sruocco@tjsp.jus.br','srloddi@tjsp.jus.br','sandrastankunas@tjsp.jus.br','sergior@tjsp.jus.br','sergiolalmeida@tjsp.jus.br','spsouza@tjsp.jus.br','spane@tjsp.jus.br','sdrodrigues@tjsp.jus.br','slora@tjsp.jus.br','simonec@tjsp.jus.br','simonepaula@tjsp.jus.br','simonefonseca@tjsp.jus.br','simonecarneiro@tjsp.jus.br','shokama@tjsp.jus.br','solangesugano@tjsp.jus.br','sonialazaro@tjsp.jus.br','soniabraga@tjsp.jus.br','sarmontanari@tjsp.jus.br','sorayar@tjsp.jus.br','snakayama@tjsp.jus.br','schiconelli@tjsp.jus.br','sylviamaria@tjsp.jus.br','taiss@tjsp.jus.br','tgpadilha@tjsp.jus.br','tmyazi@tjsp.jus.br','tfreire@tjsp.jus.br','trgalhardo@tjsp.jus.br','tsenas@tjsp.jus.br','valdirs@tjsp.jus.br','valeriaoliveira@tjsp.jus.br','vferriani@tjsp.jus.br','vkindler@tjsp.jus.br','valeriavs@tjsp.jus.br','vllima@tjsp.jus.br','vanderleim@tjsp.jus.br','vanessacma@tjsp.jus.br','vicenteb@tjsp.jus.br','victorsb@tjsp.jus.br','vtonet@tjsp.jus.br','vivianecm@tjsp.jus.br','vivianecardoso@tjsp.jus.br','vivianycr@tjsp.jus.br','wlandriote@tjsp.jus.br','wagnern@tjsp.jus.br','wagnery@tjsp.jus.br','waldiramj@tjsp.jus.br','wmoreira@tjsp.jus.br','wellingtoncruz@tjsp.jus.br','wesleiv@tjsp.jus.br','wmartineli@tjsp.jus.br','wcardim@tjsp.jus.br','wsadao@tjsp.jus.br','wolneysilva@tjsp.jus.br','wwen@tjsp.jus.br','ycorreia@tjsp.jus.br','ysouza@tjsp.jus.br','ymdias@tjsp.jus.br'
+      ];
+      
+      // Verifica se é um email VIP específico
+      for (const emailVip of emailsVipEspecificos) {
+        if (emailLower === emailVip.toLowerCase()) {
+          isVip = true;
+          break;
+        }
+      }
+      
+      // Se ainda não é VIP, verifica domínios VIP
+      if (!isVip) {
+        const dominiosVip = ['mpsp', 'imesc', 'defensoria', 'agu'];
+        for (const dominio of dominiosVip) {
+          if (emailLower.includes('@' + dominio)) {
+            isVip = true;
+            break;
+          }
+        }
+      }
+    }
+    
+    console.log('Dados extraídos:');
+    console.log(`- Número: ${numeroChamado}`);
+    console.log(`- Data: ${dataAbertura}`);
+    console.log(`- GSE: ${gse}`);
+    console.log(`- Descrição: ${descricao ? descricao.substring(0, 100) + '...' : 'null'}`);
+    console.log(`- Email: ${emailUsuario}`);
+    console.log(`- VIP: ${isVip}`);
+    
+    // Validações
+    if (!dataAbertura) {
+      console.log('Data de abertura não encontrada');
+      return null;
+    }
+    
+    if (!gse) {
+      console.log('Grupo Solucionador não encontrado');
+      return null;
+    }
+    
+    // Converte data para formato ISO
+    const dataISO = converterDataParaISO(dataAbertura);
+    
+    return {
+      numero_chamado: numeroChamado,
+      gse: gse,
+      tempo_espera_origem: dataISO,
+      descricao: descricao || 'Descrição não encontrada',
+      email: emailUsuario,
+      vip: isVip
+    };
+    
+  } catch (error) {
+    console.error('Erro ao extrair dados HTML:', error);
+    return null;
+  }
+}
+
+/**
+ * Decodifica entidades HTML básicas
+ */
+function decodificarHTML(texto) {
+  if (!texto) return texto;
+  
+  return texto
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/=C3=A1/g, 'á')
+    .replace(/=C3=A9/g, 'é')
+    .replace(/=C3=AD/g, 'í')
+    .replace(/=C3=B3/g, 'ó')
+    .replace(/=C3=BA/g, 'ú')
+    .replace(/=C3=A0/g, 'à')
+    .replace(/=C3=A2/g, 'â')
+    .replace(/=C3=AA/g, 'ê')
+    .replace(/=C3=B4/g, 'ô')
+    .replace(/=C3=A7/g, 'ç')
+    .replace(/=C3=A3/g, 'ã')
+    .replace(/=C3=B5/g, 'õ');
+}
+
+/**
+ * Converte data do formato brasileiro para ISO
+ */
+function converterDataParaISO(dataString) {
+  try {
+    // Formato esperado: 24/07/2025 17:17
+    const match = dataString.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+    
+    if (match) {
+      const [, dia, mes, ano, hora, minuto] = match;
+      const dataISO = `${ano}-${mes}-${dia}T${hora}:${minuto}:00-03:00`;
+      return dataISO;
+    }
+    
+    // Se não conseguir parsear, tenta conversão direta
+    const data = new Date(dataString);
+    return data.toISOString();
+    
+  } catch (error) {
+    console.error('Erro ao converter data:', error);
+    return new Date().toISOString(); // Fallback para data atual
+  }
+}
+
+/**
+ * Verifica se o chamado já existe no Supabase
+ * Retorna: null (não existe) | objeto com dados do chamado existente
+ */
+function verificarChamadoExiste(numeroChamado) {
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/tickets?numero_chamado=eq.${numeroChamado}&select=id,usuario_atual,status`;
+    
+    const response = UrlFetchApp.fetch(url, {
+      method: 'GET',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const data = JSON.parse(response.getContentText());
+    return data.length > 0 ? data[0] : null;
+    
+  } catch (error) {
+    console.error('Erro ao verificar chamado existente:', error);
+    return null;
+  }
+}
+
+/**
+ * Insere ticket no Supabase
+ */
+function inserirTicketSupabase(dadosChamado) {
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/tickets`;
+    
+    const payload = {
+      numero_chamado: dadosChamado.numero_chamado,
+      gse: dadosChamado.gse,
+      tempo_espera_origem: dadosChamado.tempo_espera_origem,
+      descricao: dadosChamado.descricao,
+      email: dadosChamado.email,
+      vip: dadosChamado.vip,
+      is_reopened: dadosChamado.is_reopened || false,
+      status: 'aguardando'
+    };
+    
+    const response = UrlFetchApp.fetch(url, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      payload: JSON.stringify(payload)
+    });
+    
+    return response.getResponseCode() === 201;
+    
+  } catch (error) {
+    console.error('Erro ao inserir no Supabase:', error);
+    return false;
+  }
+}
+
+
+/**
+ * Envia email de erro para o administrador
+ */
+function enviarEmailErro(error) {
+  try {
+    const assunto = 'Erro no Processador de Chamados';
+    const corpo = `
+Ocorreu um erro no processamento dos chamados:
+
+Erro: ${error.message}
+Stack: ${error.stack}
+Data/Hora: ${new Date().toLocaleString('pt-BR')}
+    `;
+    
+    GmailApp.sendEmail(SENDER_EMAIL, assunto, corpo);
+    
+  } catch (emailError) {
+    console.error('Erro ao enviar email de erro:', emailError);
+  }
+}
+
+/**
+ * ========================================
+ * SISTEMA DE TRIGGERS
+ * ========================================
+ */
+
+/**
+ * Função para configurar o trigger (execute UMA VEZ)
+ * Cria um trigger que executa a cada 15 minutos
+ */
+function configurarTrigger() {
+  try {
+    // Remove triggers antigos
+    const triggersAntigos = ScriptApp.getProjectTriggers();
+    triggersAntigos.forEach(trigger => {
+      if (trigger.getHandlerFunction() === 'processarChamados') {
+        ScriptApp.deleteTrigger(trigger);
+      }
+    });
+    console.log(`Removidos ${triggersAntigos.length} triggers antigos`);
+    
+    // Cria trigger a cada 15 minutos
+    ScriptApp.newTrigger('processarChamados')
+      .timeBased()
+      .everyMinutes(15)
+      .create();
+    
+    console.log('✅ Trigger configurado com sucesso!');
+    console.log('   - Executa a cada 15 minutos (24/7)');
+    console.log('   - Processa emails não lidos com label "Chamados-Sistema"');
+    
+  } catch (error) {
+    console.error('Erro ao configurar trigger:', error);
+    enviarEmailErro(error);
+  }
+}
+
+/**
+ * Função auxiliar para LISTAR todos os triggers ativos
+ */
+function listarTriggersAtivos() {
+  const triggers = ScriptApp.getProjectTriggers();
+  
+  console.log(`\n📋 Total de triggers ativos: ${triggers.length}\n`);
+  
+  triggers.forEach((trigger, index) => {
+    const funcao = trigger.getHandlerFunction();
+    const tipo = trigger.getTriggerSource();
+    
+    console.log(`${index + 1}. Função: ${funcao}`);
+    console.log(`   Tipo: ${tipo}`);
+    
+    if (tipo === ScriptApp.TriggerSource.CLOCK) {
+      const eventType = trigger.getEventType();
+      console.log(`   Evento: ${eventType}`);
+    }
+    console.log('');
+  });
+  
+  if (triggers.length === 0) {
+    console.log('⚠️  Nenhum trigger configurado. Execute configurarTrigger() primeiro!');
+  }
+}
+
+/**
+ * Função para REMOVER todos os triggers (emergência)
+ */
+function removerTodosOsTriggers() {
+  const triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach(trigger => ScriptApp.deleteTrigger(trigger));
+  console.log(`🗑️  Todos os ${triggers.length} triggers foram removidos`);
+}
+
+/**
+ * Função de teste - execute para testar o processamento manual
+ */
+function testarProcessamento() {
+  console.log('Iniciando teste manual...');
+  processarChamados();
+}

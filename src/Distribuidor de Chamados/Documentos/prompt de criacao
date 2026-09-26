@@ -1,0 +1,294 @@
+# 🎯 Prompt Estruturado para Claude Code - Distribuidor de Chamados
+
+## 📋 Visão Geral do Projeto
+
+Integre um **módulo distribuidor de chamados** no sistema gerenciador de chamados existente, criando um novo card no dashboard principal que permita distribuição eficiente de tickets por tempo de espera.
+
+## 🏗️ Especificações Técnicas
+
+### **Integração com Sistema Existente:**
+- **Projeto Base**: Gerenciador de chamados já em funcionamento
+- **Stack Existente**: React 18 + Vite + Tailwind CSS + TypeScript
+- **Autenticação**: AuthContext + Supabase Auth já implementado
+- **Estrutura**: Sistema de cards na Home.tsx + modais
+- **Backend**: Supabase configurado e funcionando
+- **Deploy**: GitHub Pages já configurado
+
+### **Arquitetura de Integração:**
+- **Novo Card**: "Distribuidor de Chamados" na Home.tsx
+- **Modal Principal**: `DistribuidorModal.tsx` seguindo padrão existente
+- **Hooks**: `useDistribuidor.ts`, `useTickets.ts`
+- **Componentes**: Reutilizar estrutura de UI existente
+
+## 🗃️ Estrutura do Banco de Dados
+
+**Observação**: As tabelas já estão adicionadas ao Supabase existente, mas será preciso confirmar se estão completamente integradas com o esquema atual.
+
+### **Tabela: `users` (simplificada)**
+```sql
+CREATE TABLE users (
+  id uuid primary key default gen_random_uuid(),
+  email text unique not null,
+  nome text not null,
+  role text default 'user' check (role in ('user', 'admin')),
+  created_at timestamp default now()
+);
+```
+
+### **Tabela: `gse_equipes` (nova - mapeamento)**
+```sql
+CREATE TABLE gse_equipes (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  gse text NOT NULL UNIQUE,
+  equipe_id uuid NOT NULL,
+  created_at timestamp DEFAULT now()
+);
+```
+
+### **Tabela: `tickets`**
+```sql
+CREATE TABLE tickets (
+  id uuid primary key default gen_random_uuid(),
+  numero_chamado text unique not null,
+  gse text not null,
+  tempo_espera_origem timestamp not null,
+  descricao text,
+  usuario_atual uuid references users(id),
+  status text default 'aguardando' check (status in ('aguardando', 'atribuido', 'em_atendimento', 'finalizado')),
+  created_at timestamp default now(),
+  updated_at timestamp default now(),
+  version int default 1
+);
+```
+
+### **Relacionamento GSE → Equipe:**
+- **GSE**: Grupo Solucionador Especializado (ex: "GSE - SGS - EPROC PUB EXT - DEFPUB")
+- **equipe_id**: UUID da equipe (compatível com sistema atual)
+- **Distribução**: Tickets são mostrados por equipe selecionada
+
+## 🎨 Funcionalidades Requeridas
+
+### **🔐 Autenticação (Já Implementada)**
+- ✅ **Sistema atual**: AuthContext + Supabase Auth funcionando
+- ✅ **Login/Logout**: Já implementado na aplicação
+- ✅ **Proteção**: Sistema de rotas já protegido
+- ✅ **Seleção de Equipe**: localStorage("equipe_id") já funcional
+
+### **👤 Interface do Distribuidor**
+- **Card Principal**: "Distribuidor de Chamados" na Home.tsx
+- **Modal**: Interface completa do distribuidor
+- **Fila de Tickets**: Todos os GSEs da equipe selecionada (localStorage)
+- **Ordenação**: Por tempo_espera_origem (mais antigo primeiro)
+
+### **🔄 Pipeline de Uso:**
+1. **Login**: User faz login → Supabase Auth (já funcionando)
+2. **Seleção**: User seleciona equipe → localStorage.setItem("equipe_id")
+3. **Carregamento**: Sistema carrega fila de chamados da equipe
+4. **Distribuição**: User pega próximo ou chamado específico
+5. **Atendimento**: Workflow aguardando → atribuído → em_atendimento → finalizado
+
+### **🎯 Ações Principais**:
+- **"Próximo Chamado"**: Pega o mais antigo da fila da equipe
+- **"Chamado Específico"**: Escolher qualquer da lista da equipe
+- **"Iniciar Atendimento"**: Muda status para em_atendimento
+- **"Finalizar Chamado"**: Muda status para finalizado
+- **"Devolver à Fila"**: Retorna para aguardando
+
+### **📊 Métricas e Informações**
+- **Chamado Atual**: Se user tem ticket atribuído
+- **Tempo de Atendimento**: Contador desde atribuição
+- **Fila da Equipe**: Quantidade de tickets aguardando
+- **Status Geral**: Visão dos tickets por status
+
+### **🔧 Funcionalidades Administrativas**
+- **Gestão de Usuários**: Interface para cadastrar/editar usuários
+- **Reatribuição**: Admins podem reatribuir tickets
+- **Histórico**: Visualização de tickets finalizados
+- **Estatísticas**: Métricas básicas por equipe/usuário
+
+### **⏰ Funcionalidades Real-time**
+- **Atualizações Automáticas**: Via Supabase Realtime (opcional)
+- **Refresh Manual**: Botão para atualizar fila
+- **Indicadores Visuais**: Status de tickets em tempo real
+
+### **🎯 Regras de Negócio**
+
+#### **Distribuição de Chamados:**
+1. **Um chamado por usuário**: Máximo 1 ticket ativo por user
+2. **Fila por equipe**: Tickets de todos os GSEs da equipe selecionada
+3. **Ordenação**: Sempre por tempo_espera_origem (mais antigo primeiro)
+4. **Flexibilidade**: User pode atender qualquer GSE da sua equipe
+
+#### **Estados dos Chamados:**
+- **aguardando**: Na fila central, disponível para qualquer user da equipe
+- **atribuído**: User pegou o ticket, mas ainda não iniciou atendimento
+- **em_atendimento**: User está trabalhando no ticket
+- **finalizado**: Ticket resolvido e fechado
+
+#### **Controle de Acesso:**
+- **Por Equipe**: User vê apenas tickets da equipe selecionada
+- **Sem Restrição de GSE**: User pode pegar ticket de qualquer GSE da equipe
+- **Validação**: Sistema impede pegar múltiplos tickets
+
+## 🎨 Design System
+
+### **Reutilização de Componentes Existentes:**
+- **Card Pattern**: Seguir padrão dos cards na Home.tsx
+- **Modal Pattern**: Seguir estrutura dos modais existentes
+- **Button/UI**: Reutilizar elementos já implementados
+- **Colors**: Manter paleta de cores do sistema atual
+
+### **Layout do Modal:**
+- **Header**: Título "Distribuidor de Chamados" + botão fechar
+- **Body**: Dividido em seções (Chamado Atual + Fila + Ações)
+- **Responsivo**: Adaptar para diferentes tamanhos de tela
+- **Animações**: Usar framer-motion como no sistema atual
+
+## 📁 Estrutura de Arquivos para Integração
+
+### **Arquivos a CRIAR:**
+```
+src/
+├── components/
+│   └── DistribuidorModal.tsx     # Modal principal do distribuidor
+├── hooks/
+│   ├── useDistribuidor.ts        # Hook para lógica do distribuidor
+│   └── useTickets.ts             # Hook para gerenciar tickets
+└── services/
+    ├── ticketsService.ts         # Serviços API para tickets
+    └── usersService.ts           # Serviços API para users
+```
+
+### **Arquivos a MODIFICAR:**
+```
+src/
+├── pages/
+│   └── Home.tsx                  # Adicionar novo card do distribuidor
+└── types/
+    └── Ticket.ts                 # Tipos TypeScript para tickets
+```
+
+### **Arquivos EXISTENTES que serão reutilizados:**
+- `src/contexts/AuthContext.tsx` (autenticação)
+- `src/services/supabaseClient.ts` (configuração Supabase)
+- Componentes UI existentes (botões, modais, etc.)
+
+## 🔄 Fluxos de Interação
+
+### **Fluxo Principal do Distribuidor:**
+1. **Login** → Sistema atual já autenticado
+2. **Home** → User clica no card "Distribuidor de Chamados"
+3. **Modal Abre** → Mostra chamado atual + fila da equipe
+4. **Ações Disponíveis**:
+   - Próximo chamado → Pega mais antigo da fila
+   - Chamado específico → Escolher da lista
+   - Iniciar atendimento → Muda status
+   - Finalizar → Completa ticket
+   - Devolver → Retorna para fila
+
+### **Consultas SQL Principais:**
+```sql
+-- Fila de tickets da equipe
+SELECT t.* FROM tickets t
+JOIN gse_equipes ge ON t.gse = ge.gse
+WHERE ge.equipe_id = $equipe_selecionada
+  AND t.status = 'aguardando'
+ORDER BY t.tempo_espera_origem ASC;
+
+-- Ticket atual do usuário
+SELECT * FROM tickets 
+WHERE usuario_atual = $user_id 
+  AND status IN ('atribuido', 'em_atendimento');
+```
+
+## 📱 Responsividade
+
+### **Modal do Distribuidor:**
+- **Desktop**: Modal centralizado, largura máxima 90vw
+- **Tablet**: Modal com scroll vertical se necessário
+- **Mobile**: Modal fullscreen para melhor usabilidade
+
+### **Componentes Internos:**
+- **Fila de Tickets**: Tabela responsiva com scroll horizontal
+- **Botões de Ação**: Stack vertical em mobile
+- **Cards de Status**: Grid adaptável por tamanho
+
+## ⚡ Performance & UX
+
+### **Integração com Sistema Existente:**
+- **Padrões Existentes**: Seguir estrutura de hooks e componentes atuais
+- **Cache**: Reutilizar estratégias de cache do sistema
+- **Loading States**: Usar padrões de loading já implementados
+- **Error Handling**: Integrar com sistema de erros atual
+
+### **Otimizações Específicas:**
+- **Polling Opcional**: Atualização automática da fila (configurável)
+- **Debounce**: Evitar múltiplos cliques em ações críticas
+- **Validações**: Prevenir estados inconsistentes
+- **Feedback Visual**: Loading states e confirmações claras
+
+## 🚀 Deploy & CI/CD
+
+### **Integração ao Deploy Existente:**
+- ✅ **Sistema atual**: GitHub Pages já configurado
+- ✅ **Build process**: Vite build funcionando
+- ✅ **Deploy automático**: GitHub Actions ativo
+
+### **Considerações de Deploy:**
+- **Sem mudanças**: Deploy atual continuará funcionando
+- **Novos arquivos**: Serão incluídos automaticamente
+- **Estrutura**: Mantém compatibilidade total
+
+## 🧪 Considerações de Desenvolvimento
+
+### **Desenvolvimento Incremental:**
+1. **Fase 1**: Criar card na Home.tsx + modal básico
+2. **Fase 2**: Implementar hook useTickets + serviços API
+3. **Fase 3**: Adicionar ações de distribuição
+4. **Fase 4**: Implementar funcionalidades administrativas
+
+### **Estados a Gerenciar:**
+- **Loading**: Durante carregamento da fila
+- **Empty**: Quando não há tickets na fila
+- **Error**: Falhas de conexão ou API
+- **Success**: Confirmações de ações
+
+### **Validações Críticas:**
+- **Um ticket por usuário**: Validar antes de atribuir
+- **Equipe selecionada**: Verificar localStorage
+- **Status válido**: Transições de estado corretas
+
+## 📌 Entregáveis Esperados
+
+### **Código:**
+1. **DistribuidorModal.tsx**: Modal principal com interface completa
+2. **useDistribuidor.ts**: Hook com lógica de distribuição
+3. **useTickets.ts**: Hook para gerenciar tickets
+4. **ticketsService.ts**: Serviços API para tickets
+5. **Ticket.ts**: Tipos TypeScript
+6. **Home.tsx**: Atualizado com novo card
+
+### **Integração:**
+1. **Card funcional**: Na dashboard principal
+2. **Modal responsivo**: Interface completa do distribuidor
+3. **APIs integradas**: Crud de tickets funcionando
+4. **Validações**: Regras de negócio implementadas
+
+## 🎯 Critérios de Sucesso
+
+- ✅ **Integração perfeita**: Card no dashboard + modal funcionando
+- ✅ **Pipeline completo**: Login → seleção equipe → distribuição
+- ✅ **Fila ordenada**: Tickets por tempo_espera_origem
+- ✅ **Ações funcionais**: Próximo/específico/iniciar/finalizar
+- ✅ **Validações**: Um ticket por usuário
+- ✅ **UI consistente**: Seguir padrões do sistema atual
+- ✅ **Responsividade**: Funcionar em todos os dispositivos
+- ✅ **Performance**: Integração sem impacto na app existente
+
+---
+
+## 🚀 Comando para Claude Code
+
+```bash
+claude-code "Integre um módulo Distribuidor de Chamados no sistema gerenciador existente. Crie um novo card na Home.tsx que abra um modal com interface completa para distribuição de tickets por equipe. Use a estrutura existente (React + TypeScript + Tailwind) e implemente o pipeline: login → seleção equipe → fila ordenada → distribuição por tempo de espera. Mantenha compatibilidade total com o sistema atual."
+```

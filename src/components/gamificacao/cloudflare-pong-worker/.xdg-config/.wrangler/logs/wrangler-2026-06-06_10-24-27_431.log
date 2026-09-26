@@ -1,0 +1,353 @@
+
+--- 2026-06-06T10:24:27.671Z debug
+🪵  Writing logs to "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-pong-worker\.xdg-config\.wrangler\logs\wrangler-2026-06-06_10-24-27_431.log"
+---
+
+--- 2026-06-06T10:24:27.671Z debug
+.env file not found at "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-pong-worker\.env". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T10:24:27.673Z debug
+.env file not found at "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-pong-worker\.env.local". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T10:24:27.790Z log
+
+ ⛅️ wrangler 4.98.0
+───────────────────
+---
+
+--- 2026-06-06T10:24:49.250Z debug
+setting config
+---
+
+--- 2026-06-06T10:24:49.250Z debug
+Updating config... undefined undefined
+---
+
+--- 2026-06-06T10:24:49.411Z debug
+local dev variables file not found at ".dev.vars". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T10:24:49.411Z debug
+.env file not found at "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-pong-worker\.env". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T10:24:49.412Z debug
+.env file not found at "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-pong-worker\.env.local". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T10:24:49.413Z log
+Your Worker has access to the following bindings:
+---
+
+--- 2026-06-06T10:24:49.414Z log
+Binding                Resource                Mode
+---
+
+--- 2026-06-06T10:24:49.414Z log
+env.MATCH_ROOMS        Durable Object          local
+  MatchRoom
+---
+
+--- 2026-06-06T10:24:49.414Z log
+env.ALLOWED_ORIGIN     Environment Variable    local
+  "http://localhost:5173"
+---
+
+--- 2026-06-06T10:24:49.414Z log
+env.ALLOWED_ORIGINS    Environment Variable    local
+  "http://localhost:5173,http://127.0.0...."
+---
+
+--- 2026-06-06T10:24:49.415Z log
+
+---
+
+--- 2026-06-06T10:24:50.194Z debug
+Metrics dispatcher: Posting data {"deviceId":"f7f0257a-3ec3-4eea-8c31-e82c4293e199","event":"skills_install_skipped","timestamp":1780741490194,"properties":{"amplitude_session_id":1780741489220,"amplitude_event_id":0,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":true,"configFileType":"none","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":"vscode-copilot-agent","category":"Workers","os":"win32:x64","reason":"User declined","currentAgentSkillsInstalled":"manual"}}
+---
+
+--- 2026-06-06T10:24:50.198Z debug
+Metrics dispatcher: Posting data {"deviceId":"f7f0257a-3ec3-4eea-8c31-e82c4293e199","event":"wrangler command started","timestamp":1780741490198,"properties":{"amplitude_session_id":1780741489233,"amplitude_event_id":0,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":true,"configFileType":"none","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":"vscode-copilot-agent","argsUsed":[],"argsCombination":"","sanitizedCommand":"dev","sanitizedArgs":{},"currentAgentSkillsInstalled":"manual"}}
+---
+
+--- 2026-06-06T10:24:50.206Z debug
+RemoteRuntimeController teardown beginning...
+---
+
+--- 2026-06-06T10:24:50.206Z debug
+RemoteRuntimeController teardown complete
+---
+
+--- 2026-06-06T10:24:50.239Z log
+⎔ Starting local server...
+---
+
+--- 2026-06-06T10:24:50.626Z debug
+[InspectorProxyWorker] handleProxyControllerIncomingMessage {"type":"reloadComplete","proxyData":{"userWorkerUrl":{"protocol":"http:","hostname":"127.0.0.1","port":"51238"},"userWorkerInspectorUrl":{"protocol":"ws:","hostname":"127.0.0.1","port":"51236","pathname":"/core:user:arena-pong-worker"},"userWorkerInnerUrlOverrides":{"protocol":"http:"},"headers":{"MF-Proxy-Shared-Secret":"5031c7d7-b79b-404d-88f8-103c98d9e5d9"},"liveReload":false,"proxyLogsToController":false}}
+---
+
+--- 2026-06-06T10:24:50.628Z debug
+[InspectorProxyWorker] reconnectRuntimeWebSocket
+---
+
+--- 2026-06-06T10:24:50.629Z debug
+[InspectorProxyWorker] NEW RUNTIME WEBSOCKET http://127.0.0.1:51236/core:user:arena-pong-worker
+---
+
+--- 2026-06-06T10:24:50.630Z debug
+[InspectorProxyWorker] SEND TO DEVTOOLS {"method":"Runtime.executionContextsCleared"}
+---
+
+--- 2026-06-06T10:24:50.630Z debug
+[InspectorProxyWorker] handleProxyControllerIncomingMessage {"type":"reloadStart"}
+---
+
+--- 2026-06-06T10:24:50.667Z debug
+[InspectorProxyWorker] RUNTIME WEBSOCKET OPENED
+---
+
+--- 2026-06-06T10:24:50.668Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.enable","id":100000001}
+---
+
+--- 2026-06-06T10:24:50.668Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Network.enable","id":100000002}
+---
+
+--- 2026-06-06T10:24:50.671Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000001, result: {} }
+---
+
+--- 2026-06-06T10:24:50.672Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Runtime.executionContextCreated',
+  params: {
+    context: {
+      id: 195771265,
+      origin: '',
+      name: 'Worker',
+      uniqueId: '5260147907473268503.4827294464639138556'
+    }
+  }
+}
+---
+
+--- 2026-06-06T10:24:50.673Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000002, method: 'Network.enable', result: {} }
+---
+
+--- 2026-06-06T10:25:00.636Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000003}
+---
+
+--- 2026-06-06T10:25:00.639Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000003, result: { id: '775f151eb5cfc25b' } }
+---
+
+--- 2026-06-06T10:25:00.756Z debug
+wrangler.jsonc changed...
+---
+
+--- 2026-06-06T10:25:00.757Z debug
+config file changed C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-pong-worker\wrangler.jsonc
+---
+
+--- 2026-06-06T10:25:00.758Z debug
+Updating config... AbortSignal { aborted: false } false
+---
+
+--- 2026-06-06T10:25:00.792Z debug
+local dev variables file not found at ".dev.vars". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T10:25:00.792Z debug
+.env file not found at "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-pong-worker\.env". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T10:25:00.793Z debug
+.env file not found at "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-pong-worker\.env.local". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T10:25:00.794Z log
+Your Worker has access to the following bindings:
+---
+
+--- 2026-06-06T10:25:00.795Z log
+Binding                Resource                Mode
+---
+
+--- 2026-06-06T10:25:00.795Z log
+env.MATCH_ROOMS        Durable Object          local
+  MatchRoom
+---
+
+--- 2026-06-06T10:25:00.796Z log
+env.ALLOWED_ORIGIN     Environment Variable    local
+  "http://localhost:5173"
+---
+
+--- 2026-06-06T10:25:00.796Z log
+env.ALLOWED_ORIGINS    Environment Variable    local
+  "http://localhost:5173,http://127.0.0...."
+---
+
+--- 2026-06-06T10:25:00.796Z log
+
+---
+
+--- 2026-06-06T10:25:00.885Z debug
+RemoteRuntimeController teardown beginning...
+---
+
+--- 2026-06-06T10:25:00.886Z debug
+RemoteRuntimeController teardown complete
+---
+
+--- 2026-06-06T10:25:00.888Z log
+⎔ Reloading local server...
+---
+
+--- 2026-06-06T10:25:00.894Z debug
+[InspectorProxyWorker] handleProxyControllerIncomingMessage {"type":"reloadStart"}
+---
+
+--- 2026-06-06T10:25:00.895Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.discardConsoleEntries","id":100000004}
+---
+
+--- 2026-06-06T10:25:00.896Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000004, result: {} }
+---
+
+--- 2026-06-06T10:25:00.948Z debug
+[InspectorProxyWorker] RUNTIME WEBSOCKET ERROR {
+  message: 'internal error; reference = p0l6vmffbh7rsq50eftpim4q',
+  name: 'Error',
+  stack: 'Error: internal error; reference = p0l6vmffbh7rsq50eftpim4q'
+}
+---
+
+--- 2026-06-06T10:25:00.949Z debug
+[InspectorProxyWorker] 'runtime websocket' error {
+  message: 'internal error; reference = p0l6vmffbh7rsq50eftpim4q',
+  name: 'Error',
+  stack: 'Error: internal error; reference = p0l6vmffbh7rsq50eftpim4q'
+}
+---
+
+--- 2026-06-06T10:25:01.076Z log
+⎔ Local server updated and ready
+---
+
+--- 2026-06-06T10:25:01.079Z debug
+[InspectorProxyWorker] reconnectRuntimeWebSocket
+---
+
+--- 2026-06-06T10:25:01.079Z debug
+[InspectorProxyWorker] NEW RUNTIME WEBSOCKET http://127.0.0.1:51236/core:user:arena-pong-worker
+---
+
+--- 2026-06-06T10:25:01.080Z debug
+[InspectorProxyWorker] handleProxyControllerIncomingMessage {"type":"reloadComplete","proxyData":{"userWorkerUrl":{"protocol":"http:","hostname":"127.0.0.1","port":"60703"},"userWorkerInspectorUrl":{"protocol":"ws:","hostname":"127.0.0.1","port":"51236","pathname":"/core:user:arena-pong-worker"},"userWorkerInnerUrlOverrides":{"protocol":"http:"},"headers":{"MF-Proxy-Shared-Secret":"5031c7d7-b79b-404d-88f8-103c98d9e5d9"},"liveReload":false,"proxyLogsToController":false}}
+---
+
+--- 2026-06-06T10:25:01.081Z debug
+[InspectorProxyWorker] SEND TO DEVTOOLS {"method":"Runtime.executionContextsCleared"}
+---
+
+--- 2026-06-06T10:25:01.082Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Runtime.executionContextCreated',
+  params: {
+    context: {
+      id: 292784481,
+      origin: '',
+      name: 'Worker',
+      uniqueId: '1672849155201063853.-7012210089074310811'
+    }
+  }
+}
+---
+
+--- 2026-06-06T10:25:01.083Z debug
+[InspectorProxyWorker] RUNTIME WEBSOCKET OPENED
+---
+
+--- 2026-06-06T10:25:01.083Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.enable","id":100000005}
+---
+
+--- 2026-06-06T10:25:01.084Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Network.enable","id":100000006}
+---
+
+--- 2026-06-06T10:25:01.085Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000005, result: {} }
+---
+
+--- 2026-06-06T10:25:01.085Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000006, method: 'Network.enable', result: {} }
+---
+
+--- 2026-06-06T10:25:05.876Z debug
+DevEnv teardown beginning...
+---
+
+--- 2026-06-06T10:25:05.876Z debug
+ConfigController teardown beginning...
+---
+
+--- 2026-06-06T10:25:05.876Z debug
+BundlerController teardown beginning...
+---
+
+--- 2026-06-06T10:25:05.877Z debug
+LocalRuntimeController teardown beginning...
+---
+
+--- 2026-06-06T10:25:05.877Z log
+⎔ Shutting down local server...
+---
+
+--- 2026-06-06T10:25:05.878Z debug
+RemoteRuntimeController teardown beginning...
+---
+
+--- 2026-06-06T10:25:05.878Z debug
+RemoteRuntimeController teardown complete
+---
+
+--- 2026-06-06T10:25:05.878Z debug
+ProxyController teardown beginning...
+---
+
+--- 2026-06-06T10:25:05.878Z debug
+ConfigController teardown complete
+---
+
+--- 2026-06-06T10:25:05.890Z debug
+LocalRuntimeController teardown complete
+---
+
+--- 2026-06-06T10:25:05.894Z debug
+ProxyController teardown complete
+---
+
+--- 2026-06-06T10:25:05.971Z debug
+BundlerController teardown complete
+---
+
+--- 2026-06-06T10:25:05.972Z debug
+DevEnv teardown complete
+---
+
+--- 2026-06-06T10:25:05.973Z log
+
+Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+---
+
+--- 2026-06-06T10:25:05.976Z debug
+Metrics dispatcher: Posting data {"deviceId":"f7f0257a-3ec3-4eea-8c31-e82c4293e199","event":"wrangler command completed","timestamp":1780741505975,"properties":{"amplitude_session_id":1780741489233,"amplitude_event_id":1,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"none","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":"vscode-copilot-agent","argsUsed":[],"argsCombination":"","sanitizedCommand":"dev","sanitizedArgs":{},"durationMs":38298,"currentAgentSkillsInstalled":"manual"}}
+---

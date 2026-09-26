@@ -1,0 +1,150 @@
+/* index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-50 text-gray-800 font-sans;
+}
+
+/* ============================================================================
+   DARK MODE — Base styles
+   ============================================================================ */
+html.dark {
+  @apply bg-gray-900;
+}
+
+html.dark body {
+  @apply bg-gray-900 text-gray-100;
+}
+
+/* Scrollbar dark mode */
+html.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: #1f2937; /* gray-800 */
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563; /* gray-600 */
+  border-radius: 4px;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280; /* gray-500 */
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-out {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-in-out forwards;
+}
+
+.animate-slide-out {
+  animation: slide-out 0.3s ease-in-out forwards;
+}
+
+/* ============================================================================
+   ORÁCULO V2 - HIGHLIGHT STYLES
+   Estilos para highlight amarelo de termos de busca
+   ============================================================================ */
+mark {
+  background-color: #fef08a; /* yellow-200 do Tailwind */
+  color: inherit;
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: 500;
+}
+
+/* Dark mode support para mark/highlight */
+html.dark mark {
+  background-color: #ca8a04; /* yellow-600 do Tailwind para dark mode */
+  color: #fef3c7; /* yellow-100 para contraste */
+}
+
+/* ============================================================================
+   DARK MODE — Form elements (input, textarea, select)
+   ============================================================================ */
+html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+html.dark textarea {
+  @apply bg-gray-800 border-gray-600 text-gray-100;
+  color-scheme: dark;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  @apply text-gray-400;
+}
+
+html.dark select {
+  @apply bg-gray-800 border-gray-600 text-gray-100;
+  color-scheme: dark;
+}
+
+/* Lista nativa do select no dark mode (Windows/Electron costuma herdar fundo escuro) */
+html.dark select option {
+  background-color: #1f2937;
+  color: #f3f4f6;
+}
+
+/* Selects sobre fundos coloridos (ex.: toolbar azul do editor) — popup em tema claro */
+html.dark select.select-options-light {
+  color-scheme: light;
+}
+
+html.dark select.select-options-light option {
+  background-color: #ffffff;
+  color: #111827;
+}
+
+/* ============================================================================
+   DARK MODE — Text selection
+   ============================================================================ */
+html.dark ::selection {
+  background-color: #3b82f6; /* blue-500 */
+  color: #f9fafb; /* gray-50 */
+}
+
+/* ============================================================================
+   DARK MODE — Smooth theme transition
+   Aplicado apenas a propriedades visuais, não a transforms/opacity para não
+   prejudicar animações existentes
+   ============================================================================ */
+html, html * {
+  transition-property: background-color, border-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+
+/* Exceção: elementos com animação não devem herdar a transição de cor */
+.animate-spin,
+.animate-pulse,
+.animate-bounce,
+[class*="animate-"],
+[style*="animation"] {
+  transition: none !important;
+}
+

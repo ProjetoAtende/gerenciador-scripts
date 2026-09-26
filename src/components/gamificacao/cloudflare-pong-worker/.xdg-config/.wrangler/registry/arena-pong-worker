@@ -1,0 +1,5 @@
+{
+  "debugPortAddress": "127.0.0.1:62793",
+  "defaultEntrypointService": "core:user:arena-pong-worker",
+  "userWorkerService": "core:user:arena-pong-worker"
+}

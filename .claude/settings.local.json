@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(unzip:*)",
+      "Bash(python3:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat(smith): implementa sistema completo do Agente Smith com FTS\n\nImplementa sistema completo de consulta baseado em Full-Text Search (FTS) \nsem dependência de embeddings, incluindo interface melhorada e processamento\nde conhecimento.\n\nPrincipais mudanças:\n- Novo hook useConsultaSmith com busca FTS nativa\n- Modal de ajuda (SmithHelpModal) com perguntas sugeridas\n- Scroll automático para novas mensagens no chat\n- Simplificação na geração de links de referências\n- Schemas SQL completos para agente_smith e oráculo\n- Processador Python para ingestão de documentos\n- Documentação de implementação e correções\n- Base de conhecimento curada (conteudo_curadoria.txt)\n\nTecnologias:\n- PostgreSQL Full-Text Search (pt_BR)\n- Python com suporte a PDF, Excel, Markdown, DOCX\n- Sistema de chunking inteligente\n- Upload automático para Supabase Storage\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push)",
+      "Bash(git commit:*)",
+      "Bash(dir:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(python:*)",
+      "Bash(xargs -I {} sh -c \"grep -l ''scripts_customizados\\\\|pastas_scripts'' \"\"C:\\\\Users\\\\david\\\\gerenciador-chamados\\\\database_updates\\\\{}\"\" 2>/dev/null || true\")",
+      "Bash(pip install:*)",
+      "Bash(del \"C:\\\\Users\\\\david\\\\gerenciador-chamados\\\\migrate_scripts.py\")",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(npx tsx scripts/corrigir-solicitantes.ts --analise)",
+      "Bash(npx tsx:*)"
+    ],
+    "deny": [],
+    "ask": [],
+    "defaultMode": "acceptEdits"
+  }
+}

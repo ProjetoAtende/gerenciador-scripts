@@ -1,0 +1,55 @@
+
+--- 2026-06-06T14:03:00.466Z debug
+🪵  Writing logs to "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-space-shooter-worker\.xdg-config\.wrangler\logs\wrangler-2026-06-06_14-03-00_224.log"
+---
+
+--- 2026-06-06T14:03:00.466Z debug
+.env file not found at "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-space-shooter-worker\.env". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T14:03:00.467Z debug
+.env file not found at "C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-space-shooter-worker\.env.local". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-06-06T14:03:00.480Z log
+
+ ⛅️ wrangler 4.98.0
+───────────────────
+---
+
+--- 2026-06-06T14:03:00.513Z log
+Attempting to login via OAuth...
+---
+
+--- 2026-06-06T14:03:00.517Z debug
+Metrics dispatcher: Posting data {"deviceId":"f2ed79fe-1cce-4511-b414-047b2ad6bf9f","event":"wrangler command started","timestamp":1780754580516,"properties":{"amplitude_session_id":1780754580489,"amplitude_event_id":0,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"jsonc","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":"vscode-copilot-agent","argsUsed":[],"argsCombination":"","sanitizedCommand":"deployments list","sanitizedArgs":{},"currentAgentSkillsInstalled":"manual"}}
+---
+
+--- 2026-06-06T14:03:00.525Z debug
+Metrics dispatcher: Posting data {"deviceId":"f2ed79fe-1cce-4511-b414-047b2ad6bf9f","event":"list versioned deployments","timestamp":1780754580525,"properties":{"amplitude_session_id":1780754580512,"amplitude_event_id":0,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"none","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":"vscode-copilot-agent","category":"Workers","os":"win32:x64","json":false,"currentAgentSkillsInstalled":"manual"}}
+---
+
+--- 2026-06-06T14:03:00.570Z log
+Opening a link in your default browser: https://dash.cloudflare.com/oauth2/auth?response_type=code&client_id=54d11594-84e4-41aa-b438-e81b8fa78ee7&redirect_uri=http%3A%2F%2Flocalhost%3A8976%2Foauth%2Fcallback&scope=account%3Aread%20user%3Aread%20workers%3Awrite%20workers_kv%3Awrite%20workers_routes%3Awrite%20workers_scripts%3Awrite%20workers_tail%3Aread%20d1%3Awrite%20pages%3Awrite%20zone%3Aread%20ssl_certs%3Awrite%20ai%3Awrite%20ai-search%3Awrite%20ai-search%3Arun%20websearch.run%20agent-memory%3Awrite%20queues%3Awrite%20pipelines%3Awrite%20secrets_store%3Awrite%20artifacts%3Awrite%20flagship%3Awrite%20containers%3Awrite%20cloudchamber%3Awrite%20connectivity%3Aadmin%20email_routing%3Awrite%20email_sending%3Awrite%20browser%3Awrite%20offline_access&state=LJ0d0Pnm2gP7aA~ZSxKLSZ.2k37.bHZE&code_challenge=85MnB3lHHRmP0NMGtxC3fJe6W6va_8TFG2v5eqyQHdo&code_challenge_method=S256
+---
+
+--- 2026-06-06T14:05:00.577Z log
+
+---
+
+--- 2026-06-06T14:05:00.643Z error
+X [ERROR] Timed out waiting for authorization code, please try again.
+
+
+---
+
+--- 2026-06-06T14:05:00.660Z debug
+Error: Timed out waiting for authorization code, please try again.
+    at Timeout.<anonymous> (C:\Users\david\gerenciador-chamados\src\components\gamificacao\cloudflare-space-shooter-worker\node_modules\wrangler\wrangler-dist\cli.js:77899:9)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+---
+
+--- 2026-06-06T14:05:00.660Z debug
+Metrics dispatcher: Posting data {"deviceId":"f2ed79fe-1cce-4511-b414-047b2ad6bf9f","event":"wrangler command errored","timestamp":1780754700660,"properties":{"amplitude_session_id":1780754580489,"amplitude_event_id":1,"wranglerVersion":"4.98.0","wranglerMajorVersion":4,"wranglerMinorVersion":98,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"jsonc","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":"vscode-copilot-agent","argsUsed":[],"argsCombination":"","sanitizedCommand":"deployments list","sanitizedArgs":{},"durationMs":120107,"errorType":"UserError","errorMessage":"user oauth authorization timeout","currentAgentSkillsInstalled":"manual"}}
+---

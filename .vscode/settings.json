@@ -1,0 +1,80 @@
+{
+  // -------------------------------------------------------------------------
+  // Exclusões de File Watcher — evita monitorar pastas grandes/desnecessárias
+  // -------------------------------------------------------------------------
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/.venv/**": true,
+    "**/temp/**": true,
+    "**/dist/**": true,
+    "**/android/build/**": true,
+    "**/android/.gradle/**": true,
+    "**/android/app/build/**": true,
+    "**/reports/**": true,
+    "**/smith-knowledge-processor/.venv/**": true,
+    "**/smith-knowledge-processor/__pycache__/**": true,
+    "**/__pycache__/**": true,
+    "**/.supabase/**": true,
+    "**/supabase/.branches/**": true
+  },
+
+  // -------------------------------------------------------------------------
+  // Exclusões de busca/indexação — mantém searches rápidos
+  // -------------------------------------------------------------------------
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.venv": true,
+    "**/temp": true,
+    "**/dist": true,
+    "**/android/build": true,
+    "**/android/.gradle": true,
+    "**/reports": true,
+    "**/smith-knowledge-processor/.venv": true,
+    "**/__pycache__": true,
+    "**/*.sql.bak": true
+  },
+
+  // -------------------------------------------------------------------------
+  // Exclusões de exibição no Explorer (oculta pastas de build/cache)
+  // -------------------------------------------------------------------------
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.gradle": true,
+    "**/android/.gradle": true,
+    "**/android/app/.cxx": true,
+    "**/.supabase": true,
+    "**/node_modules/.cache": true,
+    "**/node_modules/.vite": true
+  },
+
+  // -------------------------------------------------------------------------
+  // TypeScript — limita o servidor de linguagem ao diretório src/
+  // -------------------------------------------------------------------------
+  "typescript.tsserver.maxTsServerMemory": 1536,
+  "typescript.tsserver.watchOptions": {
+    "watchFile": "useFsEventsOnParentDirectory",
+    "watchDirectory": "useFsEvents",
+    "fallbackPolling": "dynamicPriority"
+  },
+  "typescript.disableAutomaticTypeAcquisition": true,
+  "typescript.suggest.autoImports": true,
+  "typescript.tsserver.enableTracing": false,
+
+  // -------------------------------------------------------------------------
+  // Python — habilita leitura do .env em terminais
+  // -------------------------------------------------------------------------
+  "python.terminal.useEnvFile": true,
+
+  // -------------------------------------------------------------------------
+  // Copilot — desativa indexação de arquivos muito grandes
+  // -------------------------------------------------------------------------
+  "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+
+  // -------------------------------------------------------------------------
+  // Editor — melhora responsividade geral
+  // -------------------------------------------------------------------------
+  "editor.quickSuggestionsDelay": 100,
+  "files.autoSave": "onFocusChange"
+}

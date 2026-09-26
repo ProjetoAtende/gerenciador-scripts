@@ -1,0 +1,466 @@
+# 🗃️ Documentação SQL - Estrutura de Banco de Dados
+
+## 🎯 Visão Geral
+Schema completo para sistema de gestão de chamados de suporte com controle de usuários, permissões e auditoria automática.
+
+---
+
+## 👥 Tabela: `users`
+
+**Propósito:** Armazena informações dos usuários do sistema (atendentes e administradores).
+
+### Estrutura da Tabela:
+
+```sql
+CREATE TABLE users (
+  id uuid default gen_random_uuid() primary key,
+  email text unique not null,
+  nome text not null,
+  role text default 'user' check (role in ('user', 'admin')),
+  created_at timestamp default now()
+);
+```
+
+### Detalhamento dos Campos:
+
+1. **`id` (UUID, Primary Key)**
+   - **Tipo**: UUID gerado automaticamente
+   - **Propósito**: Identificador único interno do usuário
+   - **Vantagem**: UUIDs são únicos globalmente, seguros para APIs públicas
+
+2. **`email` (TEXT, UNIQUE, NOT NULL)**
+   - **Tipo**: Texto com restrição de unicidade
+   - **Propósito**: Identificador de login e comunicação
+   - **Validação**: Email deve ser único no sistema
+   - **Uso**: Autenticação via Supabase Auth
+
+3. **`nome` (TEXT, NOT NULL)**
+   - **Tipo**: Texto obrigatório
+   - **Propósito**: Nome completo do usuário para exibição
+   - **Uso**: Interface do dashboard, relatórios, notificações
+
+4. **`role` (TEXT, DEFAULT 'user')**
+   - **Tipo**: Enum controlado por CHECK constraint
+   - **Valores**: 'user' (atendente) ou 'admin' (administrador)
+   - **Propósito**: Controle de permissões no sistema
+   - **Default**: Novos usuários são criados como 'user'
+
+5. **`created_at` (TIMESTAMP, DEFAULT NOW())**
+   - **Tipo**: Timestamp com timezone
+   - **Propósito**: Auditoria - quando o usuário foi criado
+   - **Uso**: Relatórios, debugging, conformidade
+
+---
+
+## 🗺️ Tabela: `gse_equipes`
+
+**Propósito:** Mapeia os Grupos Solucionadores Especializados (GSE) para as equipes do sistema atual.
+
+### Estrutura da Tabela:
+
+```sql
+CREATE TABLE gse_equipes (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  gse text NOT NULL UNIQUE,
+  equipe_id uuid NOT NULL,
+  created_at timestamp DEFAULT now()
+);
+```
+
+### Detalhamento dos Campos:
+
+1. **`id` (UUID, Primary Key)**
+   - **Tipo**: UUID gerado automaticamente
+   - **Propósito**: Identificador único interno do mapeamento
+
+2. **`gse` (TEXT, UNIQUE, NOT NULL)**
+   - **Tipo**: Texto único obrigatório
+   - **Propósito**: Nome completo do Grupo Solucionador Especializado
+   - **Exemplo**: "GSE - SGS - EPROC PUB EXT - DEFPUB"
+   - **Uso**: Ligação entre tickets e equipes
+
+3. **`equipe_id` (UUID, NOT NULL)**
+   - **Tipo**: UUID referenciando equipes do sistema
+   - **Propósito**: ID da equipe responsável pelo GSE
+   - **Uso**: Compatibilidade com sistema atual (chamados, scripts, links)
+
+4. **`created_at` (TIMESTAMP, DEFAULT NOW())**
+   - **Tipo**: Timestamp com timezone
+   - **Propósito**: Auditoria - quando o mapeamento foi criado
+
+---
+
+## 🎫 Tabela: `tickets`
+
+**Propósito:** Armazena todos os chamados de suporte do sistema.
+
+### Estrutura da Tabela:
+
+```sql
+CREATE TABLE tickets (
+  id uuid default gen_random_uuid() primary key,
+  numero_chamado text unique not null,
+  gse text not null,
+  tempo_espera_origem timestamp not null,
+  descricao text,
+  usuario_atual uuid references users(id),
+  status text default 'aguardando' check (status in ('aguardando', 'atribuido', 'em_atendimento', 'finalizado')),
+  created_at timestamp default now(),
+  updated_at timestamp default now(),
+  version int default 1
+);
+```
+
+### Detalhamento dos Campos:
+
+1. **`id` (UUID, Primary Key)**
+   - **Tipo**: UUID gerado automaticamente
+   - **Propósito**: Identificador único interno do ticket
+   - **Uso**: Referências internas, APIs, logs
+
+2. **`numero_chamado` (TEXT, UNIQUE, NOT NULL)**
+   - **Tipo**: Texto único obrigatório
+   - **Propósito**: Número do chamado do sistema origem
+   - **Exemplo**: "60248924"
+   - **Uso**: Identificação para usuários, prevenção de duplicatas
+
+3. **`gse` (TEXT, NOT NULL)**
+   - **Tipo**: Texto obrigatório
+   - **Propósito**: Grupo Solucionador Especializado
+   - **Exemplo**: "GSE - SGS - EPROC PUB EXT - DEFPUB"
+   - **Uso**: Categorização, filtros, direcionamento
+
+4. **`tempo_espera_origem` (TIMESTAMP, NOT NULL)**
+   - **Tipo**: Timestamp obrigatório
+   - **Propósito**: Data/hora de abertura no sistema origem
+   - **Formato**: ISO 8601 com timezone
+   - **Uso**: Cálculo de SLA, priorização por idade
+
+5. **`descricao` (TEXT, NULLABLE)**
+   - **Tipo**: Texto opcional
+   - **Propósito**: Descrição detalhada do chamado extraída do email
+   - **Conteúdo**: Problema reportado, contexto adicional
+   - **Uso**: Contexto para atendimento, histórico, auditoria
+
+6. **`usuario_atual` (UUID, FOREIGN KEY)**
+   - **Tipo**: UUID referenciando `users.id`
+   - **Propósito**: Usuário responsável pelo chamado
+   - **Nullable**: Sim (tickets na fila central não têm usuário)
+   - **Uso**: Atribuição, controle de carga de trabalho
+
+7. **`status` (TEXT, DEFAULT 'aguardando')**
+   - **Tipo**: Enum controlado por CHECK constraint
+   - **Estados**:
+     - `'aguardando'`: Na fila central, sem atribuição
+     - `'atribuido'`: Atribuído a usuário, aguardando início
+     - `'em_atendimento'`: Usuário iniciou o atendimento
+     - `'finalizado'`: Chamado resolvido e fechado
+   - **Uso**: Workflow, relatórios, dashboards
+
+8. **`created_at` (TIMESTAMP, DEFAULT NOW())**
+   - **Tipo**: Timestamp com timezone
+   - **Propósito**: Quando o ticket foi criado no sistema
+   - **Diferença**: `tempo_espera_origem` vs `created_at`
+   - **Uso**: Auditoria, performance do sistema
+
+9. **`updated_at` (TIMESTAMP, DEFAULT NOW())**
+   - **Tipo**: Timestamp atualizado automaticamente
+   - **Propósito**: Última modificação do registro
+   - **Atualização**: Trigger automático em qualquer UPDATE
+   - **Uso**: Auditoria de mudanças, sincronização
+
+10. **`version` (INTEGER, DEFAULT 1)**
+   - **Tipo**: Inteiro para controle de versão
+   - **Propósito**: Optimistic Locking para concorrência
+   - **Uso**: Prevenir conflitos quando múltiplos usuários editam
+   - **Funcionamento**: Incrementado a cada update
+
+---
+
+## 📊 Índices de Performance
+
+**Propósito:** Otimizar consultas frequentes e garantir performance mesmo com grandes volumes.
+
+### Índices Criados:
+
+```sql
+CREATE INDEX idx_tickets_numero_chamado ON tickets(numero_chamado);
+CREATE INDEX idx_tickets_status ON tickets(status);
+CREATE INDEX idx_tickets_usuario_atual ON tickets(usuario_atual);
+CREATE INDEX idx_tickets_gse ON tickets(gse);
+CREATE INDEX idx_gse_equipes_equipe_id ON gse_equipes(equipe_id);
+```
+
+### Justificativa dos Índices:
+
+1. **`idx_tickets_numero_chamado`**
+   - **Query**: Verificação de duplicatas
+   - **Frequência**: A cada email processado
+   - **Performance**: O(log n) vs O(n) para busca
+
+2. **`idx_tickets_status`**
+   - **Query**: Filtros por status no dashboard
+   - **Uso**: `WHERE status = 'aguardando'`
+   - **Benefício**: Lista de fila central otimizada
+
+3. **`idx_tickets_usuario_atual`**
+   - **Query**: Tickets de um usuário específico
+   - **Uso**: Dashboard pessoal, carga de trabalho
+   - **Benefício**: Consultas de usuário instantâneas
+
+4. **`idx_tickets_gse`**
+   - **Query**: Filtros por grupo especializado
+   - **Uso**: Relatórios por área, distribuição
+   - **Benefício**: Análises e estatísticas rápidas
+
+5. **`idx_gse_equipes_equipe_id`**
+   - **Query**: Busca de GSEs por equipe
+   - **Uso**: Fila de chamados por equipe selecionada
+   - **Benefício**: Join otimizado tickets ↔ gse_equipes
+
+---
+
+## 🔄 Trigger Automático: `update_updated_at`
+
+**Propósito:** Manter campo `updated_at` sempre atualizado automaticamente.
+
+### Função Base:
+
+```sql
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+```
+
+### Trigger Associado:
+
+```sql
+CREATE TRIGGER update_tickets_updated_at 
+BEFORE UPDATE ON tickets 
+FOR EACH ROW 
+EXECUTE PROCEDURE update_updated_at_column();
+```
+
+### Funcionamento:
+
+1. **Disparo**: Antes de qualquer UPDATE na tabela `tickets`
+2. **Ação**: Define `updated_at` para timestamp atual
+3. **Transparência**: Funciona automaticamente sem código adicional
+4. **Auditoria**: Garante rastreamento preciso de modificações
+
+### Casos de Uso:
+
+- **Mudança de Status**: `aguardando` → `atribuido`
+- **Reatribuição**: Mudança de `usuario_atual`
+- **Atualizações**: Qualquer campo modificado
+- **Optimistic Locking**: Incremento de `version`
+
+---
+
+## 👤 Usuário Inicial: Administrador
+
+**Propósito:** Criar primeiro usuário administrador para bootstrap do sistema.
+
+### Comando de Inserção:
+
+```sql
+INSERT INTO users (email, nome, role) VALUES 
+('exsypher0@gmail.com', 'Administrador', 'admin');
+```
+
+### Finalidade:
+
+1. **Bootstrap**: Sistema precisa de ao menos um admin inicial
+2. **Configuração**: Admin pode criar outros usuários
+3. **Emergência**: Acesso garantido mesmo com problemas
+4. **Desenvolvimento**: Usuário conhecido para testes
+
+---
+
+## 🔐 Row Level Security (RLS)
+
+**Propósito:** Controlar acesso granular aos dados baseado no usuário autenticado.
+
+### Habilitação:
+
+```sql
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tickets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE gse_equipes ENABLE ROW LEVEL SECURITY;
+```
+
+### Políticas Implementadas:
+
+#### 1. **Usuários - Dados Próprios**
+
+```sql
+CREATE POLICY "Usuários podem ver próprios dados" ON users
+  FOR SELECT USING (auth.uid() = id);
+```
+
+- **Propósito**: Usuários só veem seus próprios dados
+- **Segurança**: Previne vazamento de informações pessoais
+- **Uso**: Perfil do usuário, configurações
+
+#### 2. **Tickets - Visualização Geral**
+
+```sql
+CREATE POLICY "Usuários autenticados podem ver tickets" ON tickets
+  FOR SELECT USING (auth.role() = 'authenticated');
+```
+
+- **Propósito**: Todos usuários logados veem todos os tickets
+- **Justificativa**: Necessário para fila central e colaboração
+- **Controle**: Apenas usuários autenticados
+
+#### 3. **Tickets - Atualização Restrita**
+
+```sql
+CREATE POLICY "Usuários podem atualizar próprios tickets" ON tickets
+  FOR UPDATE USING (usuario_atual = auth.uid());
+```
+
+- **Propósito**: Usuários só editam tickets atribuídos a eles
+- **Segurança**: Previne modificação de tickets de outros
+- **Exceção**: Admins têm política separada
+
+#### 4. **Administradores - Acesso Total (Users)**
+
+```sql
+CREATE POLICY "Admins podem tudo em users" ON users
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM users 
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+```
+
+- **Propósito**: Admins podem gerenciar todos os usuários
+- **Operações**: CREATE, READ, UPDATE, DELETE
+- **Validação**: Verifica se usuário atual é admin
+
+#### 5. **Administradores - Acesso Total (Tickets)**
+
+```sql
+CREATE POLICY "Admins podem tudo em tickets" ON tickets
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM users 
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+-- Todos usuários autenticados podem ver mapeamentos GSE -> equipe
+CREATE POLICY "Usuários autenticados podem ver gse_equipes" ON gse_equipes
+  FOR SELECT USING (auth.role() = 'authenticated');
+
+-- Admins podem gerenciar mapeamentos GSE -> equipe
+CREATE POLICY "Admins podem tudo em gse_equipes" ON gse_equipes
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM users 
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+```
+
+- **Propósito**: Admins podem gerenciar todos os tickets
+- **Uso**: Reatribuições, correções, relatórios
+- **Poder**: Acesso irrestrito para administração
+
+#### 6. **Mapeamentos GSE-Equipes - Acesso Público**
+
+- **Leitura**: Todos usuários autenticados podem ver mapeamentos
+- **Justificativa**: Necessário para funcionamento do distribuidor
+- **Gestão**: Apenas admins podem modificar mapeamentos
+
+---
+
+## 🔄 Integração com Supabase Auth
+
+### Funções Utilizadas:
+
+1. **`auth.uid()`**
+   - **Propósito**: Retorna UUID do usuário autenticado
+   - **Tipo**: UUID ou null (não autenticado)
+   - **Uso**: Identificação do usuário nas políticas
+
+2. **`auth.role()`**
+   - **Propósito**: Retorna role do usuário no Supabase Auth
+   - **Valores**: 'authenticated', 'anon'
+   - **Uso**: Verificar se usuário está logado
+
+### Fluxo de Autenticação:
+
+1. **Login**: Usuário faz login via Supabase Auth
+2. **Token**: Supabase gera JWT com `user_id`
+3. **Políticas**: RLS usa `auth.uid()` para filtrar dados
+4. **Sessão**: Token valida automaticamente as consultas
+
+---
+
+## 📈 Considerações de Performance
+
+### Otimizações Implementadas:
+
+1. **Índices Estratégicos**
+   - Consultas frequentes otimizadas
+   - Joins eficientes entre tabelas
+   - Ordenações rápidas por status/data
+
+2. **Políticas RLS Eficientes**
+   - Uso de índices nas validações
+   - Subqueries otimizadas
+   - Evita scans completos de tabela
+
+3. **Triggers Mínimos**
+   - Apenas `updated_at` automatizado
+   - Evita lógica complexa em triggers
+   - Performance preservada em INSERTs
+
+### Monitoramento Recomendado:
+
+1. **Slow Queries**: Identificar consultas lentas
+2. **Index Usage**: Verificar uso dos índices criados
+3. **RLS Performance**: Monitorar impacto das políticas
+4. **Connection Pool**: Gerenciar conexões do Supabase
+
+---
+
+## 🛠️ Manutenção e Evolução
+
+### Scripts de Manutenção:
+
+1. **Verificação de Integridade**
+   ```sql
+   SELECT column_name, data_type 
+   FROM information_schema.columns 
+   WHERE table_name = 'tickets' 
+   ORDER BY ordinal_position;
+   ```
+
+2. **Estatísticas de Uso**
+   ```sql
+   SELECT status, COUNT(*) 
+   FROM tickets 
+   GROUP BY status;
+   ```
+
+3. **Performance de Índices**
+   ```sql
+   SELECT schemaname, tablename, indexname, idx_scan, idx_tup_read
+   FROM pg_stat_user_indexes 
+   WHERE tablename IN ('users', 'tickets');
+   ```
+
+### Evolução Futura:
+
+1. **Campos Adicionais**: Facilmente extensível
+2. **Novas Políticas**: RLS permite refinamento granular
+3. **Índices Compostos**: Para queries complexas futuras
+4. **Particionamento**: Para volumes muito grandes

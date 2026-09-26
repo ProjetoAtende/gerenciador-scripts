@@ -1,0 +1,35 @@
+{
+	"version": 1,
+	"accepted": false,
+	"date": "2026-06-06T14:02:58.331Z",
+	"detectedAgents": [
+		{
+			"name": "Claude Code",
+			"rosie": {
+				"id": "claude",
+				"globalPath": "C:\\Users\\david\\.claude\\skills"
+			}
+		},
+		{
+			"name": "Codex",
+			"rosie": {
+				"id": "codex",
+				"globalPath": "C:\\Users\\david\\.codex\\skills"
+			}
+		},
+		{
+			"name": "Continue",
+			"rosie": {
+				"id": "continue",
+				"globalPath": "C:\\Users\\david\\.continue\\skills"
+			}
+		},
+		{
+			"name": "GitHub Copilot",
+			"rosie": {
+				"id": "copilot",
+				"globalPath": "C:\\Users\\david\\.copilot\\skills"
+			}
+		}
+	]
+}

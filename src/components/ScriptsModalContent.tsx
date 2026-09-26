@@ -11,7 +11,7 @@ import {
   rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ScriptItem } from '../types/Script';
+import { ScriptItem, scriptPublicado } from '../types/Script';
 import { ScriptCard } from './ScriptCard';
 import { ScriptSidebar } from './ScriptSidebar';
 import { buscarPropostaAtiva } from '../services/scriptVersioningService';
@@ -187,7 +187,7 @@ export const ScriptsModalContent = React.memo<ScriptsModalContentProps>(function
                           });
                           return;
                         }
-                        if (script.email_enviado && !showCuradoriaControls) {
+                        if (scriptPublicado(script) && !showCuradoriaControls) {
                           setModoPropostaAtivo(true);
                           setPropostaScriptId(script.id);
                           setPropostaScriptNome(script.nome);

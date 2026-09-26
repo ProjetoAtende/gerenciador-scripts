@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, HelpCircle, ChevronDown,
-  FolderPlus, FileText, Edit3, Mail, CheckCircle2,
+  FolderPlus, FileText, Edit3, Send, CheckCircle2,
   Wand2, Bold, Image, Video, Link, Palette,
   GripVertical, Sparkles, Eye, Search, Trash2, ShieldCheck,
   Bell, History, MessageSquare, RotateCcw
@@ -207,11 +207,11 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
       ),
     },
 
-    // SEÇÃO 2: FLUXO DE CRIAÇÃO E EMAIL
+    // SEÇÃO 2: FLUXO DE CRIAÇÃO E PUBLICAÇÃO
     {
       id: 'fluxo',
       title: 'Fluxo de Criação e Curadoria',
-      icon: <Mail size={20} className="text-blue-600" />,
+      icon: <FileText size={20} className="text-blue-600" />,
       color: 'bg-blue-100',
       content: (
         <div className="space-y-4">
@@ -244,7 +244,7 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
             <Step
               number={5}
               title="Publicar script"
-              description="O botão 'Publicar script' aparece no card quando chamado e pergunta estão preenchidos. A curadoria é avisada no sininho (notificação in-app); não há mais envio de e-mail ZeptoMail neste fluxo."
+              description="O botão 'Publicar script' aparece no card quando chamado e pergunta estão preenchidos. A curadoria é avisada no sininho (notificação in-app)."
             />
             <Step
               number={6}
@@ -606,7 +606,7 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
               </div>
               <p className="text-sm text-gray-700 dark:text-gray-300">
                 Organiza o texto com estrutura profissional: parágrafos, listas,
-                links clicáveis, e formatação de email.
+                links clicáveis e formatação de texto profissional.
               </p>
               <p className="text-xs text-amber-800 dark:text-amber-300 mt-2">
                 Mantém saudações como "Prezado usuário" e preserva estruturas especiais
@@ -730,7 +730,7 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
             </div>
             <p className="text-sm text-gray-700 dark:text-gray-300">
               Apenas membros das equipes da coordenadoria 3.2 (equipes 3.2.1, 3.2.2 e 3.2.3) 
-              têm permissão para revisar scripts, marcar como curados e enviar emails de aprovação.
+              têm permissão para revisar scripts, marcar como curados e registrar aprovações (com notificação in-app ao autor).
             </p>
           </div>
 
@@ -1133,104 +1133,36 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
       ),
     },
 
-    // SEÇÃO 12: PUBLICAÇÃO (substitui envio de e-mail)
+    // SEÇÃO 12: PUBLICAÇÃO
     {
-      id: 'emails',
+      id: 'publicacao',
       title: 'Publicação de Scripts',
-      icon: <Mail size={20} className="text-blue-600" />,
+      icon: <Send size={20} className="text-blue-600" />,
       color: 'bg-blue-100',
       content: (
         <div className="space-y-4">
-          <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
-            <p className="text-sm text-blue-800 dark:text-blue-300">
-              <strong>Atualização (set/2026):</strong> o módulo Scripts não envia mais e-mails pela ZeptoMail.
-              Use <strong>Publicar script</strong> no card; a equipe de curadoria recebe notificação no sininho (<em>script publicado</em>).
-            </p>
-          </div>
-          <p className="text-gray-700 dark:text-gray-300 text-sm text-gray-500 dark:text-gray-400">
-            Referência histórica — o fluxo anterior enviava e-mails personalizados por relacionamento autor/destinatário:
+          <p className="text-gray-700 dark:text-gray-300 text-sm">
+            A publicação substitui qualquer envio externo: tudo acontece dentro do gerenciador via sininho (🔔).
           </p>
 
-          <h4 className="font-semibold text-gray-800 dark:text-gray-200">Emails de Novo Script</h4>
-          <div className="space-y-3">
-            <div className="p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-200 dark:border-purple-800">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-purple-600">👤</span>
-                <span className="font-medium text-purple-800 dark:text-purple-300">Para o Autor</span>
-              </div>
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                <em>"Seu script foi enviado para análise da curadoria"</em><br/>
-                Mensagem confirmando o envio do seu próprio script.
-              </p>
-            </div>
+          <h4 className="font-semibold text-gray-800 dark:text-gray-200">Como publicar</h4>
+          <ol className="list-decimal list-inside text-sm text-gray-700 dark:text-gray-300 space-y-2">
+            <li>Salve o script com autor, chamado e pergunta preenchidos.</li>
+            <li>No card, clique em <strong>Publicar script</strong> (aparece quando chamado e pergunta existem).</li>
+            <li>O card passa a exibir o selo <strong>Publicado</strong>.</li>
+            <li>A curadoria recebe notificação <em>script publicado</em> no sininho.</li>
+          </ol>
 
-            <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-blue-600">👥</span>
-                <span className="font-medium text-blue-800 dark:text-blue-300">Para a Mesma Equipe</span>
-              </div>
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                <em>"Um colega da sua equipe propôs um novo script"</em><br/>
-                Notifica membros da mesma equipe do autor com contexto de colaboração.
-              </p>
-            </div>
+          <h4 className="font-semibold text-gray-800 dark:text-gray-200 mt-4">Após a curadoria</h4>
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            O autor e demais envolvidos são avisados pelo sininho quando o script é revisado (com ou sem alterações).
+            Não há disparo de e-mail pelo sistema — use Teams ou outro canal institucional se precisar avisar alguém fora do app.
+          </p>
 
-            <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-gray-600 dark:text-gray-400">🌐</span>
-                <span className="font-medium text-gray-800 dark:text-gray-200">Para Outras Equipes</span>
-              </div>
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                <em>"Um novo script foi cadastrado e aguarda revisão da curadoria"</em><br/>
-                Mensagem padrão para equipes que não têm relação direta com o autor.
-              </p>
-            </div>
-          </div>
-
-          <h4 className="font-semibold text-gray-800 dark:text-gray-200 mt-4">Emails de Aprovação pela Curadoria</h4>
-          <div className="space-y-3">
-            <div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-green-600">✅</span>
-                <span className="font-medium text-green-800 dark:text-green-300">Script Modificado</span>
-              </div>
-              <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                Quando a curadoria faz ajustes no script:
-              </p>
-              <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1 ml-4">
-                <li><strong>Autor:</strong> "Seu script foi revisado com ajustes"</li>
-                <li><strong>Mesma equipe:</strong> "Script revisado com ajustes para uso"</li>
-                <li><strong>Outras equipes:</strong> "Este script foi revisado para uso oficial"</li>
-              </ul>
-            </div>
-
-            <div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-green-600">✨</span>
-                <span className="font-medium text-green-800 dark:text-green-300">Script Não Modificado</span>
-              </div>
-              <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                Quando revisado sem alterações:
-              </p>
-              <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1 ml-4">
-                <li><strong>Autor:</strong> "Seu script foi revisado na íntegra"</li>
-                <li><strong>Mesma equipe:</strong> "Script revisado para uso oficial"</li>
-                <li><strong>Outras equipes:</strong> "Este script foi revisado para uso oficial"</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="bg-amber-50 dark:bg-amber-900/30 rounded-lg p-3 mt-4">
-            <p className="text-sm text-amber-800 dark:text-amber-300">
-              <strong>📧 Importante:</strong> O sistema agrupa destinatários com o mesmo tipo de mensagem 
-              para otimizar o envio. Todos recebem emails profissionais e personalizados.
-            </p>
-          </div>
-
-          <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3 mt-4">
+          <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
             <p className="text-sm text-blue-800 dark:text-blue-300">
-              <strong>💡 Novidade:</strong> Scripts criados antes desta atualização enviarão emails com 
-              a mensagem padrão para todos os destinatários (sem personalização por contexto).
+              <strong>💡 Dica:</strong> Scripts ainda não publicados continuam como rascunho interno; a exclusão pode ser imediata.
+              Scripts publicados ou já revisados exigem fluxo de aprovação para desativar.
             </p>
           </div>
         </div>
@@ -1495,18 +1427,15 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
             />
           </div>
 
-          <h4 className="font-semibold text-gray-800 dark:text-gray-200 mt-4">Email com conteúdo para o atendente</h4>
+          <h4 className="font-semibold text-gray-800 dark:text-gray-200 mt-4">Conteúdo para o atendente</h4>
           <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
             <p className="text-sm text-blue-800 dark:text-blue-300 mb-2">
-              Quando um script com conteúdo para o atendente é enviado por email (criação ou curadoria),
-              o email inclui automaticamente uma seção destacada em <strong>laranja</strong>:
+              No editor, a aba <strong>Script para o Atendente</strong> guarda orientações internas (procedimentos para o serventuário).
+              Esse texto fica separado do script para o usuário final e não é compartilhado automaticamente por e-mail.
             </p>
             <div className="text-xs bg-white dark:bg-gray-800 rounded border border-orange-300 dark:border-orange-700 p-2 font-mono text-orange-800 dark:text-orange-300">
               🛠️ Orientações para o Atendente
             </div>
-            <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
-              Essa seção só aparece no email se o script tiver conteúdo para o atendente cadastrado.
-            </p>
           </div>
 
           <h4 className="font-semibold text-gray-800 dark:text-gray-200 mt-4">Campos compartilhados entre os dois modos</h4>

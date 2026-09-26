@@ -15,11 +15,9 @@ import {
   UserCheck,
   Shield
 } from 'lucide-react';
-import { EmailPreviewModal } from './EmailPreviewModal';
+import { UsuarioCriadoModal } from './UsuarioCriadoModal';
 import { PermissoesTab } from './PermissoesTab';
 import { FormModal, ConfirmDeleteModal } from './BossOnlyHelpers';
-import { enviarEmailBoasVindas } from '../services/emailService';
-import { toast } from 'sonner';
 
 type TabType = 'setores' | 'equipes' | 'usuarios' | 'permissoes';
 
@@ -42,14 +40,14 @@ const BossOnlyContent: React.FC<{ [key: string]: any }> = (h) => {
     formSetorId, setFormSetorId,
     formEquipeId, setFormEquipeId,
     formSupervisorEquipeIds, setFormSupervisorEquipeIds,
+    blockUserFormAutofill, setBlockUserFormAutofill,
     showDeleteModal, setShowDeleteModal,
     deleteItem, setDeleteItem, deleteLoading,
     showResetSenhaModal, setShowResetSenhaModal,
     setResetSenhaUserId,
     novaSenha, setNovaSenha,
-    showEmailPreview, setShowEmailPreview,
+    showUsuarioCriadoModal, setShowUsuarioCriadoModal,
     usuarioCriado, setUsuarioCriado,
-    enviandoEmail, setEnviandoEmail,
     abrirFormularioCriacao,
     abrirFormularioEdicao,
     handleFormSubmit,
@@ -473,9 +471,13 @@ const BossOnlyContent: React.FC<{ [key: string]: any }> = (h) => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
               <input
                 type="email"
+                name="bossonly-new-user-email"
+                autoComplete="off"
                 value={formEmail}
                 onChange={(e) => setFormEmail(e.target.value)}
                 disabled={formMode === 'edit'}
+                readOnly={formMode === 'create' && blockUserFormAutofill}
+                onFocus={() => formMode === 'create' && setBlockUserFormAutofill(false)}
                 className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:bg-gray-100 dark:disabled:bg-gray-800"
                 placeholder="usuario@email.com"
               />
@@ -485,8 +487,12 @@ const BossOnlyContent: React.FC<{ [key: string]: any }> = (h) => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Senha</label>
                 <input
                   type="password"
+                  name="bossonly-new-user-password"
+                  autoComplete="new-password"
                   value={formSenha}
                   onChange={(e) => setFormSenha(e.target.value)}
+                  readOnly={blockUserFormAutofill}
+                  onFocus={() => setBlockUserFormAutofill(false)}
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   placeholder="Minimo 6 caracteres"
                 />
@@ -742,6 +748,8 @@ const BossOnlyContent: React.FC<{ [key: string]: any }> = (h) => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nova Senha</label>
                 <input
                   type="password"
+                  name="bossonly-reset-password"
+                  autoComplete="new-password"
                   value={novaSenha}
                   onChange={(e) => setNovaSenha(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -752,35 +760,14 @@ const BossOnlyContent: React.FC<{ [key: string]: any }> = (h) => {
           )}
         </AnimatePresence>
 
-        {/* Modal de preview de email */}
-        {showEmailPreview && usuarioCriado && (
-          <EmailPreviewModal
-            open={showEmailPreview}
+        {showUsuarioCriadoModal && usuarioCriado && (
+          <UsuarioCriadoModal
+            open={showUsuarioCriadoModal}
             onClose={() => {
-              setShowEmailPreview(false);
+              setShowUsuarioCriadoModal(false);
               setUsuarioCriado(null);
             }}
             usuario={usuarioCriado}
-            onEnviarEmail={async () => {
-              setEnviandoEmail(true);
-              try {
-                const resultado = await enviarEmailBoasVindas(usuarioCriado);
-                
-                if (resultado.sucesso) {
-                  toast.success('Email de boas-vindas enviado com sucesso!');
-                  setShowEmailPreview(false);
-                  setUsuarioCriado(null);
-                } else {
-                  toast.error(resultado.erro || 'Falha ao enviar email');
-                }
-              } catch (error) {
-                console.error('Erro ao enviar email:', error);
-                toast.error('Erro inesperado ao enviar email');
-              } finally {
-                setEnviandoEmail(false);
-              }
-            }}
-            enviando={enviandoEmail}
           />
         )}
       </motion.div>

@@ -4,6 +4,7 @@
  */
 
 import { supabase } from './supabaseClient';
+import { scriptPublicado } from '../types/Script';
 
 export interface ResultadoExclusao {
   sucesso: boolean;
@@ -34,7 +35,7 @@ export function scriptExigeAprovacaoExclusao(script: {
   email_enviado?: boolean;
   curadoria_atuada?: boolean;
 }): boolean {
-  return !!(script.email_enviado || script.curadoria_atuada);
+  return !!(scriptPublicado(script) || script.curadoria_atuada);
 }
 
 export async function solicitarExclusaoScript(

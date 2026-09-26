@@ -47,6 +47,16 @@ export interface CreateUserData {
   supervisor_equipe_ids?: string[];
 }
 
+/** Dados exibidos após criar usuário (compartilhar credenciais via cópia). */
+export interface UsuarioCriadoData {
+  nome: string;
+  email: string;
+  senha: string;
+  role: 'user' | 'supervisor' | 'coordenador' | 'admin';
+  setor_nome?: string;
+  equipe_nome?: string;
+}
+
 export interface UpdateUserData {
   nome?: string;
   role?: 'user' | 'supervisor' | 'coordenador' | 'admin';
@@ -102,6 +112,9 @@ const extractEdgeFunctionError = async (error: unknown): Promise<string> => {
 
     if (maybeError.context) {
       try {
+        if (maybeError.context.status === 404) {
+          return 'A função admin-users não está implantada no Supabase. Execute: npx supabase functions deploy admin-users (projeto linkado).';
+        }
         const body = await maybeError.context.json() as { error?: string; message?: string };
         if (body?.error) return body.error;
         if (body?.message) return body.message;
@@ -111,6 +124,9 @@ const extractEdgeFunctionError = async (error: unknown): Promise<string> => {
     }
 
     if (typeof maybeError.message === 'string' && maybeError.message.trim() !== '') {
+      if (maybeError.message.includes('Failed to send a request to the Edge Function')) {
+        return 'Não foi possível contactar a Edge Function admin-users. Implantar no projeto Supabase: npm run sb:deploy-admin-users (após npx supabase link --project-ref lhofkimrmzyjazfpqesd).';
+      }
       return maybeError.message;
     }
   }

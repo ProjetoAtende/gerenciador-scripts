@@ -8,7 +8,7 @@ import { supabase } from '../services/supabaseClient';
 import { buscarPropostaPorId } from '../services/scriptVersioningService';
 
 // Lazy imports para modais (tree-shaking)
-import { OrientacaoEmailModal } from './OrientacaoEmailModal';
+import { OrientacaoPosSalvarScriptModal } from './OrientacaoPosSalvarScriptModal';
 import { ConfirmPublicarScriptModal } from './ConfirmPublicarScriptModal';
 import { scriptExigeAprovacaoExclusao } from '../services/scriptExclusaoService';
 import { ConfirmLocationModal } from './ConfirmLocationModal';
@@ -113,7 +113,7 @@ interface ScriptsModalModalsProps {
   saveScript: (payload: ScriptSavePayload) => Promise<void>;
   savePergunta: (scriptId: string, pergunta: string, numeroChamado: string) => Promise<void>;
   closeScriptEditor: () => void;
-  showOrientacaoModal: boolean; setShowOrientacaoModal: (v: boolean) => void;
+  showOrientacaoPosSalvarModal: boolean; setShowOrientacaoPosSalvarModal: (v: boolean) => void;
   orientacaoScriptNome: string;
   showConfirmPublicarModal: boolean; setShowConfirmPublicarModal: (v: boolean) => void;
   scriptForPublicar: ScriptItem | null; setScriptForPublicar: (v: ScriptItem | null) => void;
@@ -525,7 +525,7 @@ export const ScriptsModalModals = React.memo<ScriptsModalModalsProps>(function S
         onClose={props.closeScriptEditor}
       />
 
-      <OrientacaoEmailModal isOpen={props.showOrientacaoModal} scriptNome={props.orientacaoScriptNome} onClose={() => props.setShowOrientacaoModal(false)} />
+      <OrientacaoPosSalvarScriptModal isOpen={props.showOrientacaoPosSalvarModal} scriptNome={props.orientacaoScriptNome} onClose={() => props.setShowOrientacaoPosSalvarModal(false)} />
 
       <ConfirmPublicarScriptModal
         isOpen={props.showConfirmPublicarModal}

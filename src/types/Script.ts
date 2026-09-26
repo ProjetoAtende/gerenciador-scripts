@@ -110,7 +110,9 @@ export interface ScriptItem {
   curadoria_atuada: boolean;
   pergunta?: string | null;
   numero_chamado?: string | null;
+  /** Coluna DB legacy `email_enviado`: script publicado para a curadoria (notificação in-app). */
   email_enviado?: boolean;
+  /** Coluna DB legacy; não usada no fluxo atual (curadoria via sininho). */
   email_curadoria_enviado?: boolean;
   // Campos de autor e controle de modificações
   criado_por?: string | null;           // UUID do autor do script para o usuário final
@@ -168,4 +170,9 @@ export interface ScriptItem {
 
 export interface ScriptWithFolder extends ScriptItem {
   pasta?: ScriptFolder | null;
+}
+
+/** Script já publicado (curadoria notificada via sininho). */
+export function scriptPublicado(script: Pick<ScriptItem, 'email_enviado'>): boolean {
+  return script.email_enviado === true;
 }

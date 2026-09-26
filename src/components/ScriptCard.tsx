@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 
 import { CheckCircle2, Circle, Clock, HelpCircle, Ticket, Send, Calendar, User, History } from 'lucide-react';
-import { ScriptItem, ScriptFolder } from '../types/Script';
+import { ScriptItem, ScriptFolder, scriptPublicado } from '../types/Script';
 import { CategoriaEditavelScript } from './CategoriaEditavelScript';
 import { useCategoriaInfo } from '../hooks/useCategoriaInfo';
 
@@ -359,7 +359,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo(({
         )}
       </div>
 
-      {!script.email_enviado && (script.numero_chamado && script.pergunta) && (
+      {!scriptPublicado(script) && (script.numero_chamado && script.pergunta) && (
         <div
           className="px-3 py-2 border-t dark:border-gray-700 text-xs"
           onClick={(e) => e.stopPropagation()}
@@ -374,7 +374,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo(({
         </div>
       )}
 
-      {script.email_enviado && (
+      {scriptPublicado(script) && (
         <div
           className="px-3 py-1.5 border-t bg-green-50 dark:bg-green-900/30 text-xs text-green-700 dark:text-green-400 flex items-center gap-1 dark:border-gray-700"
           onClick={(e) => e.stopPropagation()}

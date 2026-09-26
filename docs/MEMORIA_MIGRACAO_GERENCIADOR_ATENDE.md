@@ -1,6 +1,6 @@
 # Memória de execução — Gerenciador Atende
 
-Documento de continuidade da migração e recorte do **Gerenciador de Chamados** para o **Gerenciador Atende**. Atualizado em setembro/2026.
+Documento de continuidade da migração e recorte do **Gerenciador de Chamados** para o **Gerenciador Atende**. Atualizado em setembro/2026 (última revisão operacional: Boss Only, `admin-users`, retirada de e-mail no produto).
 
 ---
 
@@ -58,12 +58,15 @@ O **Gerenciador Atende** é uma aplicação web (React + Supabase) para equipes 
 | DB-5 | `20260927220000_scripts_db5_tables.sql`, `20260927221000_scripts_db5_functions.sql` | Tabelas e RPCs de scripts |
 | DB-6 | `20260927230000_chamar_deepseek_db6.sql` | RPC `public.chamar_deepseek` |
 | Seed | `20260927240000_seed_equipe_atende_admin.sql` | Setor/equipe Atende + lotação/admin `dpestilli@tjsp.jus.br` |
+| DB-5b | `20260927250000_scripts_conteudo_usuario_final_categorias.sql` | `tem_conteudo_usuario_final` + tabelas/RPC de categorias para Scripts |
 
 ### Comandos úteis
 
 ```bash
-npx supabase link --project-ref lhofkimrmzyjazfpqesd   # se necessário
-npm run sb:push   # db push das migrations em supabase/migrations/
+npx supabase login                                      # uma vez por máquina; token fica no perfil local, não no .env
+npx supabase link --project-ref lhofkimrmzyjazfpqesd   # gera vínculo local (não versionar secrets)
+npm run sb:push                                         # db push das migrations em supabase/migrations/
+npm run sb:deploy-admin-users                           # após alterar supabase/functions/admin-users/
 ```
 
 ### Helpers de montagem DB-5
@@ -90,6 +93,10 @@ npm run sb:push   # db push das migrations em supabase/migrations/
 | TS unused após remover aba GSE no Boss Only | Limpeza em `BossOnlyContent.tsx` / `useBossOnlyModal.ts` |
 | DeepSeek no deploy GitHub | Secret `VITE_*` no workflow **não** substitui Vault; Pasquale usa RPC |
 | Modelo `deepseek-v4-flash` com `content` vazio | Resposta pode vir em `reasoning_content`; `deepseekService.ts` usa `extractDeepseekText` (igual ao client RPC) |
+| Boss Only: formulário “Novo usuário” vinha com login/senha do admin (autofill do navegador) | Campos com `autoComplete` adequado + `readOnly` até foco (`blockUserFormAutofill` em `useBossOnlyModal.ts` / `BossOnlyContent.tsx`) |
+| Cadastro de usuário falhava com CORS / “Failed to send a request to the Edge Function” | Função `admin-users` **não estava implantada** no remoto (OPTIONS 404). Implantar com `npm run sb:deploy-admin-users` após `supabase link` |
+| `supabase link` avisava versão local do Postgres diferente do remoto | `supabase/config.toml` → `[db] major_version = 17` (remoto Postgres 17) |
+| Scripts: `column tem_conteudo_usuario_final does not exist` + 404 em `categorias_equipe` / RPC `obter_hierarquia_categorias` | Migration `20260927250000_scripts_conteudo_usuario_final_categorias.sql` — aplicar com `npm run sb:push`. Tabelas de categorias podem ficar **vazias** até importar dados do legado/produção; filtros funcionam sem 404. |
 
 ---
 
@@ -130,6 +137,20 @@ SELECT vault.create_secret(
 
 - Abas: Setores, Equipes, Usuários, Permissões.
 - Removidos GSE e fluxos de anomalias do legado.
+- **Criar usuário:** `criarUsuario` → Edge Function **`admin-users`** (`action: create`) via `adminService.ts` — sincroniza Auth + `public.users` (não usar service role no browser).
+- **Toggle ativo / reset senha:** também via `admin-users` (`toggle-active`, `reset-password`).
+- **Editar perfil/lotação:** RPCs `admin_atualizar_usuario`, `admin_toggle_usuario_ativo` (toggle legado na RPC só atualiza `users`; o fluxo da UI usa ban via Edge Function).
+- **Após criar usuário:** modal `UsuarioCriadoModal.tsx` — apenas **copiar credenciais** (clipboard). Texto do bloco: cabeçalho **SISTEMA ATENDE** (não “SGS”). TJSP bloqueia e-mail externo; **não há** envio ZeptoMail/boas-vindas.
+- **Config local da function:** `supabase/config.toml` → `[functions.admin-users] verify_jwt = false` (JWT validado dentro da função).
+
+### Scripts (publicação e notificações — sem e-mail)
+
+- **Publicar script:** botão no card → marca coluna legacy `email_enviado = true` + RPC `notificar_curadoria_script_publicado` (sininho). UI usa helper `scriptPublicado()` em `src/types/Script.ts` (não renomear coluna no banco sem migration).
+- **Após salvar script novo:** `OrientacaoPosSalvarScriptModal.tsx` (orienta publicar + script para atendente).
+- **Curadoria / revisão:** notificações in-app; referência histórica ZeptoMail removida do código (`src/services/emailService.ts` **excluído** do produto Atende).
+- **Ajuda in-app:** `ScriptsHelpModal.tsx` — seção **Publicação de Scripts** (`id: publicacao`); fluxo de criação sem menção a envio de e-mail.
+- **Exclusão:** `scriptExclusaoService.ts` trata “publicado” via `scriptPublicado()` + `curadoria_atuada`.
+- **Renomeações (set/2026):** `EmailPreviewModal` → `UsuarioCriadoModal`; `OrientacaoEmailModal` → `OrientacaoPosSalvarScriptModal`; estado do hook `showOrientacaoPosSalvarModal`.
 
 ### Escala
 
@@ -161,8 +182,12 @@ Origem no código: `src/pages/Home.tsx`, hooks de scripts, serviços de exclusã
 - **URL pública (Pages):** `https://projetoatende.github.io/gerenciador-scripts/#/home` — links em e-mails usam [`src/config/appUrls.ts`](../src/config/appUrls.ts) (`VITE_APP_PUBLIC_ORIGIN` opcional no build).
 - **Remoto Git (referência local):** variável `GITHUB` no `.env` (não versionado) → `https://github.com/ProjetoAtende/gerenciador-scripts`.
 - **Push Git:** pacote inicial grande (**HTTP 408**); depois **GH013** por tokens em `archive/legacy/`. Histórico reescrito sem `archive/`; **`archive/`**, dumps e corpo de `migrations_legacy/` no `.gitignore`. Push para `main` concluído com sucesso após limpeza; **Pages** via workflow no push em `main`.
-- **Variáveis:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (e opcionais no workflow); `.env` local não versionado.
-- **Edge Function em uso:** `supabase/functions/admin-users` (gestão de usuários via `adminService.ts`).
+- **Variáveis:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (e opcionais no workflow); `.env` local não versionado. **Não** colocar token da CLI (`supabase login`) nem PAT pessoal no `.env` versionado — só no ambiente de quem opera.
+- **Edge Function em uso:** `admin-users` (gestão de usuários via `adminService.ts`). **Implantada no remoto** `lhofkimrmzyjazfpqesd` (set/2026); redeploy com `npm run sb:deploy-admin-users` após mudanças na função. Código: `supabase/functions/admin-users/index.ts`.
+- **Postgres remoto:** major version **17** — alinhar `supabase/config.toml` ao linkar (`major_version = 17`).
+- **Acesso Supabase:** operadores convidados como **Developer** na org podem `supabase login`, `link` e deploy de functions; **Owner/Admin** convida em Dashboard → Organization → Team. Token da CLI **não** vai para `.env` nem para este documento.
+- **E-mail no produto Atende:** não há integração ZeptoMail no front atual; compartilhamento de credenciais de usuário é manual (copiar). Links públicos em mensagens externas podem usar `appUrls.ts` / `VITE_APP_PUBLIC_ORIGIN`.
+- **CLI vs Management API:** `supabase login` autentica deploy/link/diff; scripts SQL remoto (`run-mgmt-sql.mjs`) usam `PAT_SUPABASE` ou `SUPABASE_ACCESS_TOKEN` no `.env` — são credenciais distintas.
 - **Edge Functions legadas** (não parte do produto Atende): `homologacao-relatorio`, `remote-smax-orchestrator` — arquivadas em `archive/legacy/` se movidas.
 
 ---
@@ -199,6 +224,9 @@ Para repetir a análise (dry-run): `node scripts/migracao/prune-src.mjs --dry-ru
 - [x] Renomear pacote npm e alinhar `base` GitHub Pages → `gerenciador-atende`
 - [x] Repositório `ProjetoAtende/gerenciador-scripts` publicado (`main` + GitHub Pages)
 - [x] Equipe **Atende** e admin inicial no Supabase remoto
+- [x] Edge Function **`admin-users`** implantada no remoto (cadastro/toggle/reset via Boss Only)
+- [x] Boss Only: autofill corrigido; pós-criação só **Copiar credenciais** (`UsuarioCriadoModal`, marca **Sistema Atende**)
+- [x] Scripts: fluxo documentado e UI alinhada à **publicação + sininho** (sem `emailService.ts`)
 
 ---
 

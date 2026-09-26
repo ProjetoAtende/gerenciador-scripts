@@ -350,7 +350,7 @@ export const CHANGELOG: Version[] = [
       },
       {
         title: 'Lazy Loading de Conteúdo',
-        description: 'Conteúdo completo dos scripts agora é carregado sob demanda apenas ao abrir o editor, gerador ou enviar email. Listagem não carrega mais HTML/texto de 600+ scripts',
+        description: 'Conteúdo completo dos scripts agora é carregado sob demanda apenas ao abrir o editor ou gerador. Listagem não carrega mais HTML/texto de 600+ scripts',
         type: 'improvement',
         area: 'Scripts'
       },

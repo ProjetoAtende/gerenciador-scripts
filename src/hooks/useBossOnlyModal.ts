@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useEffectiveAuth } from './useEffectiveAuth';
-import { UsuarioEmailData } from '../services/emailService';
 import {
   isAdmin,
   listarSetores,
@@ -24,7 +23,8 @@ import {
   UserWithStatus,
   GSEWithEquipe,
   CreateUserData,
-  UpdateUserData
+  UpdateUserData,
+  UsuarioCriadoData,
 } from '../services/adminService';
 
 // =====================================================
@@ -77,6 +77,8 @@ export const useBossOnlyModal = ({ isOpen, onClose }: UseBossOnlyModalParams) =>
   const [formEquipeId, setFormEquipeId] = useState('');
   const [formSupervisorEquipeIds, setFormSupervisorEquipeIds] = useState<string[]>([]);
   const [formGSE, setFormGSE] = useState('');
+  /** Evita autofill do navegador (login) no formulário de novo usuário */
+  const [blockUserFormAutofill, setBlockUserFormAutofill] = useState(true);
 
   // Modal de confirmacao de exclusao
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -88,10 +90,8 @@ export const useBossOnlyModal = ({ isOpen, onClose }: UseBossOnlyModalParams) =>
   const [resetSenhaUserId, setResetSenhaUserId] = useState('');
   const [novaSenha, setNovaSenha] = useState('');
 
-  // Modal de preview de email
-  const [showEmailPreview, setShowEmailPreview] = useState(false);
-  const [usuarioCriado, setUsuarioCriado] = useState<UsuarioEmailData | null>(null);
-  const [enviandoEmail, setEnviandoEmail] = useState(false);
+  const [showUsuarioCriadoModal, setShowUsuarioCriadoModal] = useState(false);
+  const [usuarioCriado, setUsuarioCriado] = useState<UsuarioCriadoData | null>(null);
 
   // =====================================================
   // CARREGAMENTO DE DADOS
@@ -208,11 +208,13 @@ export const useBossOnlyModal = ({ isOpen, onClose }: UseBossOnlyModalParams) =>
     setFormSupervisorEquipeIds([]);
     setFormGSE('');
     setEditingItem(null);
+    setBlockUserFormAutofill(true);
   };
 
   const abrirFormularioCriacao = () => {
     setFormMode('create');
     limparFormulario();
+    setBlockUserFormAutofill(true);
     setShowFormModal(true);
   };
 
@@ -277,26 +279,23 @@ export const useBossOnlyModal = ({ isOpen, onClose }: UseBossOnlyModalParams) =>
             };
             result = await criarUsuario(dados);
             
-            // Se criou usuário com sucesso, preparar dados para email
             if (result?.success && result.senha) {
               const equipeSelecionada = equipes.find(e => e.id === formEquipeId);
               const setorSelecionado = setores.find(s => s.id === formSetorId);
-              
-              const dadosEmail: UsuarioEmailData = {
+
+              setUsuarioCriado({
                 nome: formNome,
                 email: formEmail,
-                senha: result.senha, // Senha retornada do adminService
+                senha: result.senha,
                 role: formRole,
                 setor_nome: setorSelecionado?.nome,
-                equipe_nome: equipeSelecionada?.nome
-              };
-              
-              setUsuarioCriado(dadosEmail);
-              setShowEmailPreview(true); // Abrir modal de preview
-              setShowFormModal(false); // Fechar formulário
+                equipe_nome: equipeSelecionada?.nome,
+              });
+              setShowUsuarioCriadoModal(true);
+              setShowFormModal(false);
               limparFormulario();
               carregarDados();
-              return; // Não executar toast aqui, será feito no modal
+              return;
             }
           } else {
             const canManageSupervisorEquipes = formRole === 'admin' || formRole === 'supervisor';
@@ -455,6 +454,7 @@ export const useBossOnlyModal = ({ isOpen, onClose }: UseBossOnlyModalParams) =>
     formEquipeId, setFormEquipeId,
     formSupervisorEquipeIds, setFormSupervisorEquipeIds,
     formGSE, setFormGSE,
+    blockUserFormAutofill, setBlockUserFormAutofill,
     // Delete
     showDeleteModal, setShowDeleteModal,
     deleteItem, setDeleteItem, deleteLoading,
@@ -462,10 +462,8 @@ export const useBossOnlyModal = ({ isOpen, onClose }: UseBossOnlyModalParams) =>
     showResetSenhaModal, setShowResetSenhaModal,
     resetSenhaUserId, setResetSenhaUserId,
     novaSenha, setNovaSenha,
-    // Email preview
-    showEmailPreview, setShowEmailPreview,
+    showUsuarioCriadoModal, setShowUsuarioCriadoModal,
     usuarioCriado, setUsuarioCriado,
-    enviandoEmail, setEnviandoEmail,
     // Handlers
     carregarDados,
     limparFormulario,

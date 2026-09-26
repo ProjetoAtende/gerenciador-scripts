@@ -24,6 +24,7 @@
     "sb:reset": "powershell -ExecutionPolicy Bypass -File scripts/migracao/sb-reset.ps1",
     "sb:diff": "npx supabase db diff --linked",
     "sb:push": "npx supabase db push",
+    "sb:deploy-admin-users": "npx supabase functions deploy admin-users",
     "sb:pull": "npx supabase db pull",
     "dev:docker": "npx cross-env VITE_SUPABASE_URL=http://127.0.0.1:54321 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRFA0NiK7W9oHvfI7AZae-mE1n7T3IJOiWVu2MQQ6cw VITE_SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hj04zWl196z2-SBc0 vite"
   },

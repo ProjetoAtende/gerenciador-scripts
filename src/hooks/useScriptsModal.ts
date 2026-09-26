@@ -8,7 +8,7 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import { ScriptItem, ScriptInstancia, inferirInstanciaPorEquipe } from '../types/Script';
+import { ScriptItem, ScriptInstancia, inferirInstanciaPorEquipe, scriptPublicado } from '../types/Script';
 import { useScriptFolders } from './useScriptFolders';
 import { ScriptSavePayload } from '../components/ScriptEditorFullscreen';
 import { exportarScriptComoHtml } from '../services/scriptExportService';
@@ -83,8 +83,7 @@ export function useScriptsModal({ isOpen, onClose: _onClose, onOpenGerador, noti
   const [filtroValidacaoEnvio, setFiltroValidacaoEnvio] = useState<'todos' | 'validado-n1' | 'enviado-n1'>('todos');
   const [isCreatingNew, setIsCreatingNew] = useState(false);
 
-  // Publicação (substitui fluxo de e-mail ZeptoMail)
-  const [showOrientacaoModal, setShowOrientacaoModal] = useState(false);
+  const [showOrientacaoPosSalvarModal, setShowOrientacaoPosSalvarModal] = useState(false);
   const [orientacaoScriptNome, setOrientacaoScriptNome] = useState('');
   const [showConfirmPublicarModal, setShowConfirmPublicarModal] = useState(false);
   const [scriptForPublicar, setScriptForPublicar] = useState<ScriptItem | null>(null);
@@ -241,7 +240,7 @@ export function useScriptsModal({ isOpen, onClose: _onClose, onOpenGerador, noti
       .select(`
         id, nome, ordem, equipe_id, criado_em, pasta_id, numero_referencia,
         curadoria_atuada, pergunta, numero_chamado,
-        email_enviado, email_curadoria_enviado,
+        email_enviado,
         criado_por, criado_por_atendente, equipe_autor_id, modificado_curadoria, data_curadoria, curadoria_por,
         deletado, deletado_em, deletado_por, desativado_em,
         exclusao_pendente, exclusao_solicitada_em, exclusao_solicitada_por, motivo_exclusao,
@@ -257,7 +256,7 @@ export function useScriptsModal({ isOpen, onClose: _onClose, onOpenGerador, noti
     
     if (error) {
       console.error('Erro ao carregar scripts:', error);
-      toast.error('Erro ao carregar scripts');
+      toast.error('Erro ao carregar scripts', { id: 'scripts-fetch-error' });
       return;
     }
     // Mapear scripts_categorias_adicionais para categorias_adicionais
@@ -588,7 +587,7 @@ export function useScriptsModal({ isOpen, onClose: _onClose, onOpenGerador, noti
   };
 
   const openPublicarModal = (script: ScriptItem) => {
-    if (script.email_enviado) {
+    if (scriptPublicado(script)) {
       toast.info('Este script já está publicado.');
       return;
     }
@@ -1442,9 +1441,8 @@ export function useScriptsModal({ isOpen, onClose: _onClose, onOpenGerador, noti
 
       toast.success('Script criado com sucesso');
 
-      // Mostrar modal de orientação sobre email
       setOrientacaoScriptNome(nome.trim() || 'Novo Script');
-      setShowOrientacaoModal(true);
+      setShowOrientacaoPosSalvarModal(true);
 
       setEditingScript(null);
       setEditingContent('');
@@ -1632,7 +1630,7 @@ export function useScriptsModal({ isOpen, onClose: _onClose, onOpenGerador, noti
         setEditingScript(null);
         setEditingContent('');
         fetchScripts();
-        // Atualizar mapa de autores e emails
+        // Atualizar mapa de autores (nome/e-mail de login)
         fetchAutoresMap();
       }
     }
@@ -2267,7 +2265,7 @@ export function useScriptsModal({ isOpen, onClose: _onClose, onOpenGerador, noti
     handleOpenCreateFolderModal, handleConfirmFolderLocation, handleCreateFolder,
     handleOpenEditFolder, handleEditFolder, handleDeleteFolder, confirmDeleteFolder,
     // Publicação
-    showOrientacaoModal, setShowOrientacaoModal, orientacaoScriptNome,
+    showOrientacaoPosSalvarModal, setShowOrientacaoPosSalvarModal, orientacaoScriptNome,
     showConfirmPublicarModal, setShowConfirmPublicarModal,
     scriptForPublicar, setScriptForPublicar, publicarLoading,
     openPublicarModal, handleConfirmPublicar,

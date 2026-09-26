@@ -186,7 +186,9 @@ export default function EquipeSelectorPage() {
                       >
                         <div className="mb-1 text-2xl">{meta.emoji}</div>
                         <h3 className="mb-1 text-base font-bold">{equipe.nome}</h3>
-                        <p className="text-xs leading-tight text-gray-600 dark:text-gray-400">{meta.description}</p>
+                        {meta.description !== equipe.nome && (
+                          <p className="text-xs leading-tight text-gray-600 dark:text-gray-400">{meta.description}</p>
+                        )}
                         <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                           {meta.detail}
                           <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-gray-900" />

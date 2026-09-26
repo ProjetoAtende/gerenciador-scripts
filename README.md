@@ -56,7 +56,7 @@ VITE_SUPABASE_URL=https://<project-ref>.supabase.co
 VITE_SUPABASE_ANON_KEY=<anon-key>
 ```
 
-Para **Pasquale**, configure no Supabase Vault o secret `DEEPSEEK_API_KEY` (ver comentários em `supabase/migrations/20260927230000_chamar_deepseek_db6.sql`).
+Para **Pasquale**, a chave fica no Supabase Vault como `DEEPSEEK_API_KEY` (RPC `chamar_deepseek`; ver `supabase/migrations/20260927230000_chamar_deepseek_db6.sql`). Smoke opcional: `node scripts/migracao/run-mgmt-sql.mjs --file=scripts/migracao/smoke-deepseek.sql`.
 
 ---
 

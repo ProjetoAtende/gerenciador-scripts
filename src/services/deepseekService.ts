@@ -1,4 +1,4 @@
-import { callDeepseekRpc } from './deepseekRpcClient';
+import { callDeepseekRpc, extractDeepseekText } from './deepseekRpcClient';
 
 export interface MelhorarTextoResponse {
   textoMelhorado: string;
@@ -109,11 +109,10 @@ export const melhorarTextoComIA = async (textoOriginal: string, promptCustomizad
 
     data = rpcData;
 
-    if (!data?.choices?.[0]?.message) {
+    const textoMelhorado = extractDeepseekText(data);
+    if (!textoMelhorado) {
       throw new Error('Resposta da API inválida');
     }
-
-    const textoMelhorado = data.choices[0].message.content.trim();
 
     return {
       textoMelhorado
@@ -195,14 +194,13 @@ export const melhorarTextoOuvidoria = async (
       };
     }
 
-    if (!rpcData?.choices?.[0]?.message) {
+    const textoMelhorado = extractDeepseekText(rpcData);
+    if (!textoMelhorado) {
       return {
         textoMelhorado: resolucao,
         erro: 'Resposta da API inválida'
       };
     }
-
-    const textoMelhorado = (rpcData.choices[0].message.content as string).trim();
 
     return { textoMelhorado };
   } catch (error) {

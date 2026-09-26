@@ -28,7 +28,7 @@ O **Gerenciador Atende** é uma aplicação web (React + Supabase) para equipes 
 
 - **Origem do código:** `C:\Users\david\gerenciador-chamados` → cópia para `C:\Users\david\Atende\gerenciador` com **podagem funcional** (Home, Boss Only, Escala) e **banco curado**.
 - **Supabase:** projeto remoto `lhofkimrmzyjazfpqesd` (sem dependência de stack local para o recorte atual).
-- **Admin inicial:** `dpestilli@tjsp.jus.br` (credenciais não versionadas).
+- **Admin inicial:** `dpestilli@tjsp.jus.br` — role `admin`, lotado na equipe **Atende** (setor/equipe homônimos, `sgs_codigo` `ATENDE`; seed idempotente `20260927240000_seed_equipe_atende_admin.sql`).
 - **Banco:**
   - Migrations **ativas** em `supabase/migrations/` (bootstrap Atende + módulos DB-1…DB-6).
   - Histórico completo do monólito em `supabase/migrations_legacy/` (referência; não aplicar em projeto novo).
@@ -57,6 +57,7 @@ O **Gerenciador Atende** é uma aplicação web (React + Supabase) para equipes 
 | DB-4 | `20260927210000_escala_db4.sql` | Escala (calendários, rotinas, etc.) |
 | DB-5 | `20260927220000_scripts_db5_tables.sql`, `20260927221000_scripts_db5_functions.sql` | Tabelas e RPCs de scripts |
 | DB-6 | `20260927230000_chamar_deepseek_db6.sql` | RPC `public.chamar_deepseek` |
+| Seed | `20260927240000_seed_equipe_atende_admin.sql` | Setor/equipe Atende + lotação/admin `dpestilli@tjsp.jus.br` |
 
 ### Comandos úteis
 
@@ -70,6 +71,12 @@ npm run sb:push   # db push das migrations em supabase/migrations/
 - `scripts/migracao/extract-scripts-rpcs.mjs` — extrai RPCs do legado.
 - `scripts/migracao/assemble-scripts-db5.mjs` — monta partes das migrations de scripts.
 
+### Helpers operacionais (SQL remoto / smoke)
+
+- `scripts/migracao/run-mgmt-sql.mjs` — executa SQL via **Management API** (`PAT_SUPABASE` ou `SUPABASE_ACCESS_TOKEN` no `.env`). Útil quando `supabase db query --linked` falha por privilégio da login role.
+- `scripts/migracao/smoke-deepseek.sql` + `run-mgmt-sql.mjs --file=...` — smoke da RPC no Postgres (Vault + extensão `http`).
+- `scripts/migracao/smoke-deepseek-auth.mjs` — smoke via PostgREST como usuário (`SMOKE_TEST_EMAIL` / `SMOKE_TEST_PASSWORD` opcionais no `.env`).
+
 ---
 
 ## 4. Problemas encontrados e correções
@@ -82,14 +89,17 @@ npm run sb:push   # db push das migrations em supabase/migrations/
 | `npm install` ausente após cópia | `npm install` (~1146 pacotes) |
 | TS unused após remover aba GSE no Boss Only | Limpeza em `BossOnlyContent.tsx` / `useBossOnlyModal.ts` |
 | DeepSeek no deploy GitHub | Secret `VITE_*` no workflow **não** substitui Vault; Pasquale usa RPC |
+| Modelo `deepseek-v4-flash` com `content` vazio | Resposta pode vir em `reasoning_content`; `deepseekService.ts` usa `extractDeepseekText` (igual ao client RPC) |
 
 ---
 
 ## 5. DeepSeek (Pasquale)
 
-- Front chama `callDeepseekRpc` → **`public.chamar_deepseek`** (SECURITY DEFINER).
+- Front: `melhorarTextoComIA` / ouvidoria → `callDeepseekRpc` → **`public.chamar_deepseek`** (SECURITY DEFINER, `GRANT` para `authenticated`).
 - Chave: **`DEEPSEEK_API_KEY` no Supabase Vault** (preferencial); fallback `app.settings.deepseek_api_key`.
-- Configuração pós-push (SQL Editor, service role):
+- Modelo padrão no client: **`deepseek-v4-flash`** (API responde como `deepseek-flash`); timeout HTTP/SQL **120s**.
+
+Configuração inicial (SQL Editor, service role), se ainda não existir:
 
 ```sql
 SELECT vault.create_secret(
@@ -99,7 +109,7 @@ SELECT vault.create_secret(
 );
 ```
 
-- Status em set/2026: chave sendo providenciada no Vault pelo operador; smoke test Pasquale após confirmação.
+**Status set/2026:** Vault `DEEPSEEK_API_KEY` configurado no remoto; smoke SQL e RPC PostgREST OK; **Pasquale validado na UI** pelo operador.
 
 ---
 
@@ -150,7 +160,7 @@ Origem no código: `src/pages/Home.tsx`, hooks de scripts, serviços de exclusã
 - **Pacote npm:** `gerenciador-atende`; **`vite.config.ts` → `base`:** `/gerenciador-scripts/` (repositório GitHub `ProjetoAtende/gerenciador-scripts`).
 - **URL pública (Pages):** `https://projetoatende.github.io/gerenciador-scripts/#/home` — links em e-mails usam [`src/config/appUrls.ts`](../src/config/appUrls.ts) (`VITE_APP_PUBLIC_ORIGIN` opcional no build).
 - **Remoto Git (referência local):** variável `GITHUB` no `.env` (não versionado) → `https://github.com/ProjetoAtende/gerenciador-scripts`.
-- **Push Git:** o pacote inicial era grande (~209 MiB) e o GitHub chegou a responder **HTTP 408**. Depois de enxugar, o remoto bloqueou com **GH013 (push protection)** por PAT Supabase e chaves de IA em `archive/legacy/`. **`archive/`**, `schema_dump.sql`, `schema_local.sql` e SQL em `migrations_legacy/` ficam **fora do Git**; `archive/` permanece só no disco local. Tokens que tenham sido commitados devem ser **revogados/rotacionados**.
+- **Push Git:** pacote inicial grande (**HTTP 408**); depois **GH013** por tokens em `archive/legacy/`. Histórico reescrito sem `archive/`; **`archive/`**, dumps e corpo de `migrations_legacy/` no `.gitignore`. Push para `main` concluído com sucesso após limpeza; **Pages** via workflow no push em `main`.
 - **Variáveis:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (e opcionais no workflow); `.env` local não versionado.
 - **Edge Function em uso:** `supabase/functions/admin-users` (gestão de usuários via `adminService.ts`).
 - **Edge Functions legadas** (não parte do produto Atende): `homologacao-relatorio`, `remote-smax-orchestrator` — arquivadas em `archive/legacy/` se movidas.
@@ -168,7 +178,7 @@ Para separar o **Atende** do monólito **Chamados**:
 | Scripts operacionais Oráculo/Distribuidor | `archive/legacy/scripts-gerenciador-chamados/` |
 | Scripts de migração Atende | `scripts/migracao/` |
 | Lixo raiz (`temp_*.json`, `.codex-*`, `reports/`, `ESTRUTURA_PROJETO.md`) | Removido ou arquivado |
-| `supabase/migrations_legacy/` | **Mantido** como referência de schema legado |
+| `supabase/migrations_legacy/` | Referência local (SQL **fora do Git**; só `README.md` versionado) |
 
 ### Código-fonte `src/` (poda concluída)
 
@@ -184,9 +194,11 @@ Para repetir a análise (dry-run): `node scripts/migracao/prune-src.mjs --dry-ru
 - [x] Home e Boss Only recortados
 - [x] Escala genérica por equipe
 - [x] Build de produção OK
-- [ ] Vault `DEEPSEEK_API_KEY` confirmada + teste Pasquale
+- [x] Vault `DEEPSEEK_API_KEY` + smoke RPC + Pasquale na UI
 - [x] Poda completa de `src/` legado (grafo de imports + build OK)
 - [x] Renomear pacote npm e alinhar `base` GitHub Pages → `gerenciador-atende`
+- [x] Repositório `ProjetoAtende/gerenciador-scripts` publicado (`main` + GitHub Pages)
+- [x] Equipe **Atende** e admin inicial no Supabase remoto
 
 ---
 

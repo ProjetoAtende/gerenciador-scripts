@@ -284,7 +284,7 @@ export const ScriptsCoberturaTab: React.FC<ScriptsCoberturaTabProps> = ({ visibl
 
   function getStatusBadge(qtdScripts: number): { label: string; className: string } {
     if (qtdScripts === 0) {
-      return { label: 'VAZIO', className: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700' };
+      return { label: 'VAZIO', className: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 border-gray-200 dark:border-gray-700' };
     }
     if (qtdScripts < 3) {
       return { label: 'BAIXO', className: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800' };
@@ -341,7 +341,7 @@ export const ScriptsCoberturaTab: React.FC<ScriptsCoberturaTabProps> = ({ visibl
           📊 Cobertura de Scripts por Categoria
           <button
             onClick={() => setShowHelp(true)}
-            className="ml-1 w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-600 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-gray-500 dark:text-gray-400 hover:text-indigo-600 text-xs font-bold transition-colors"
+            className="ml-1 w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-600 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-gray-500 dark:text-gray-300 hover:text-indigo-600 text-xs font-bold transition-colors"
             title="Ajuda sobre esta aba"
           >
             ?
@@ -360,7 +360,7 @@ export const ScriptsCoberturaTab: React.FC<ScriptsCoberturaTabProps> = ({ visibl
           </select>
           <button
             onClick={expandidas.size > 0 ? recolherTodas : expandirTodas}
-            className="px-2.5 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md transition-colors"
+            className="px-2.5 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md transition-colors"
           >
             {expandidas.size > 0 ? '▼ Recolher' : '▶ Expandir'}
           </button>
@@ -403,7 +403,7 @@ export const ScriptsCoberturaTab: React.FC<ScriptsCoberturaTabProps> = ({ visibl
 
       {/* Lista de categorias */}
       {coberturaOrdenada.length === 0 ? (
-        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+        <div className="text-center py-12 text-gray-500 dark:text-gray-300">
           <div className="text-4xl mb-3">📭</div>
           <p className="font-medium">Nenhum dado de cobertura disponível</p>
           <p className="text-sm mt-1">Verifique se os scripts estão classificados.</p>
@@ -468,7 +468,7 @@ export const ScriptsCoberturaTab: React.FC<ScriptsCoberturaTabProps> = ({ visibl
                             style={{ width: `${progress.pct}%` }}
                           />
                         </div>
-                        <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium w-7 text-right">{progress.pct}%</span>
+                        <span className="text-[10px] text-gray-500 dark:text-gray-300 font-medium w-7 text-right">{progress.pct}%</span>
                       </div>
                     )}
                   </div>

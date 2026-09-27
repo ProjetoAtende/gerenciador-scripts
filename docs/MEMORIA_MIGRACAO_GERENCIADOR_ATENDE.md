@@ -80,6 +80,12 @@ npm run sb:deploy-admin-users                           # após alterar supabase
 - `scripts/migracao/smoke-deepseek.sql` + `run-mgmt-sql.mjs --file=...` — smoke da RPC no Postgres (Vault + extensão `http`).
 - `scripts/migracao/smoke-deepseek-auth.mjs` — smoke via PostgREST como usuário (`SMOKE_TEST_EMAIL` / `SMOKE_TEST_PASSWORD` opcionais no `.env`).
 
+### Atende Stack (Q&A global)
+
+- Plano: `docs/ATENDE_STACK_PLANO.md` — operação/seeds/QA: `docs/ATENDE_STACK_OPERACAO.md`
+- Migrations: `supabase/migrations/20260927260000_*.sql` … `20260927269000_*.sql` (`npm run sb:push`)
+- Seeds: `npm run stack:seed-demo`, `stack:seed-pag` (+ `:clean`, `:verify` no pag); credenciais smoke no `.env` (modelo `.env.example`)
+
 ---
 
 ## 4. Problemas encontrados e correções

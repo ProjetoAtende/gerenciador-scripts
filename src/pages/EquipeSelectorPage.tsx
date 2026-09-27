@@ -170,7 +170,7 @@ export default function EquipeSelectorPage() {
           <div className="flex flex-wrap justify-center gap-8">
             {setoresComEquipes.map((setor) => (
               <div key={setor.id}>
-                <h2 className="mb-3 text-center text-sm font-semibold text-gray-500 dark:text-gray-400">
+                <h2 className="mb-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
                   Setor {setor.nome}
                 </h2>
                 <div className="flex flex-wrap justify-center gap-3">

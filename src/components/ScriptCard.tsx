@@ -260,7 +260,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo(({
               })}
               {script.categorias_adicionais.length > 2 && (
                 <span
-                  className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600"
+                  className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600"
                   title={script.categorias_adicionais.slice(2).map(ca => {
                     const info = resolverSlug(ca.categoria_equipe_slug);
                     return (info?.nome || ca.categoria_equipe_slug) + (ca.subcategoria_gse_slug ? ` > ${ca.subcategoria_gse_slug}` : '');
@@ -448,7 +448,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo(({
             {/* Data de criação */}
             {script.criado_em && (
               <span 
-                className="flex items-center gap-1 text-xs text-gray-400"
+                className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-300"
                 title={`Criado em ${formatarDataCriacao(script.criado_em)}`}
               >
                 <Calendar size={12} />

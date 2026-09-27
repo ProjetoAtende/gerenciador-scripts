@@ -130,11 +130,11 @@ export const ChangelogModal = ({
                       </div>
                       
                       {version.title && (
-                        <span className="text-gray-500 dark:text-gray-400 text-sm">— {version.title}</span>
+                        <span className="text-gray-500 dark:text-gray-300 text-sm">— {version.title}</span>
                       )}
                     </div>
                     
-                    <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-300">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
                         {formatDate(version.date)}
@@ -182,7 +182,7 @@ export const ChangelogModal = ({
                                   </div>
                                   
                                   {feature.description && (
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">
                                       {feature.description}
                                     </p>
                                   )}
@@ -200,7 +200,7 @@ export const ChangelogModal = ({
           </div>
 
           <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t dark:border-gray-700 flex items-center justify-between">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-500 dark:text-gray-300">
               Histórico consolidado de versões e novidades do sistema
             </p>
             <button

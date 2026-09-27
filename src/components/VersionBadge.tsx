@@ -26,7 +26,8 @@ export const VersionBadge = ({ userId }: VersionBadgeProps) => {
       <div className="relative">
         <button
           onClick={handleOpenModal}
-          className="relative p-2 rounded-lg transition-all bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-400"
+          className="relative p-2 rounded-lg transition-all bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200"
+          aria-label={`Versão ${currentVersion}, abrir changelog`}
           title={`Versão ${currentVersion}`}
         >
           <div className="flex items-center gap-1.5">

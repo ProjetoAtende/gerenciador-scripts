@@ -61,7 +61,7 @@ export const CoberturaHelpModal = ({ isOpen, onClose }: CoberturaHelpModalProps)
                 onClick={onClose}
                 className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-gray-400" />
+                <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               </button>
             </div>
 
@@ -102,7 +102,7 @@ export const CoberturaHelpModal = ({ isOpen, onClose }: CoberturaHelpModalProps)
                         <FileText className="w-4 h-4 text-blue-400" />
                         <span className="font-medium text-blue-300">Scripts classificados</span>
                       </div>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-600 dark:text-gray-300">
                         Total de scripts únicos que possuem pelo menos uma categoria atribuída. 
                         Scripts com múltiplas categorias são contados apenas uma vez.
                       </p>
@@ -114,7 +114,7 @@ export const CoberturaHelpModal = ({ isOpen, onClose }: CoberturaHelpModalProps)
                         <TicketCheck className="w-4 h-4 text-purple-400" />
                         <span className="font-medium text-purple-300">Tickets categorizados</span>
                       </div>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-600 dark:text-gray-300">
                         Soma total de tickets já analisados e classificados por categoria. 
                         Os dados vêm de um cache (Materialized View) que pode ser atualizado 
                         manualmente pelo botão 🔄.
@@ -127,7 +127,7 @@ export const CoberturaHelpModal = ({ isOpen, onClose }: CoberturaHelpModalProps)
                         <Layers className="w-4 h-4 text-green-400" />
                         <span className="font-medium text-green-300">Cobertura subcats</span>
                       </div>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-600 dark:text-gray-300">
                         Percentual de subcategorias que possuem ao menos 1 script. 
                         O formato X/Y abaixo mostra quantas subcategorias estão cobertas 
                         do total existente.
@@ -140,7 +140,7 @@ export const CoberturaHelpModal = ({ isOpen, onClose }: CoberturaHelpModalProps)
                         <AlertTriangle className="w-4 h-4 text-orange-400" />
                         <span className="font-medium text-orange-300">Cats sem scripts</span>
                       </div>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-600 dark:text-gray-300">
                         Número de categorias inteiras (nível pai) que não possuem nenhum script. 
                         São os maiores gaps de cobertura e merecem atenção prioritária.
                       </p>
@@ -161,7 +161,7 @@ export const CoberturaHelpModal = ({ isOpen, onClose }: CoberturaHelpModalProps)
                       <span className="text-lg shrink-0">🏢</span>
                       <div>
                         <span className="font-medium text-white">Filtro de equipe</span>
-                        <p className="text-xs text-gray-400 mt-0.5">
+                        <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
                           Selecione <em>"Todas as equipes"</em> para ver o panorama global, 
                           ou escolha uma equipe específica para ver apenas os scripts e tickets 
                           atribuídos a ela. O dropdown mostra apenas equipes que possuem scripts.
@@ -170,10 +170,10 @@ export const CoberturaHelpModal = ({ isOpen, onClose }: CoberturaHelpModalProps)
                     </div>
 
                     <div className="flex items-start gap-2">
-                      <ArrowUpDown className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                      <ArrowUpDown className="w-5 h-5 text-gray-600 dark:text-gray-300 shrink-0 mt-0.5" />
                       <div>
                         <span className="font-medium text-white">Ordenação</span>
-                        <p className="text-xs text-gray-400 mt-0.5">
+                        <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
                           <strong className="text-gray-300">� Mais scripts</strong> — categorias com mais scripts aparecem primeiro (padrão).<br />
                           <strong className="text-gray-300">🎫 Mais tickets</strong> — categorias com maior volume de tickets no topo; útil para priorizar onde a demanda é maior.<br />
                           <strong className="text-gray-300">📊 Menor cobertura</strong> — categorias com menor % de subcategorias cobertas aparecem primeiro.<br />
@@ -184,10 +184,10 @@ export const CoberturaHelpModal = ({ isOpen, onClose }: CoberturaHelpModalProps)
                     </div>
 
                     <div className="flex items-start gap-2">
-                      <ChevronRight className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                      <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-300 shrink-0 mt-0.5" />
                       <div>
                         <span className="font-medium text-white">Expandir / Recolher</span>
-                        <p className="text-xs text-gray-400 mt-0.5">
+                        <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
                           Abre ou fecha todas as categorias de uma vez, revelando as subcategorias. 
                           Você também pode clicar em cada categoria individualmente.
                         </p>
@@ -198,7 +198,7 @@ export const CoberturaHelpModal = ({ isOpen, onClose }: CoberturaHelpModalProps)
                       <RefreshCw className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
                       <div>
                         <span className="font-medium text-white">Botão 🔄 Atualizar</span>
-                        <p className="text-xs text-gray-400 mt-0.5">
+                        <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
                           Atualiza o cache de contagem de tickets (Materialized View no banco) 
                           e recarrega todos os dados da tela. Use quando novos tickets tiverem 
                           sido categorizados e você quiser ver números atualizados.
@@ -217,7 +217,7 @@ export const CoberturaHelpModal = ({ isOpen, onClose }: CoberturaHelpModalProps)
                 </div>
                 <div className="pl-7 space-y-2 text-gray-300 text-sm">
                   <p>Cada linha representa uma categoria de atendimento e contém:</p>
-                  <ul className="space-y-1.5 text-xs text-gray-400">
+                  <ul className="space-y-1.5 text-xs text-gray-600 dark:text-gray-300">
                     <li className="flex items-start gap-2">
                       <span className="text-gray-500 mt-0.5">▸</span>
                       <span><strong className="text-gray-300">Seta (▶)</strong> — clique para expandir/recolher as subcategorias</span>
@@ -258,7 +258,7 @@ export const CoberturaHelpModal = ({ isOpen, onClose }: CoberturaHelpModalProps)
                     lógica de contagem de scripts e tickets. As subcategorias são ordenadas  
                     da que tem mais scripts para a que tem menos.
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-gray-600 dark:text-gray-300">
                     No rodapé de cada categoria expandida, há um resumo indicando quantas 
                     subcategorias possuem cobertura e quantas estão sem scripts.
                   </p>
@@ -276,19 +276,19 @@ export const CoberturaHelpModal = ({ isOpen, onClose }: CoberturaHelpModalProps)
                     <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-green-900/50 text-green-400 border border-green-700/50">
                       OK
                     </span>
-                    <span className="text-gray-400 text-xs">≥ 3 scripts — cobertura adequada</span>
+                    <span className="text-gray-600 dark:text-gray-300 text-xs">≥ 3 scripts — cobertura adequada</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-yellow-900/50 text-yellow-400 border border-yellow-700/50">
                       BAIXO
                     </span>
-                    <span className="text-gray-400 text-xs">1-2 scripts — cobertura insuficiente, considere criar mais</span>
+                    <span className="text-gray-600 dark:text-gray-300 text-xs">1-2 scripts — cobertura insuficiente, considere criar mais</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-gray-800 text-gray-400 border border-gray-700">
+                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-gray-800 text-gray-300 border border-gray-700">
                       VAZIO
                     </span>
-                    <span className="text-gray-400 text-xs">0 scripts — sem cobertura, criação urgente recomendada</span>
+                    <span className="text-gray-600 dark:text-gray-300 text-xs">0 scripts — sem cobertura, criação urgente recomendada</span>
                   </div>
                 </div>
               </section>

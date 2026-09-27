@@ -49,7 +49,7 @@ const HelpCard: React.FC<{
           animate={{ rotate: isExpanded ? 180 : 0 }}
           transition={{ duration: 0.2 }}
         >
-          <ChevronDown size={20} className="text-gray-500 dark:text-gray-400" />
+          <ChevronDown size={20} className="text-gray-500 dark:text-gray-300" />
         </motion.div>
       </button>
       
@@ -77,12 +77,12 @@ const HelpItem: React.FC<{ icon: React.ReactNode; title: string; description: st
   icon, title, description
 }) => (
   <div className="flex items-start gap-3 py-2">
-    <div className="p-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 flex-shrink-0">
+    <div className="p-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-300 flex-shrink-0">
       {icon}
     </div>
     <div>
       <div className="font-medium text-gray-800 dark:text-gray-200">{title}</div>
-      <div className="text-sm text-gray-600 dark:text-gray-400">{description}</div>
+      <div className="text-sm text-gray-600 dark:text-gray-300">{description}</div>
     </div>
   </div>
 );
@@ -97,7 +97,7 @@ const Step: React.FC<{ number: number; title: string; description: string }> = (
     </div>
     <div>
       <div className="font-medium text-gray-800 dark:text-gray-200">{title}</div>
-      <div className="text-sm text-gray-600 dark:text-gray-400">{description}</div>
+      <div className="text-sm text-gray-600 dark:text-gray-300">{description}</div>
     </div>
   </div>
 );
@@ -276,17 +276,17 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-gray-400 dark:text-gray-500">⭕</span>
+                <span className="text-gray-600 dark:text-gray-300">⭕</span>
                 <span className="font-medium">Não Revisado</span>
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Script ainda não foi revisado pela curadoria. Edição livre.</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300">Script ainda não foi revisado pela curadoria. Edição livre.</p>
             </div>
             <div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
               <div className="flex items-center gap-2 mb-1">
                 <CheckCircle2 size={16} className="text-green-600" />
                 <span className="font-medium text-green-800 dark:text-green-300">Revisado pela Curadoria</span>
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Script revisado. Alterações só via propostas.</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300">Script revisado. Alterações só via propostas.</p>
             </div>
           </div>
 
@@ -354,23 +354,23 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
           <div className="grid grid-cols-2 gap-2">
             <div className="p-2 bg-gray-50 dark:bg-gray-700/50 rounded flex items-center gap-2">
               <ButtonExample icon="▶️" label="Gerar" color="bg-blue-100 text-blue-700" />
-              <span className="text-xs text-gray-600 dark:text-gray-400">Abre o gerador</span>
+              <span className="text-xs text-gray-600 dark:text-gray-300">Abre o gerador</span>
             </div>
             <div className="p-2 bg-gray-50 dark:bg-gray-700/50 rounded flex items-center gap-2">
               <ButtonExample icon="📁" label="" color="bg-blue-50 text-blue-600" />
-              <span className="text-xs text-gray-600 dark:text-gray-400">Mover para pasta</span>
+              <span className="text-xs text-gray-600 dark:text-gray-300">Mover para pasta</span>
             </div>
             <div className="p-2 bg-gray-50 dark:bg-gray-700/50 rounded flex items-center gap-2">
               <ButtonExample icon="📤" label="Publicar script" color="bg-green-50 text-green-600" />
-              <span className="text-xs text-gray-600 dark:text-gray-400">Notificar equipe (quando chamado e pergunta preenchidos)</span>
+              <span className="text-xs text-gray-600 dark:text-gray-300">Notificar equipe (quando chamado e pergunta preenchidos)</span>
             </div>
             <div className="p-2 bg-gray-50 dark:bg-gray-700/50 rounded flex items-center gap-2">
               <ButtonExample icon="✏️" label="" color="bg-yellow-50 text-yellow-600" />
-              <span className="text-xs text-gray-600 dark:text-gray-400">Editar conteúdo</span>
+              <span className="text-xs text-gray-600 dark:text-gray-300">Editar conteúdo</span>
             </div>
             <div className="p-2 bg-gray-50 dark:bg-gray-700/50 rounded flex items-center gap-2">
               <ButtonExample icon="🗑️" label="" color="bg-red-50 text-red-600" />
-              <span className="text-xs text-gray-600 dark:text-gray-400">Excluir script</span>
+              <span className="text-xs text-gray-600 dark:text-gray-300">Excluir script</span>
             </div>
           </div>
 
@@ -477,14 +477,14 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
                 <Edit3 size={16} className="text-blue-600" />
                 <span className="font-medium">Modo Edição</span>
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Edite o conteúdo livremente.</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300">Edite o conteúdo livremente.</p>
             </div>
             <div className="flex-1 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
               <div className="flex items-center gap-2 mb-1">
                 <Eye size={16} className="text-green-600" />
                 <span className="font-medium">Modo Preview</span>
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Veja como o script ficará. Variáveis são destacadas.</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300">Veja como o script ficará. Variáveis são destacadas.</p>
             </div>
           </div>
 
@@ -521,7 +521,7 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
             </p>
             <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-amber-300 dark:border-amber-700">
               <p className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">Como usar:</p>
-              <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1 ml-4">
+              <ul className="text-xs text-gray-600 dark:text-gray-300 space-y-1 ml-4">
                 <li>• Clique no campo "Tipo Requisitante" no header</li>
                 <li>• Modal com busca aparece com todos os 77 perfis</li>
                 <li>• Digite para filtrar e autocomplete encontra rapidamente</li>
@@ -619,13 +619,13 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
               <span className="font-medium">Texto Selecionado</span>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                 Processa apenas o trecho que você selecionou no editor.
               </p>
             </div>
             <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
               <span className="font-medium">Texto Completo</span>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                 Processa todo o conteúdo do editor de uma vez.
               </p>
             </div>
@@ -680,7 +680,7 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
           </div>
 
           <h4 className="font-semibold text-gray-800 dark:text-gray-200 mt-4">Visualização no Preview</h4>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             No modo preview do editor, as variáveis são destacadas com cores diferentes
             para fácil identificação:
           </p>
@@ -688,15 +688,15 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
             <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 rounded text-sm font-mono">
               {'{[opção]}'}
             </span>
-            <span className="text-gray-500 dark:text-gray-400">=</span>
-            <span className="text-sm text-gray-600 dark:text-gray-400">Fundo azul</span>
+            <span className="text-gray-500 dark:text-gray-300">=</span>
+            <span className="text-sm text-gray-600 dark:text-gray-300">Fundo azul</span>
           </div>
           <div className="flex gap-2 mt-1">
             <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300 rounded text-sm font-mono">
               ()
             </span>
-            <span className="text-gray-500 dark:text-gray-400">=</span>
-            <span className="text-sm text-gray-600 dark:text-gray-400">Fundo amarelo</span>
+            <span className="text-gray-500 dark:text-gray-300">=</span>
+            <span className="text-sm text-gray-600 dark:text-gray-300">Fundo amarelo</span>
           </div>
 
           <div className="bg-amber-50 dark:bg-amber-900/30 rounded-lg p-3 mt-4">
@@ -812,7 +812,7 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
           </div>
 
           <h4 className="font-semibold text-gray-800 dark:text-gray-200 mt-4">Exibição da V1 (duas fases)</h4>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
             Quando a Curadoria revisa a V1, o histórico mostra <strong>duas fases</strong> para essa mesma versão:
           </p>
           <div className="grid grid-cols-1 gap-2">
@@ -821,14 +821,14 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
                 <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">V1</span>
                 <span className="font-medium text-blue-800 dark:text-blue-300">Fase 1 — Criação</span>
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 ml-8">O texto original enviado pelo autor, com a data de criação.</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300 ml-8">O texto original enviado pelo autor, com a data de criação.</p>
             </div>
             <div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800">
               <div className="flex items-center gap-2 mb-1">
                 <span className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center text-xs font-bold">V1</span>
                 <span className="font-medium text-green-800 dark:text-green-300">Fase 2 — Revisão</span>
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 ml-8">O resultado da revisão (com ou sem alterações), data da revisão e nome do revisor.</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300 ml-8">O resultado da revisão (com ou sem alterações), data da revisão e nome do revisor.</p>
             </div>
           </div>
 
@@ -1182,7 +1182,7 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
           </p>
 
           <h4 className="font-semibold text-gray-800 dark:text-gray-200">Barra de Busca</h4>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             Digite para buscar scripts pelos títulos. A busca é feita em tempo real e percorre todos os scripts do sistema.
           </p>
 
@@ -1213,7 +1213,7 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
           </div>
 
           <h4 className="font-semibold text-gray-800 dark:text-gray-200 mt-4">Filtro de Equipe 🏢</h4>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
             Disponível para todos os usuários. Filtra scripts pela equipe responsável, 
             <strong> independentemente</strong> dos outros filtros ativos — inclusive ignora a pasta selecionada
             no sidebar, exibindo scripts da equipe em todas as pastas.
@@ -1234,7 +1234,7 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
           </div>
 
           <h4 className="font-semibold text-gray-800 dark:text-gray-200 mt-4">Filtro de Curadoria 🔖</h4>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
             Visível apenas para membros da coordenadoria 3.2 e administradores. Permite filtrar scripts
             pelo status de revisão. Os contadores entre parênteses se atualizam conforme o filtro de equipe
             ativo.
@@ -1293,7 +1293,7 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
           </div>
 
           <h4 className="font-semibold text-gray-800 dark:text-gray-200 mt-4">Navegação por Pastas</h4>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             Clique em uma pasta no sidebar para ver apenas os scripts daquela pasta.
             Clique em "📄 Scripts" para ver scripts sem pasta.
           </p>
@@ -1372,7 +1372,7 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
               </span>
               <div>
                 <div className="font-medium text-gray-800 dark:text-gray-200">Badge no card</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
                   Cards com conteúdo para o atendente exibem o badge 🛠️ no header. Passe o mouse para ver o tooltip explicativo.
                 </div>
               </div>
@@ -1383,7 +1383,7 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
               </div>
               <div>
                 <div className="font-medium text-gray-800 dark:text-gray-200">Abas no gerador</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
                   No modal "Gerar Script", dois abas aparecem: <em>"Script para o usuário final"</em> e <em>"Script para o atendente"</em>.
                   Cada aba tem seus próprios campos preenchíveis e botão Copiar independente.
                   Se o script não tiver conteúdo para o atendente, a aba mostra um estado vazio.
@@ -1396,7 +1396,7 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
               </div>
               <div>
                 <div className="font-medium text-gray-800 dark:text-gray-200">Editor com tema laranja</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
                   O editor no modo atendente usa gradiente laranja (ao invés do azul padrão) e exibe
                   o badge "Atendente" no header — diferenciação visual clara para evitar confusão
                   sobre qual conteúdo está sendo editado.
@@ -1406,7 +1406,7 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
           </div>
 
           <h4 className="font-semibold text-gray-800 dark:text-gray-200 mt-4">Filtro de scripts por atendente</h4>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
             Na barra de filtros, o select <strong>"Script atendente"</strong> permite três opções:
           </p>
           <div className="space-y-2">
@@ -1445,7 +1445,7 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
               são os mesmos para os dois conteúdos — eles pertencem ao script, não ao conteúdo.
               Alterar o nome pelo editor do atendente refletirá quando abrir pelo modo usuário final, e vice-versa.
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-gray-500 dark:text-gray-300">
               O campo "Tipo Requisitante" é exclusivo do modo usuário final e não aparece no modo atendente.
             </p>
           </div>
@@ -1608,15 +1608,15 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
             <div className="space-y-2 text-sm">
               <div className="p-2 bg-white dark:bg-gray-800 rounded border border-cyan-200 dark:border-cyan-800 flex items-center gap-2">
                 <span className="px-2 py-0.5 bg-cyan-100 dark:bg-cyan-900 text-cyan-700 dark:text-cyan-300 rounded font-mono text-xs">N1: Sim</span>
-                <span className="text-gray-600 dark:text-gray-400">— Script relevante para o N1</span>
+                <span className="text-gray-600 dark:text-gray-300">— Script relevante para o N1</span>
               </div>
               <div className="p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 flex items-center gap-2">
                 <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded font-mono text-xs">N1: Não</span>
-                <span className="text-gray-600 dark:text-gray-400">— Script não é N1</span>
+                <span className="text-gray-600 dark:text-gray-300">— Script não é N1</span>
               </div>
               <div className="p-2 bg-white dark:bg-gray-800 rounded border border-red-200 dark:border-red-800 flex items-center gap-2">
                 <span className="px-2 py-0.5 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded font-mono text-xs animate-pulse">N1: ?</span>
-                <span className="text-gray-600 dark:text-gray-400">— Não definido (bloqueia o salvamento)</span>
+                <span className="text-gray-600 dark:text-gray-300">— Não definido (bloqueia o salvamento)</span>
               </div>
             </div>
           </div>
@@ -1736,7 +1736,7 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
 
           {/* Controles */}
           <div className="px-6 py-3 bg-white dark:bg-gray-800 border-b dark:border-gray-700 flex items-center justify-between">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               Clique nos cards para expandir/recolher as seções
             </p>
             <div className="flex gap-2">
@@ -1748,7 +1748,7 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
               </button>
               <button
                 onClick={collapseAll}
-                className="px-3 py-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                className="px-3 py-1 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
               >
                 Recolher Tudo
               </button>
@@ -1771,7 +1771,7 @@ export const ScriptsHelpModal: React.FC<ScriptsHelpModalProps> = ({
 
           {/* Footer */}
           <div className="px-6 py-4 bg-white dark:bg-gray-800 border-t dark:border-gray-700">
-            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-300 text-center">
               Pressione <Key>ESC</Key> para fechar • Dúvidas? Consulte a equipe de suporte
             </p>
           </div>

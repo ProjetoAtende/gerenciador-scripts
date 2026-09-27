@@ -23,6 +23,9 @@ const GeradorModal = lazy(() => import('../components/GeradorModal').then((m) =>
 const MelhorarTextoModal = lazy(() => import('../components/MelhorarTextoModal').then((m) => ({ default: m.MelhorarTextoModal })));
 const ConfiguracoesModal = lazy(() => import('../components/ConfiguracoesModal').then((m) => ({ default: m.ConfiguracoesModal })));
 const EscalaModal = lazy(() => import('../components/escala/EscalaModal').then((m) => ({ default: m.EscalaModal })));
+const AtendeStackModal = lazy(() =>
+  import('../components/atende-stack/AtendeStackModal').then((m) => ({ default: m.AtendeStackModal })),
+);
 
 const containerVariants = {
   hidden: {},
@@ -46,6 +49,7 @@ const HOME_MODALS = {
   escala: false,
   copilot: false,
   bossOnly: false,
+  atendeStack: false,
 } as const;
 
 type HomeModalKey = keyof typeof HOME_MODALS;
@@ -86,6 +90,12 @@ const HOME_CARD_CONFIGS: HomeCardConfig[] = [
     cor: 'bg-blue-100 dark:bg-blue-900/30',
     modal: 'links',
     permissionCode: 'home.card.links_uteis',
+  },
+  {
+    titulo: 'Atende Stack',
+    descricao: '🗨 Perguntas e respostas da operação',
+    cor: 'bg-gradient-to-br from-indigo-100 via-violet-100 to-purple-100 dark:from-indigo-900/30 dark:via-violet-900/30 dark:to-purple-900/30',
+    modal: 'atendeStack',
   },
   {
     titulo: 'Outros Serviços',
@@ -137,6 +147,7 @@ export default function Home() {
   const [loadingSimulacao, setLoadingSimulacao] = useState(false);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [openedViaQueryParam, setOpenedViaQueryParam] = useState(false);
+  const stackPerguntaId = useMemo(() => new URLSearchParams(location.search).get('pergunta'), [location.search]);
 
   const [selectedScript, setSelectedScript] = useState<{
     nome: string;
@@ -169,6 +180,14 @@ export default function Home() {
   const toggleModal = useCallback((nome: HomeModalKey) => {
     setModals((prev) => ({ ...prev, [nome]: !prev[nome] }));
   }, []);
+
+  const closeAtendeStack = useCallback(() => {
+    setModals((prev) => ({ ...prev, atendeStack: false }));
+    const params = new URLSearchParams(location.search);
+    if (params.has('modal') || params.has('pergunta')) {
+      navigate('/home', { replace: true });
+    }
+  }, [location.search, navigate]);
 
   const cards = useMemo(
     () => HOME_CARD_CONFIGS.filter((card) => !card.permissionCode || temPermissao(card.permissionCode)),
@@ -210,13 +229,13 @@ export default function Home() {
   const canOpenConfig = temPermissao('home.card.configuracoes');
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+    <div className="min-h-screen min-w-0 overflow-x-hidden bg-gray-50 dark:bg-gray-900 flex flex-col">
       <header className="w-full bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 p-4 flex justify-end items-center sticky top-0 z-50">
         <div className="w-full flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-wrap items-center gap-2">
             {canSimulate && (
               <>
-                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
                   Visualização
                 </span>
                 <select
@@ -287,7 +306,14 @@ export default function Home() {
           <div className="flex items-center gap-4 justify-end">
             {user && <VersionBadge userId={user.id} />}
             {user && (
-              <NotificationBadge onOpenScriptNotificacao={handleOpenScriptNotificacao} />
+              <NotificationBadge
+                onOpenScriptNotificacao={handleOpenScriptNotificacao}
+                onOpenStackPergunta={(perguntaId) => {
+                  setModals((prev) => ({ ...prev, atendeStack: true }));
+                  setOpenedViaQueryParam(true);
+                  navigate(`/home?modal=atendeStack&pergunta=${perguntaId}`, { replace: true });
+                }}
+              />
             )}
             {user?.email && (
               <span className="text-sm text-gray-600 dark:text-gray-300">
@@ -346,12 +372,13 @@ export default function Home() {
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           {cards.map((card) => (
-            <motion.div
+            <motion.button
               key={card.titulo}
+              type="button"
               variants={cardVariants}
               whileHover={{ scale: 1.03 }}
               transition={{ type: 'tween', duration: 0.15 }}
-              className={`cursor-pointer ${card.cor} rounded-xl shadow-md dark:shadow-gray-900/50 p-6 text-center transition-shadow`}
+              className={`cursor-pointer w-full text-left ${card.cor} rounded-xl shadow-md dark:shadow-gray-900/50 p-6 text-center transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900`}
               onClick={() => {
                 if (openCardsInNewTab) {
                   const hash = window.location.hash.split('?')[0];
@@ -365,7 +392,7 @@ export default function Home() {
               <div className="text-4xl mb-2">{card.descricao.split(' ')[0]}</div>
               <h2 className="text-xl font-semibold dark:text-gray-100">{card.titulo}</h2>
               <p className="text-gray-600 dark:text-gray-300 mt-1">{card.descricao.split(' ').slice(1).join(' ')}</p>
-            </motion.div>
+            </motion.button>
           ))}
         </motion.div>
       </div>
@@ -432,6 +459,16 @@ export default function Home() {
       {modals.bossOnly && (
         <Suspense fallback={null}>
           <BossOnlyModal isOpen onClose={() => toggleModal('bossOnly')} />
+        </Suspense>
+      )}
+
+      {modals.atendeStack && (
+        <Suspense fallback={null}>
+          <AtendeStackModal
+            isOpen
+            onClose={closeAtendeStack}
+            initialPerguntaId={stackPerguntaId}
+          />
         </Suspense>
       )}
 

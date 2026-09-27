@@ -893,17 +893,17 @@ export const ScriptEditorFullscreen: React.FC<ScriptEditorFullscreenProps> = ({
               <div className="h-full p-6 bg-gray-50 dark:bg-gray-800/50">
                 <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-8">
                   <div className="mb-4 pb-4 border-b dark:border-gray-700">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">Preview do Script</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-300">Preview do Script</span>
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{nome}</h3>
                   </div>
                   <div
                     ref={previewRef}
                     className="prose prose-sm dark:prose-invert max-w-none"
                     dangerouslySetInnerHTML={{
-                      __html: processPreviewContent(content) || '<p class="text-gray-400">Conteúdo vazio</p>'
+                      __html: processPreviewContent(content) || '<p class="text-gray-600">Conteúdo vazio</p>'
                     }}
                   />
-                  <div className="mt-6 pt-4 border-t dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400">
+                  <div className="mt-6 pt-4 border-t dark:border-gray-700 text-sm text-gray-500 dark:text-gray-300">
                     <p>Legenda:</p>
                     <div className="flex gap-4 mt-2">
                       <span className="flex items-center gap-2">
@@ -938,7 +938,7 @@ export const ScriptEditorFullscreen: React.FC<ScriptEditorFullscreenProps> = ({
           </div>
 
           {/* Footer com dicas */}
-          <div className="px-6 py-3 bg-gray-100 dark:bg-gray-800 border-t dark:border-gray-700 text-sm text-gray-600 dark:text-gray-400 flex justify-between items-center">
+          <div className="px-6 py-3 bg-gray-100 dark:bg-gray-800 border-t dark:border-gray-700 text-sm text-gray-600 dark:text-gray-300 flex justify-between items-center">
             <div className="flex gap-4">
               <span><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">Ctrl+S</kbd> Salvar</span>
               <span><kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">ESC</kbd> Fechar</span>
@@ -1015,7 +1015,7 @@ export const ScriptEditorFullscreen: React.FC<ScriptEditorFullscreenProps> = ({
                       className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                       autoFocus
                     />
-                    <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-300">
                       Caso não possua número do chamado, preencha com <strong>n/a</strong>. Recomenda-se, sempre que possível, informar o número do chamado.
                     </p>
                     {numeroChamadoEdit && numeroChamadoEdit.toLowerCase() !== 'n/a' && (
@@ -1041,7 +1041,7 @@ export const ScriptEditorFullscreen: React.FC<ScriptEditorFullscreenProps> = ({
                         #{script.numero_chamado}
                       </a>
                     ) : (
-                      <span className="text-gray-400 italic">Não informado</span>
+                      <span className="text-gray-600 italic">Não informado</span>
                     )}
                   </div>
                 )}
@@ -1062,14 +1062,14 @@ export const ScriptEditorFullscreen: React.FC<ScriptEditorFullscreenProps> = ({
                       rows={5}
                       className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
                     />
-                    <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-300">
                       Não é necessário copiar a pergunta do chamado — ela pode ser confusa ou extensa demais. Escreva uma pergunta objetiva cuja resposta seja exatamente o procedimento descrito neste script.
                     </p>
                   </>
                 ) : (
                   <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
                     <p className="text-gray-800 dark:text-gray-200 text-base leading-relaxed whitespace-pre-wrap">
-                      {script.pergunta || <span className="text-gray-400 italic">Não informada</span>}
+                      {script.pergunta || <span className="text-gray-600 italic">Não informada</span>}
                     </p>
                   </div>
                 )}
@@ -1080,7 +1080,7 @@ export const ScriptEditorFullscreen: React.FC<ScriptEditorFullscreenProps> = ({
             <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t dark:border-gray-700 flex items-center justify-between">
               {onSavePergunta ? (
                 <>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-xs text-gray-500 dark:text-gray-300">
                     Ctrl+Enter para salvar • ESC para fechar
                   </span>
                   <div className="flex gap-2">
@@ -1167,7 +1167,7 @@ export const ScriptEditorFullscreen: React.FC<ScriptEditorFullscreenProps> = ({
             {/* Campo de busca / autocomplete */}
             <div className="px-6 pt-4 pb-2">
               <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
                 <input
                   type="text"
                   value={tipoRequisitanteBusca}
@@ -1179,14 +1179,14 @@ export const ScriptEditorFullscreen: React.FC<ScriptEditorFullscreenProps> = ({
               </div>
               {tipoRequisitante && (
                 <div className="flex items-center gap-2 mt-2 text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">Selecionado:</span>
+                  <span className="text-gray-500 dark:text-gray-300">Selecionado:</span>
                   <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1">
                     <Check size={12} />
                     {tipoRequisitante}
                   </span>
                   <button
                     onClick={() => { setTipoRequisitante(null); setHasChanges(true); }}
-                    className="text-gray-400 hover:text-red-500 text-xs ml-1"
+                    className="text-gray-600 hover:text-red-500 text-xs ml-1"
                     title="Remover seleção"
                   >
                     ✕
@@ -1219,7 +1219,7 @@ export const ScriptEditorFullscreen: React.FC<ScriptEditorFullscreenProps> = ({
                     </button>
                   ))}
                 {PERFIS_EPROC.filter(p => !tipoRequisitanteBusca.trim() || p.toLowerCase().includes(tipoRequisitanteBusca.toLowerCase())).length === 0 && (
-                  <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-4">Nenhum perfil encontrado</p>
+                  <p className="text-gray-600 dark:text-gray-500 text-sm text-center py-4">Nenhum perfil encontrado</p>
                 )}
               </div>
             </div>

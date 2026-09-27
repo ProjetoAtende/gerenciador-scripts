@@ -148,3 +148,27 @@ html, html * {
   transition: none !important;
 }
 
+/* Atende Stack — contraste de links e corpo HTML exibido */
+.stack-html-viewer a {
+  @apply text-indigo-800 underline decoration-indigo-400/80 dark:text-indigo-200 dark:decoration-indigo-400;
+}
+
+.stack-html-viewer p,
+.stack-html-viewer li {
+  @apply text-slate-800 dark:text-slate-200;
+}
+
+/* Texto secundário com contraste mínimo ~4.5:1 (WCAG AA) em fundos claros/escuros */
+@layer components {
+  .app-text-muted {
+    @apply text-gray-600 dark:text-gray-300;
+  }
+
+  .app-text-muted-xs {
+    @apply text-xs text-gray-600 dark:text-gray-300;
+  }
+
+  .app-filter-label {
+    @apply text-[10px] font-medium text-gray-600 dark:text-gray-300 mb-0.5 leading-tight;
+  }
+}

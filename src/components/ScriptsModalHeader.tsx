@@ -230,10 +230,10 @@ export const ScriptsModalHeader = React.memo<ScriptsModalHeaderProps>(function S
         {/* Toggle Lista / Cobertura */}
         <div className="flex items-center bg-gray-200 dark:bg-gray-700 rounded-md p-0.5 shrink-0">
           <button onClick={() => setViewMode('lista')}
-            className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${viewMode === 'lista' ? 'bg-white dark:bg-gray-600 text-gray-800 dark:text-gray-200 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+            className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${viewMode === 'lista' ? 'bg-white dark:bg-gray-600 text-gray-800 dark:text-gray-200 shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100'}`}
             title="Lista de Scripts">📜 Scripts</button>
           <button onClick={() => { setViewMode('cobertura'); setShowFiltrosPanel(false); }}
-            className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${viewMode === 'cobertura' ? 'bg-white dark:bg-gray-600 text-gray-800 dark:text-gray-200 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+            className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${viewMode === 'cobertura' ? 'bg-white dark:bg-gray-600 text-gray-800 dark:text-gray-200 shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100'}`}
             title="Dashboard de Cobertura">📊 Cobertura</button>
         </div>
 
@@ -243,7 +243,7 @@ export const ScriptsModalHeader = React.memo<ScriptsModalHeaderProps>(function S
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors shrink-0 ${
             showFiltrosPanel ? 'bg-blue-100 text-blue-700 border border-blue-300'
             : activeFilterCount > 0 ? 'bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100'
-            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
           }`}
           title={showFiltrosPanel ? 'Recolher filtros' : 'Expandir filtros'}>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -267,7 +267,7 @@ export const ScriptsModalHeader = React.memo<ScriptsModalHeaderProps>(function S
         <div className="flex items-center gap-2 lg:gap-3 flex-wrap px-3 lg:px-4 pb-3 lg:pb-4 pt-1">
           {/* Ordenação */}
           <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5 leading-tight">Ordenação</span>
+            <span className="app-filter-label">Ordenação</span>
             <select value={ordenacaoData} onChange={(e) => setOrdenacaoData(e.target.value as any)}
               className="px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white dark:bg-gray-700 dark:text-gray-200 cursor-pointer">
               <option value="mais-novo">📅 Mais novos</option>
@@ -277,7 +277,7 @@ export const ScriptsModalHeader = React.memo<ScriptsModalHeaderProps>(function S
 
           {/* Tipo */}
           <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5 leading-tight">Permanência</span>
+            <span className="app-filter-label">Permanência</span>
             <select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value as any)}
               className={`px-2.5 py-1.5 border rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm bg-white dark:bg-gray-700 dark:text-gray-200 cursor-pointer ${filtroTipo === 'temporario' ? 'border-orange-400 bg-orange-50' : filtroTipo === 'permanente' ? 'border-blue-400 bg-blue-50' : 'border-gray-300 dark:border-gray-600'}`}>
               <option value="todos">📋 Todos</option>
@@ -288,7 +288,7 @@ export const ScriptsModalHeader = React.memo<ScriptsModalHeaderProps>(function S
 
           {/* Atendente */}
           <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5 leading-tight">Scripts para Atendente</span>
+            <span className="app-filter-label">Scripts para Atendente</span>
             <select value={filtroAtendente} onChange={(e) => setFiltroAtendente(e.target.value as any)}
               className={`px-2.5 py-1.5 border rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm bg-white dark:bg-gray-700 dark:text-gray-200 cursor-pointer ${filtroAtendente === 'com-atendente' ? 'border-orange-400 bg-orange-50' : filtroAtendente === 'sem-atendente' ? 'border-gray-400 bg-gray-50' : 'border-gray-300 dark:border-gray-600'}`}>
               <option value="todos">🛠️ Todos</option>
@@ -299,7 +299,7 @@ export const ScriptsModalHeader = React.memo<ScriptsModalHeaderProps>(function S
 
           {/* N1 */}
           <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5 leading-tight">N1</span>
+            <span className="app-filter-label">N1</span>
             <select value={filtroN1} onChange={(e) => { const val = e.target.value as any; setFiltroN1(val); if (val !== 'n1') setFiltroValidacaoEnvio('todos'); }}
               className={`px-2.5 py-1.5 border rounded-md focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-sm bg-white dark:bg-gray-700 dark:text-gray-200 cursor-pointer ${filtroN1 === 'n1' ? 'border-cyan-400 bg-cyan-50' : filtroN1 === 'nao-n1' ? 'border-gray-400 bg-gray-50' : 'border-gray-300 dark:border-gray-600'}`}>
               <option value="todos">🏷️ Todos</option>
@@ -311,7 +311,7 @@ export const ScriptsModalHeader = React.memo<ScriptsModalHeaderProps>(function S
           {/* Validação e Envio N1 */}
           {filtroN1 === 'n1' && isEquipe21OuAdmin && (
             <div className="flex flex-col">
-              <span className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5 leading-tight">Validação e Envio</span>
+              <span className="app-filter-label">Validação e Envio</span>
               <select value={filtroValidacaoEnvio} onChange={(e) => setFiltroValidacaoEnvio(e.target.value as any)}
                 className={`px-2.5 py-1.5 border rounded-md focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm bg-white dark:bg-gray-700 dark:text-gray-200 cursor-pointer ${filtroValidacaoEnvio === 'validado-n1' ? 'border-teal-400 bg-teal-50' : filtroValidacaoEnvio === 'enviado-n1' ? 'border-green-400 bg-green-50' : 'border-gray-300 dark:border-gray-600'}`}>
                 <option value="todos">📋 Todos</option>
@@ -323,7 +323,7 @@ export const ScriptsModalHeader = React.memo<ScriptsModalHeaderProps>(function S
 
           {/* Equipe */}
           <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5 leading-tight">Equipe</span>
+            <span className="app-filter-label">Equipe</span>
             <select value={filtroEquipeId || ''} onChange={(e) => setFiltroEquipeId(e.target.value || null)}
               className={`px-2.5 py-1.5 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm bg-white dark:bg-gray-700 dark:text-gray-200 cursor-pointer ${filtroEquipeId ? 'border-indigo-400 bg-indigo-50' : 'border-gray-300 dark:border-gray-600'}`}>
               <option value="">🏢 Todas as equipes</option>
@@ -333,7 +333,7 @@ export const ScriptsModalHeader = React.memo<ScriptsModalHeaderProps>(function S
 
           {/* Instância */}
           <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5 leading-tight">Instância</span>
+            <span className="app-filter-label">Instância</span>
             <select value={filtroInstancia} onChange={(e) => setFiltroInstancia(e.target.value as 'todos' | ScriptInstancia)}
               className={`px-2.5 py-1.5 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm bg-white dark:bg-gray-700 dark:text-gray-200 cursor-pointer ${filtroInstancia !== 'todos' ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-950 dark:border-indigo-500 dark:text-indigo-100' : 'border-gray-300 dark:border-gray-600'}`}>
               <option value="todos">⚖️ Todas</option>
@@ -345,7 +345,7 @@ export const ScriptsModalHeader = React.memo<ScriptsModalHeaderProps>(function S
 
           {/* Categoria */}
           <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5 leading-tight">Categoria</span>
+            <span className="app-filter-label">Categoria</span>
             <select value={filtroCategoria} onChange={(e) => { setFiltroCategoria(e.target.value); setFiltroSubcategoria('todos'); }}
               className={`px-2.5 py-1.5 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm bg-white dark:bg-gray-700 dark:text-gray-200 cursor-pointer ${filtroCategoria !== 'todos' ? 'border-purple-400 bg-purple-50' : 'border-gray-300 dark:border-gray-600'}`}>
               <option value="todos">🏷️ Todas ({scripts.filter(s => !s.deletado && (!filtroEquipeId || s.equipe_id === filtroEquipeId) && (filtroInstancia === 'todos' || s.instancia === filtroInstancia)).length})</option>
@@ -356,7 +356,7 @@ export const ScriptsModalHeader = React.memo<ScriptsModalHeaderProps>(function S
 
           {/* Subcategoria */}
           <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5 leading-tight">Subcategoria</span>
+            <span className="app-filter-label">Subcategoria</span>
             <select value={filtroSubcategoria} onChange={(e) => setFiltroSubcategoria(e.target.value)}
               disabled={filtroCategoria === 'sem_categoria'}
               className={`px-2.5 py-1.5 border rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm bg-white dark:bg-gray-700 dark:text-gray-200 cursor-pointer ${filtroSubcategoria !== 'todos' ? 'border-purple-400 bg-purple-50' : 'border-gray-300 dark:border-gray-600'} ${filtroCategoria === 'sem_categoria' ? 'opacity-50 cursor-not-allowed' : ''}`}>
@@ -368,7 +368,7 @@ export const ScriptsModalHeader = React.memo<ScriptsModalHeaderProps>(function S
 
           {/* Tipo Requisitante */}
           <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5 leading-tight">Tipo Requisitante</span>
+            <span className="app-filter-label">Tipo Requisitante</span>
             <select value={filtroTipoRequisitante} onChange={(e) => setFiltroTipoRequisitante(e.target.value)}
               className={`px-2.5 py-1.5 border rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white dark:bg-gray-700 dark:text-gray-200 cursor-pointer ${filtroTipoRequisitante !== 'todos' ? 'border-emerald-400 bg-emerald-50' : 'border-gray-300 dark:border-gray-600'}`}>
               <option value="todos">🛡️ Todos</option>
@@ -378,7 +378,7 @@ export const ScriptsModalHeader = React.memo<ScriptsModalHeaderProps>(function S
 
           {/* Curadoria */}
           <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5 leading-tight">Revisão</span>
+            <span className="app-filter-label">Revisão</span>
             <div className="flex items-center gap-2">
               <select value={filtroCuradoria} onChange={(e) => setFiltroCuradoria(e.target.value as any)}
                 className={`px-2.5 py-1.5 border rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm bg-white dark:bg-gray-700 dark:text-gray-200 cursor-pointer ${

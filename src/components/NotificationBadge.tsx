@@ -3,7 +3,12 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Bell, Loader2, X, Trash2, ClipboardList } from 'lucide-react';
+import { Bell, Loader2, X, Trash2, ClipboardList, MessageSquare } from 'lucide-react';
+import {
+  stackListarNotificacoes,
+  stackMarcarNotificacaoLida,
+} from '../services/atendeStackService';
+import type { StackNotificacao } from '../types/atendeStack';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissoes } from '../contexts/PermissoesContext';
 import { useBrowserNotifications } from '../hooks/useBrowserNotifications';
@@ -29,6 +34,7 @@ const TIPOS_INFORMATIVOS_SCRIPT: ScriptNotificacao['tipo'][] = [
 
 export interface NotificationBadgeProps {
   onOpenScriptNotificacao?: (notificacao: ScriptNotificacao) => void;
+  onOpenStackPergunta?: (perguntaId: string) => void;
 }
 
 function formatTimeAgo(dateString: string): string {
@@ -68,7 +74,7 @@ function scriptNotificacaoIcon(tipo: ScriptNotificacao['tipo']): string {
   }
 }
 
-export const NotificationBadge = ({ onOpenScriptNotificacao }: NotificationBadgeProps) => {
+export const NotificationBadge = ({ onOpenScriptNotificacao, onOpenStackPergunta }: NotificationBadgeProps) => {
   const { user } = useAuth();
   const { temPermissao } = usePermissoes();
   const canAprovarExclusao = temPermissao('scripts.curadoria_acesso');
@@ -78,6 +84,8 @@ export const NotificationBadge = ({ onOpenScriptNotificacao }: NotificationBadge
   const [loading, setLoading] = useState(false);
   const [exclusoesPendentes, setExclusoesPendentes] = useState<NotificacaoExclusaoScript[]>([]);
   const [scriptNotificacoes, setScriptNotificacoes] = useState<ScriptNotificacao[]>([]);
+  const [stackNotificacoes, setStackNotificacoes] = useState<StackNotificacao[]>([]);
+  const stackFetchStartedAt = useRef(0);
 
   const carregarNotificacoesScripts = useCallback(async () => {
     if (!user?.id) return;
@@ -86,6 +94,20 @@ export const NotificationBadge = ({ onOpenScriptNotificacao }: NotificationBadge
       setScriptNotificacoes(notifs);
     } catch (e) {
       console.warn('Erro ao carregar notificações de scripts:', e);
+    }
+  }, [user?.id]);
+
+  const carregarStackNotificacoes = useCallback(async () => {
+    if (!user?.id) return;
+    const now = Date.now();
+    if (now - stackFetchStartedAt.current < 400) return;
+    stackFetchStartedAt.current = now;
+    try {
+      const notifs = await stackListarNotificacoes(30);
+      setStackNotificacoes(notifs);
+    } catch (e) {
+      console.warn('Erro ao carregar notificações do Stack:', e);
+      setStackNotificacoes([]);
     }
   }, [user?.id]);
 
@@ -100,9 +122,13 @@ export const NotificationBadge = ({ onOpenScriptNotificacao }: NotificationBadge
 
   const refreshAll = useCallback(async () => {
     setLoading(true);
-    await Promise.all([carregarNotificacoesScripts(), carregarExclusoesPendentes()]);
+    await Promise.all([
+      carregarNotificacoesScripts(),
+      carregarExclusoesPendentes(),
+      carregarStackNotificacoes(),
+    ]);
     setLoading(false);
-  }, [carregarNotificacoesScripts, carregarExclusoesPendentes]);
+  }, [carregarNotificacoesScripts, carregarExclusoesPendentes, carregarStackNotificacoes]);
 
   useEffect(() => {
     refreshAll();
@@ -149,7 +175,8 @@ export const NotificationBadge = ({ onOpenScriptNotificacao }: NotificationBadge
   }, []);
 
   const unreadScriptCount = scriptNotificacoes.filter((n) => !n.lida).length;
-  const totalCount = exclusoesPendentes.length + unreadScriptCount;
+  const unreadStackCount = stackNotificacoes.filter((n) => !n.lida_em).length;
+  const totalCount = exclusoesPendentes.length + unreadScriptCount + unreadStackCount;
   const hasNotifications = totalCount > 0;
 
   useBrowserNotifications({
@@ -188,8 +215,24 @@ export const NotificationBadge = ({ onOpenScriptNotificacao }: NotificationBadge
     setScriptNotificacoes((prev) => prev.filter((n) => n.id !== notificacaoId));
   }, []);
 
+  const handleStackNotificacaoClick = useCallback(
+    async (notificacao: StackNotificacao) => {
+      if (!notificacao.lida_em) {
+        await stackMarcarNotificacaoLida(notificacao.id);
+        setStackNotificacoes((prev) =>
+          prev.map((n) => (n.id === notificacao.id ? { ...n, lida_em: new Date().toISOString() } : n)),
+        );
+      }
+      if (notificacao.pergunta_id) {
+        onOpenStackPergunta?.(notificacao.pergunta_id);
+      }
+      setIsOpen(false);
+    },
+    [onOpenStackPergunta],
+  );
+
   const empty =
-    exclusoesPendentes.length === 0 && scriptNotificacoes.length === 0;
+    exclusoesPendentes.length === 0 && scriptNotificacoes.length === 0 && stackNotificacoes.length === 0;
 
   return (
     <div ref={dropdownRef} className="relative">
@@ -199,9 +242,10 @@ export const NotificationBadge = ({ onOpenScriptNotificacao }: NotificationBadge
         className={`relative rounded-lg p-2 transition-colors ${
           hasNotifications
             ? 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-            : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
         }`}
         title="Notificações"
+        aria-label="Notificações"
       >
         <Bell size={20} />
         {hasNotifications && (
@@ -228,7 +272,7 @@ export const NotificationBadge = ({ onOpenScriptNotificacao }: NotificationBadge
                 <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
               </div>
             ) : empty ? (
-              <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+              <div className="flex flex-col items-center justify-center py-8 text-gray-500 dark:text-gray-400">
                 <Bell size={32} className="mb-2 opacity-50" />
                 <p className="text-sm">Nenhuma notificação</p>
               </div>
@@ -256,7 +300,7 @@ export const NotificationBadge = ({ onOpenScriptNotificacao }: NotificationBadge
                             Solicitado por:{' '}
                             <span className="font-medium">{exclusao.solicitanteNome}</span>
                           </p>
-                          <p className="mt-1 text-xs text-gray-400">{formatTimeAgo(exclusao.dataHora)}</p>
+                          <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{formatTimeAgo(exclusao.dataHora)}</p>
                         </div>
                         <button
                           type="button"
@@ -273,6 +317,39 @@ export const NotificationBadge = ({ onOpenScriptNotificacao }: NotificationBadge
                         Em <span className="font-medium">Scripts → Revisão → Exclusão</span>, aprove ou negue
                       </p>
                     </div>
+                  </div>
+                )}
+
+                {stackNotificacoes.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 border-b bg-indigo-50 px-4 py-2 dark:border-gray-700 dark:bg-indigo-900/20">
+                      <MessageSquare size={14} className="text-indigo-600" />
+                      <span className="text-xs font-semibold text-indigo-800 dark:text-indigo-400">
+                        Atende Stack {unreadStackCount > 0 && `(${unreadStackCount} não lidas)`}
+                      </span>
+                    </div>
+                    {stackNotificacoes.map((notificacao) => (
+                      <div
+                        key={notificacao.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => void handleStackNotificacaoClick(notificacao)}
+                        onKeyDown={(e) => e.key === 'Enter' && void handleStackNotificacaoClick(notificacao)}
+                        className={`flex cursor-pointer items-start gap-3 border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-indigo-50/50 dark:border-gray-700 dark:hover:bg-indigo-900/20 ${
+                          notificacao.lida_em ? 'opacity-60' : ''
+                        }`}
+                      >
+                        <div
+                          className={`mt-2 h-2 w-2 flex-shrink-0 rounded-full ${
+                            notificacao.lida_em ? 'bg-gray-300 dark:bg-gray-600' : 'bg-indigo-500'
+                          }`}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="line-clamp-3 text-sm text-gray-800 dark:text-gray-200">{notificacao.mensagem}</p>
+                          <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{formatTimeAgo(notificacao.updated_at)}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -305,7 +382,7 @@ export const NotificationBadge = ({ onOpenScriptNotificacao }: NotificationBadge
                           <p className="line-clamp-2 text-sm text-gray-800 dark:text-gray-200">
                             {notificacao.mensagem}
                           </p>
-                          <p className="mt-1 text-xs text-gray-400">{formatTimeAgo(notificacao.criado_em)}</p>
+                          <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{formatTimeAgo(notificacao.criado_em)}</p>
                         </div>
                         <button
                           type="button"

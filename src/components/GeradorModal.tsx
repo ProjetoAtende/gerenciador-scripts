@@ -158,7 +158,7 @@ const EditableChip: React.FC<EditableChipProps> = ({ tipo, valor, opcoes, onChan
             className="absolute z-50 mt-1 left-0 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-3 min-w-[200px]"
             style={{ top: '100%' }}
           >
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">
+            <div className="text-xs text-gray-500 dark:text-gray-300 mb-2 font-medium">
               Campo {numero} {isDropdown ? '(selecione)' : '(digite)'}
             </div>
             
@@ -194,7 +194,7 @@ const EditableChip: React.FC<EditableChipProps> = ({ tipo, valor, opcoes, onChan
                       setTempValor(valor);
                       setIsOpen(false);
                     }}
-                    className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                    className="px-2 py-1 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                   >
                     Cancelar
                   </button>
@@ -549,7 +549,7 @@ export const GeradorModal: React.FC<GeradorModalProps> = ({ isOpen, onClose, scr
                 <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                   <Info size={32} className="text-gray-400" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-2">Nenhum script para o atendente</h3>
+                <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300 mb-2">Nenhum script para o atendente</h3>
                 <p className="text-sm text-gray-400 dark:text-gray-500 max-w-sm">
                   Este script ainda não possui orientações para o atendente. Use o editor (ícone de lápis) para adicionar conteúdo.
                 </p>
@@ -566,7 +566,7 @@ export const GeradorModal: React.FC<GeradorModalProps> = ({ isOpen, onClose, scr
 
           {/* Footer */}
           <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t dark:border-gray-700 flex items-center justify-between shrink-0">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-gray-500 dark:text-gray-300">
               {activeTab === 'atendente' && !hasConteudoAtendente
                 ? 'Sem conteúdo para copiar nesta aba'
                 : 'Preencha os campos e clique em "Copiar" para usar o texto'

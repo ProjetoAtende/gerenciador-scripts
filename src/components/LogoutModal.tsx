@@ -49,7 +49,7 @@ export const LogoutModal = ({ isVisible }: LogoutModalProps) => {
         </h3>
         
         {/* Texto descritivo */}
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
+        <p className="text-gray-600 dark:text-gray-300 mb-6">
           Finalizando sessão e desconectando dos serviços
         </p>
 
@@ -83,7 +83,7 @@ export const LogoutModal = ({ isVisible }: LogoutModalProps) => {
         </div>
 
         {/* Texto de instrução */}
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
+        <p className="text-xs text-gray-500 dark:text-gray-300 mt-4">
           Aguarde, não feche esta janela
         </p>
       </motion.div>

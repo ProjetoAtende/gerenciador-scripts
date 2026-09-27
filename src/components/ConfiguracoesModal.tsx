@@ -168,7 +168,7 @@ export function ConfiguracoesModal({ isOpen, onClose }: ConfiguracoesModalProps)
             className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             aria-label="Fechar"
           >
-            <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <X className="w-5 h-5 text-gray-500 dark:text-gray-300" />
           </button>
         </div>
 
@@ -187,7 +187,7 @@ export function ConfiguracoesModal({ isOpen, onClose }: ConfiguracoesModalProps)
                   </span>
                 )}
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">
                 Ativa o tema escuro nos componentes do sistema
               </p>
             </div>
@@ -221,7 +221,7 @@ export function ConfiguracoesModal({ isOpen, onClose }: ConfiguracoesModalProps)
                   </span>
                 )}
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">
                 Cards do dashboard principal abrem em novas abas do navegador
               </p>
             </div>
@@ -255,13 +255,13 @@ export function ConfiguracoesModal({ isOpen, onClose }: ConfiguracoesModalProps)
                   </span>
                 )}
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">
                 Escolha se as notificações do sistema devem vir de todas as equipes elegíveis ou apenas das equipes que você marcar.
               </p>
             </div>
 
             {loadingNotifications ? (
-              <div className="flex items-center justify-center py-6 text-sm text-gray-500 dark:text-gray-400 gap-2">
+              <div className="flex items-center justify-center py-6 text-sm text-gray-500 dark:text-gray-300 gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Carregando preferências de notificações...
               </div>
@@ -281,7 +281,7 @@ export function ConfiguracoesModal({ isOpen, onClose }: ConfiguracoesModalProps)
                           {definition.nome}
                           {savingThis && <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500" />}
                         </div>
-                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">
                           {definition.descricao}
                         </p>
                       </div>
@@ -298,7 +298,7 @@ export function ConfiguracoesModal({ isOpen, onClose }: ConfiguracoesModalProps)
                           />
                           <span>
                             <span className="font-medium">Todas as equipes elegíveis</span>
-                            <span className="block text-xs text-gray-500 dark:text-gray-400">
+                            <span className="block text-xs text-gray-500 dark:text-gray-300">
                               Mantém o recebimento para qualquer equipe em que você tenha elegibilidade para este tipo de notificação.
                             </span>
                           </span>
@@ -315,7 +315,7 @@ export function ConfiguracoesModal({ isOpen, onClose }: ConfiguracoesModalProps)
                           />
                           <span>
                             <span className="font-medium">Apenas equipes selecionadas</span>
-                            <span className="block text-xs text-gray-500 dark:text-gray-400">
+                            <span className="block text-xs text-gray-500 dark:text-gray-300">
                               Filtra novas notificações para as equipes marcadas abaixo. Se nada estiver marcado, você não recebe novas notificações deste tipo.
                             </span>
                           </span>
@@ -325,7 +325,7 @@ export function ConfiguracoesModal({ isOpen, onClose }: ConfiguracoesModalProps)
                       {pref.modo === 'selected' && (
                         <div className="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/30 p-3">
                           {equipesDisponiveis.length === 0 ? (
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                            <div className="text-sm text-gray-500 dark:text-gray-300">
                               Nenhuma equipe disponível para seleção.
                             </div>
                           ) : (

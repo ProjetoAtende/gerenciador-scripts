@@ -10,6 +10,7 @@ import { VideoOperations } from '../services/videoOperations';
 import { useDarkModeColorFixEditable } from '../hooks/useDarkModeColorFix';
 import { toast } from 'sonner';
 import { AIAssistantMenu, type AIContext } from './AIAssistantMenu';
+import { isAllowedLinkUrl } from '../utils/sanitizeStackHtml';
 
 interface RichTextEditorProps {
   value: string;
@@ -18,6 +19,8 @@ interface RichTextEditorProps {
   className?: string;
   scriptId?: string;
   aiContext?: AIContext;
+  /** Oculta o menu de IA (ex.: Atende Stack). */
+  hideAssistant?: boolean;
 }
 
 const FONT_FAMILIES = [
@@ -93,7 +96,28 @@ const BACKGROUND_COLORS = [
   '#FFE1FF', '#E1FFFF', '#FFE1B5', '#E1B5FF'
 ];
 
-export const RichTextEditor = ({ value, onChange, placeholder, className = '', scriptId, aiContext }: RichTextEditorProps) => {
+export const RichTextEditor = ({
+  value,
+  onChange,
+  placeholder,
+  className = '',
+  scriptId,
+  aiContext,
+  hideAssistant = false,
+}: RichTextEditorProps) => {
+  const tb = (label: string) =>
+    hideAssistant ? { title: label, 'aria-label': label } : { title: label };
+
+  const toolbarBtn =
+    'rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors' +
+    (hideAssistant
+      ? ' p-2 min-h-[44px] min-w-[44px] inline-flex items-center justify-center'
+      : ' p-1.5');
+
+  const toolbarSelect =
+    'px-2 text-sm border rounded dark:border-gray-600 dark:bg-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500' +
+    (hideAssistant ? ' min-h-[44px] py-2' : ' py-1');
+
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -368,9 +392,12 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
 
   const insertLink = () => {
     const url = prompt('Digite a URL do link:');
-    if (url) {
-      executeCommand('createLink', url);
+    if (!url) return;
+    if (!isAllowedLinkUrl(url)) {
+      window.alert('URL não permitida. Use http(s):// ou mailto:.');
+      return;
     }
+    executeCommand('createLink', url);
   };
 
   // Handler de paste para interceptar imagens coladas do clipboard
@@ -726,16 +753,16 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
           <button
             type="button"
             onClick={() => executeCommand('undo')}
-            className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            title="Desfazer (Ctrl+Z)"
+            className={toolbarBtn}
+            {...tb('Desfazer (Ctrl+Z)')}
           >
             <Undo2 size={16} />
           </button>
           <button
             type="button"
             onClick={() => executeCommand('redo')}
-            className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            title="Refazer (Ctrl+Y)"
+            className={toolbarBtn}
+            {...tb('Refazer (Ctrl+Y)')}
           >
             <Redo2 size={16} />
           </button>
@@ -749,7 +776,8 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
               executeCommand('formatBlock', e.target.value);
               setCurrentBlockFormat(e.target.value);
             }}
-            className="px-2 py-1 text-sm border rounded dark:border-gray-600 dark:bg-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={toolbarSelect}
+            aria-label={hideAssistant ? 'Estilo de parágrafo' : undefined}
           >
             {HEADING_STYLES.map(style => (
               <option key={style.value} value={style.value}>
@@ -767,7 +795,8 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
               executeCommand('fontName', e.target.value);
               setCurrentFontFamily(e.target.value);
             }}
-            className="px-2 py-1 text-sm border rounded dark:border-gray-600 dark:bg-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={toolbarSelect}
+            aria-label={hideAssistant ? 'Fonte' : undefined}
           >
             <option value="">Fonte</option>
             {FONT_FAMILIES.map(font => (
@@ -782,7 +811,8 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
               executeCommand('fontSize', e.target.value);
               setCurrentFontSize(e.target.value);
             }}
-            className="px-2 py-1 text-sm border rounded dark:border-gray-600 dark:bg-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={toolbarSelect}
+            aria-label={hideAssistant ? 'Tamanho da fonte' : undefined}
           >
             <option value="">Tamanho</option>
             {FONT_SIZES.map((size, index) => (
@@ -798,32 +828,32 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
           <button
             type="button"
             onClick={() => executeCommand('bold')}
-            className={`p-1.5 rounded transition-colors ${isBold ? 'bg-blue-200 text-blue-700' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`}
-            title="Negrito (Ctrl+B)"
+            className={`${toolbarBtn} transition-colors ${isBold ? 'bg-blue-200 text-blue-700' : ''}`}
+            {...tb('Negrito (Ctrl+B)')}
           >
             <Bold size={16} />
           </button>
           <button
             type="button"
             onClick={() => executeCommand('italic')}
-            className={`p-1.5 rounded transition-colors ${isItalic ? 'bg-blue-200 text-blue-700' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`}
-            title="Itálico (Ctrl+I)"
+            className={`${toolbarBtn} transition-colors ${isItalic ? 'bg-blue-200 text-blue-700' : ''}`}
+            {...tb('Itálico (Ctrl+I)')}
           >
             <Italic size={16} />
           </button>
           <button
             type="button"
             onClick={() => executeCommand('underline')}
-            className={`p-1.5 rounded transition-colors ${isUnderline ? 'bg-blue-200 text-blue-700' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`}
-            title="Sublinhado (Ctrl+U)"
+            className={`${toolbarBtn} transition-colors ${isUnderline ? 'bg-blue-200 text-blue-700' : ''}`}
+            {...tb('Sublinhado (Ctrl+U)')}
           >
             <Underline size={16} />
           </button>
           <button
             type="button"
             onClick={() => executeCommand('strikeThrough')}
-            className={`p-1.5 rounded transition-colors ${isStrikethrough ? 'bg-blue-200 text-blue-700' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`}
-            title="Riscado"
+            className={`${toolbarBtn} transition-colors ${isStrikethrough ? 'bg-blue-200 text-blue-700' : ''}`}
+            {...tb('Riscado')}
           >
             <Strikethrough size={16} />
           </button>
@@ -838,8 +868,10 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
               setShowTextColorPicker(!showTextColorPicker);
               setShowBgColorPicker(false);
             }}
-            className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex flex-col items-center justify-center"
-            title={`Cor do texto (${currentTextColor})`}
+            className={`${toolbarBtn} flex flex-col items-center justify-center`}
+            {...(hideAssistant
+              ? { title: 'Cor do texto', 'aria-label': 'Cor do texto' }
+              : { title: `Cor do texto (${currentTextColor})` })}
           >
             <Type size={16} />
             <div
@@ -876,8 +908,10 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
               setShowBgColorPicker(!showBgColorPicker);
               setShowTextColorPicker(false);
             }}
-            className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex flex-col items-center justify-center"
-            title={`Cor de fundo (${currentBgColor})`}
+            className={`${toolbarBtn} flex flex-col items-center justify-center`}
+            {...(hideAssistant
+              ? { title: 'Cor de fundo', 'aria-label': 'Cor de fundo' }
+              : { title: `Cor de fundo (${currentBgColor})` })}
           >
             <Palette size={16} />
             <div
@@ -928,24 +962,24 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
           <button
             type="button"
             onClick={() => executeCommand('justifyLeft')}
-            className={`p-1.5 rounded transition-colors ${currentAlignment === 'left' ? 'bg-blue-200 text-blue-700' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`}
-            title="Alinhar à esquerda"
+            className={`${toolbarBtn} transition-colors ${currentAlignment === 'left' ? 'bg-blue-200 text-blue-700' : ''}`}
+            {...tb('Alinhar à esquerda')}
           >
             <AlignLeft size={16} />
           </button>
           <button
             type="button"
             onClick={() => executeCommand('justifyCenter')}
-            className={`p-1.5 rounded transition-colors ${currentAlignment === 'center' ? 'bg-blue-200 text-blue-700' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`}
-            title="Centralizar"
+            className={`${toolbarBtn} transition-colors ${currentAlignment === 'center' ? 'bg-blue-200 text-blue-700' : ''}`}
+            {...tb('Centralizar')}
           >
             <AlignCenter size={16} />
           </button>
           <button
             type="button"
             onClick={() => executeCommand('justifyRight')}
-            className={`p-1.5 rounded transition-colors ${currentAlignment === 'right' ? 'bg-blue-200 text-blue-700' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`}
-            title="Alinhar à direita"
+            className={`${toolbarBtn} transition-colors ${currentAlignment === 'right' ? 'bg-blue-200 text-blue-700' : ''}`}
+            {...tb('Alinhar à direita')}
           >
             <AlignRight size={16} />
           </button>
@@ -956,16 +990,16 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
           <button
             type="button"
             onClick={() => executeCommand('insertUnorderedList')}
-            className={`p-1.5 rounded transition-colors ${isUnorderedList ? 'bg-blue-200 text-blue-700' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`}
-            title="Lista com marcadores"
+            className={`${toolbarBtn} transition-colors ${isUnorderedList ? 'bg-blue-200 text-blue-700' : ''}`}
+            {...tb('Lista com marcadores')}
           >
             <List size={16} />
           </button>
           <button
             type="button"
             onClick={() => executeCommand('insertOrderedList')}
-            className={`p-1.5 rounded transition-colors ${isOrderedList ? 'bg-blue-200 text-blue-700' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`}
-            title="Lista numerada"
+            className={`${toolbarBtn} transition-colors ${isOrderedList ? 'bg-blue-200 text-blue-700' : ''}`}
+            {...tb('Lista numerada')}
           >
             <ListOrdered size={16} />
           </button>
@@ -976,16 +1010,16 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
           <button
             type="button"
             onClick={insertLink}
-            className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            title="Inserir link"
+            className={toolbarBtn}
+            {...tb('Inserir link')}
           >
             <Link size={16} />
           </button>
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            title="Inserir imagem"
+            className={toolbarBtn}
+            {...tb('Inserir imagem')}
             disabled={uploading || !scriptId}
           >
             <Image size={16} />
@@ -993,20 +1027,21 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
           <button
             type="button"
             onClick={() => setShowVideoSourceModal(true)}
-            className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            title="Inserir vídeo"
+            className={toolbarBtn}
+            {...tb('Inserir vídeo')}
             disabled={uploading}
           >
             <Video size={16} />
           </button>
         </div>
 
-        {/* Assistente IA */}
-        <AIAssistantMenu
-          onInsertText={handleAIInsertText}
-          getFullText={getFullText}
-          aiContext={aiContext}
-        />
+        {!hideAssistant && (
+          <AIAssistantMenu
+            onInsertText={handleAIInsertText}
+            getFullText={getFullText}
+            aiContext={aiContext}
+          />
+        )}
 
         {uploading && (
           <span className="ml-2 text-sm text-blue-600 animate-pulse">
@@ -1148,7 +1183,7 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
               Inserir Vídeo no Script
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-5">
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-5">
               Escolha como deseja adicionar o vídeo ao script:
             </p>
             
@@ -1172,7 +1207,7 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
                   </div>
                   <div>
                     <p className="font-medium text-gray-800 dark:text-gray-100 mb-1">Fazer upload de arquivo</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                    <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
                       O vídeo será salvo no repositório próprio do sistema e inserido como um <strong>link clicável</strong> no script. 
                       Você poderá personalizar o texto do link.
                     </p>
@@ -1191,7 +1226,7 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
                   </div>
                   <div>
                     <p className="font-medium text-gray-800 dark:text-gray-100 mb-1">Inserir URL de vídeo</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                    <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
                       O vídeo permanecerá na fonte original (YouTube, Vimeo, etc.) e será inserido como um <strong>link clicável</strong> no script. 
                       Você poderá personalizar o texto do link.
                     </p>
@@ -1220,7 +1255,7 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
 
             <button
               onClick={() => setShowVideoSourceModal(false)}
-              className="w-full px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="w-full px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
               Cancelar
             </button>
@@ -1235,7 +1270,7 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
               Inserir URL do Vídeo
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
               Cole o link do vídeo que deseja adicionar ao script:
             </p>
             
@@ -1257,7 +1292,7 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
                 }}
                 autoFocus
               />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              <p className="text-xs text-gray-500 dark:text-gray-300 mt-2">
                 Suporta YouTube, Vimeo ou URLs diretas de vídeos
               </p>
             </div>
@@ -1268,7 +1303,7 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
                   setShowVideoUrlModal(false);
                   setVideoUrlInput('');
                 }}
-                className="flex-1 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex-1 px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 Cancelar
               </button>
@@ -1291,7 +1326,7 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
               Personalizar Link do Vídeo
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
               Defina o texto que será exibido como link clicável no script:
             </p>
             
@@ -1313,7 +1348,7 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
                 }}
                 autoFocus
               />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              <p className="text-xs text-gray-500 dark:text-gray-300 mt-2">
                 Este texto aparecerá como link clicável no corpo do script
               </p>
             </div>
@@ -1325,7 +1360,7 @@ export const RichTextEditor = ({ value, onChange, placeholder, className = '', s
                   setPendingVideoUrl(null);
                   setVideoLinkText('');
                 }}
-                className="flex-1 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex-1 px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 Cancelar
               </button>

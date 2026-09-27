@@ -22,6 +22,24 @@ Aplicar na ordem com `npm run sb:push` ou pipeline habitual:
 | `20260927267000_stack_qa_rodada4_retest.sql` | Reteste R3: votar, buscar, `stack_obter_pergunta` |
 | `20260927268000_stack_html_assert_entities_data.sql` | Decode entidades + bloqueio `data:` |
 | `20260927269000_stack_qa_rodada8_html_equipe.sql` | Allowlist URL em `href`/`src`, `stack_autor_equipe_efetiva` (BUG-33) |
+| `20260927270000_stack_autor_self_visible.sql` | User vê **próprio** nome no payload `autor`; demais users continuam anônimos |
+
+---
+
+## Autoria e publicação no detalhe
+
+No painel de **detalhe** (pergunta e cada resposta):
+
+| Quem vê | Linha exibida |
+|---------|----------------|
+| `user` (conteúdo alheio) | `por anônimo em dd/mm/aa hh:mm` |
+| `user` (próprio conteúdo) | `por {nome do perfil} em dd/mm/aa hh:mm` |
+| staff | Nome real + `· email` após a linha; demais users anônimos |
+
+- Data/hora = `created_at` (publicação), formato **`27/09/26 15:40`** (local do navegador).
+- Edição continua em linha separada: **Editado em …** (data/hora completa `pt-BR`), quando existir.
+- Helpers: `stackPublicadoPorLine`, `formatStackDateTime` em `src/components/atende-stack/stackUtils.ts`.
+- RPC: `stack_autor_json` / `stack_autor_json_for_view` (migration 270000).
 
 ---
 
@@ -91,6 +109,7 @@ Requer `SMOKE_TEST_*` admin e um id de pergunta existente.
 | Tipos | `src/types/atendeStack.ts` |
 | Sanitização | `src/utils/sanitizeStackHtml.ts`, `sanitizeHighlightHtml.ts` |
 | Destaque busca (acentos) | `src/utils/stackSearchHighlight.ts` |
+| Byline autoria/data | `src/components/atende-stack/stackUtils.ts` (`stackPublicadoPorLine`) |
 | Home / deep link | `src/pages/Home.tsx` |
 
 ---

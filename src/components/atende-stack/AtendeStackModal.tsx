@@ -46,7 +46,12 @@ import { StackFeedSkeleton, StackDetalheSkeleton } from './StackFeedSkeleton';
 import { StackHighlightSnippet } from './StackHighlightSnippet';
 import { StackHelpModal } from './StackHelpModal';
 import { highlightSearchTermsHtml, stripHighlightMarkup } from '../../utils/stackSearchHighlight';
-import { formatStackTimeAgo, stackStatusClass, stackStatusLabel } from './stackUtils';
+import {
+  formatStackTimeAgo,
+  stackPublicadoPorLine,
+  stackStatusClass,
+  stackStatusLabel,
+} from './stackUtils';
 
 interface Props {
   isOpen: boolean;
@@ -563,12 +568,13 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
                 {t.rotulo}
               </span>
             ))}
-            {isStaff && isStackAutorStaff(detalheView.autor) && (
-              <span className="text-slate-700 dark:text-slate-300">
-                por {detalheView.autor.nome} ({detalheView.autor.email})
-              </span>
-            )}
           </div>
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1.5">
+            {stackPublicadoPorLine(detalheView.autor, detalheView.created_at)}
+            {isStaff && isStackAutorStaff(detalheView.autor) && (
+              <span className="text-slate-500 dark:text-slate-500"> · {detalheView.autor.email}</span>
+            )}
+          </p>
         </div>
         <div className="flex items-center gap-1">
           <button
@@ -681,11 +687,12 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
                 <CheckCircle2 className="w-3.5 h-3.5" /> Solução
               </span>
             )}
-            {isStaff && isStackAutorStaff(r.autor) && (
-              <p className="text-xs text-slate-700 dark:text-slate-300 mb-2">
-                por {r.autor.nome} ({r.autor.email})
-              </p>
-            )}
+            <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
+              {stackPublicadoPorLine(r.autor, r.created_at)}
+              {isStaff && isStackAutorStaff(r.autor) && (
+                <span className="text-slate-500 dark:text-slate-500"> · {r.autor.email}</span>
+              )}
+            </p>
             <StackHtmlViewer html={r.corpo_html} />
             {r.editado && (
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">

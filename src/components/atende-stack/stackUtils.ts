@@ -1,3 +1,26 @@
+import { isStackAutorStaff, type StackAutor } from '../../types/atendeStack';
+
+/** Ex.: 27/09/26 15:40 (horário local do navegador). */
+export function formatStackDateTime(dateString: string): string {
+  const d = new Date(dateString);
+  if (Number.isNaN(d.getTime())) return '';
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yy = String(d.getFullYear()).slice(-2);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${dd}/${mm}/${yy} ${hh}:${min}`;
+}
+
+export function stackAutorRotulo(autor: StackAutor | null | undefined): string {
+  if (isStackAutorStaff(autor)) return autor.nome;
+  return 'anônimo';
+}
+
+export function stackPublicadoPorLine(autor: StackAutor | null | undefined, createdAt: string): string {
+  return `por ${stackAutorRotulo(autor)} em ${formatStackDateTime(createdAt)}`;
+}
+
 export function formatStackTimeAgo(dateString: string): string {
   const date = new Date(dateString);
   const diffMs = Date.now() - date.getTime();

@@ -53,7 +53,7 @@ Aplicar em todo o `AtendeStackModal`:
 |------|--------|
 | Escopo | Global |
 | Card Home | Visível para **todos autenticados** |
-| Anonimato | `user` não vê autor de pergunta/resposta; `supervisor+` vê **nome + e-mail** |
+| Anonimato | `user` não vê autor alheio (exibe **anônimo**); vê **próprio nome** no próprio conteúdo; `supervisor+` vê **nome + e-mail** |
 | Ordenação feed | **Sem bump.** `ultima_atividade_em DESC`, `upvote_count DESC`, `created_at DESC` |
 | `ultima_atividade_em` | Atualizado em: nova resposta, aceite, edição relevante, fechamento, reabertura |
 | Resolução | Autor **ou** staff marca resposta como solução |
@@ -162,14 +162,18 @@ UI v1: exibir registro **mais recente** no detalhe; histórico completo opcional
 ### 4.5 Payload de autoria (API)
 
 ```typescript
-// Perfil user
+// Perfil user — conteúdo de outro
 autor: { anonimo: true }
-editado_por: null // ou { editado_em } sem identidade
+
+// Perfil user — próprio conteúdo (viewer = autor_id)
+autor: { id, nome, email }
 
 // Perfil supervisor+
 autor: { id, nome, email }
-editado_por: { id, nome, email, editado_em } | null
+editado_por: { editado_em, por?: … } // por só identificado para staff
 ```
+
+**UI (detalhe):** linha `por {nome|anônimo} em dd/mm/aa hh:mm` a partir de `created_at`; staff pode ver e-mail após a linha. Edição mantém bloco **Editado em …** separado.
 
 ---
 

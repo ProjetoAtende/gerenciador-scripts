@@ -2,7 +2,65 @@
 
 Complemento ao [plano funcional](./ATENDE_STACK_PLANO.md). Relatórios detalhados de QA (GrokBot) ficam em `reports/` (pasta local, não versionada).
 
-**Última atualização:** 2026-09-27
+**Última atualização:** 2026-09-28
+
+**Versão de produto:** **v1** (backend + funcionalidades core) · **v2** (UX do detalhe e compositor — ver seção abaixo).
+
+---
+
+## Atende Stack v2 (2026-09-28)
+
+Melhorias de **experiência no painel de detalhe** da pergunta (sem migrations nem mudança de RPC). Objetivo: respostas curtas rápidas, textos longos confortáveis e thread legível.
+
+### Layout do detalhe
+
+| Zona | Comportamento | Visual |
+|------|----------------|--------|
+| **Cabeçalho** | Título, tags, status, ações (joinha, favorito, editar, fechar, excluir) | Fixo no topo do painel |
+| **Pergunta** | Corpo HTML, bloco de reabertura, metadados de edição | Card fixo (**não rola** com as respostas); borda neutra forte |
+| **Compositor** | Resposta curta + botões | Card **indigo** abaixo da pergunta; fixo enquanto a thread rola |
+| **Respostas publicadas** | Lista com ações (joinha, solução, editar) | Fundo mais neutro; **única área com scroll vertical** |
+
+Pergunta encerrada: compositor oculto; barra “Pergunta encerrada” + reabrir (staff) permanecem.
+
+### Responder (dois modos, um rascunho)
+
+1. **Resposta curta (inline)** — `StackMinimalReplyEditor`: textarea multilinha (auto-grow ~3–8 linhas), converte texto plano em HTML simples (`<p>` por linha). Botão **Publicar resposta**.
+2. **Editor completo** — modal **80vh** (`StackFullEditorModal`):
+   - **~55%** esquerda/topo: `StackRichTextEditor` (mesmo rich text da v1, sem IA).
+   - **~45%** direita/base: pergunta (sticky) + respostas com scroll interno (somente leitura).
+   - **Publicar**, **Voltar** (mantém rascunho), **Esc** fecha o modal.
+   - Em viewports estreitas: coluna (editor acima, contexto abaixo).
+
+**Rascunho único:** estado `respostaDraft` compartilhado entre inline e modal. Trocar de pergunta na lista **limpa** rascunho e fecha o modal. HTML com formatação avançada ou mídia no rascunho: o inline exibe aviso para continuar no editor completo (`isStackMinimalCompatibleHtml`).
+
+Utilitários: `src/utils/stackReplyDraftUtils.ts` (`plainTextToStackReplyHtml`, `stackReplyHtmlToPlainText`, `isStackMinimalCompatibleHtml`).
+
+### Respostas longas na thread
+
+`StackCollapsibleHtmlViewer`: respostas **intermediárias** longas exibem **uma linha** + **Ver mais** / **Ver menos**. **Não colapsa** se for a **única** resposta do thread ou a **última** (sempre texto completo). Usado no detalhe e no painel de contexto do editor completo. A pergunta no detalhe continua **sempre expandida**.
+
+### Componentes (v2)
+
+| Arquivo | Função |
+|---------|--------|
+| `StackMinimalReplyEditor.tsx` | Compositor curto |
+| `StackFullEditorModal.tsx` | Modal editor completo + contexto |
+| `StackCollapsibleHtmlViewer.tsx` | Colapso de respostas longas |
+| `RichTextEditor.tsx` | Prop `fillHeight` (modal Stack) |
+
+Orquestração: `AtendeStackModal.tsx` (removido compositor fixo no rodapé com `max-h-48`).
+
+### QA manual sugerido (v2)
+
+- [ ] Resposta curta inline publica e limpa rascunho.
+- [ ] Texto digitado no inline aparece no editor completo ao abrir o modal.
+- [ ] Formatação rica no modal: aviso no inline; publicar pelo modal.
+- [ ] Scroll só na lista de respostas; pergunta e compositor visíveis ao rolar.
+- [ ] Resposta longa **intermediária** (não é a última): uma linha + Ver mais / Ver menos.
+- [ ] Única resposta longa ou **última** do thread: texto completo, sem colapso.
+- [ ] Esc fecha modal completo sem fechar o Stack; Esc com rascunho pergunta confirmação (comportamento v1).
+- [ ] Trocar pergunta descarta rascunho de resposta.
 
 ---
 
@@ -104,6 +162,8 @@ Requer `SMOKE_TEST_*` admin e um id de pergunta existente.
 | Área | Caminhos |
 |------|----------|
 | Modal e UI | `src/components/atende-stack/` |
+| Compositor v2 | `StackMinimalReplyEditor`, `StackFullEditorModal`, `stackReplyDraftUtils.ts` |
+| Colapso respostas | `StackCollapsibleHtmlViewer.tsx` |
 | Feed / busca | `src/hooks/useAtendeStackFeed.ts` |
 | RPC | `src/services/atendeStackService.ts` |
 | Tipos | `src/types/atendeStack.ts` |

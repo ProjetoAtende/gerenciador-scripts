@@ -5,10 +5,12 @@ interface Props {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  /** Preenche altura do container (modal editor completo). */
+  fillHeight?: boolean;
 }
 
 /** Editor rich text para o Stack (sem assistente IA dos Scripts). */
-export function StackRichTextEditor({ value, onChange, placeholder, className }: Props) {
+export function StackRichTextEditor({ value, onChange, placeholder, className, fillHeight }: Props) {
   return (
     <RichTextEditor
       value={value}
@@ -16,6 +18,7 @@ export function StackRichTextEditor({ value, onChange, placeholder, className }:
       placeholder={placeholder}
       className={className}
       hideAssistant
+      fillHeight={fillHeight}
     />
   );
 }

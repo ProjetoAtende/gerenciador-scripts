@@ -39,12 +39,15 @@ import {
   stackVotar,
 } from '../../services/atendeStackService';
 import { StackHtmlViewer } from './StackHtmlViewer';
+import { StackCollapsibleHtmlViewer } from './StackCollapsibleHtmlViewer';
 import { StackRichTextEditor } from './StackRichTextEditor';
 import { StackFiltrosPanel } from './StackFiltrosPanel';
 import { StackTagField } from './StackTagField';
 import { StackFeedSkeleton, StackDetalheSkeleton } from './StackFeedSkeleton';
 import { StackHighlightSnippet } from './StackHighlightSnippet';
 import { StackHelpModal } from './StackHelpModal';
+import { StackMinimalReplyEditor } from './StackMinimalReplyEditor';
+import { StackFullEditorModal } from './StackFullEditorModal';
 import { highlightSearchTermsHtml, stripHighlightMarkup } from '../../utils/stackSearchHighlight';
 import {
   formatStackTimeAgo,
@@ -115,8 +118,11 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
   const [reabrirOpen, setReabrirOpen] = useState(false);
   const [reabrirMotivo, setReabrirMotivo] = useState('');
   const [showHelp, setShowHelp] = useState(false);
+  const [fullEditorOpen, setFullEditorOpen] = useState(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const respostasScrollRef = useRef<HTMLDivElement>(null);
+  const respostasScrollBeforeFullEditor = useRef(0);
   const equipeFiltroDisabled = !equipeId;
 
   const detalheView = detalhe;
@@ -158,6 +164,10 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
   }, [previewStackRole]); // eslint-disable-line react-hooks/exhaustive-deps -- recarregar preview simulado
 
   const selectPergunta = (id: string) => {
+    if (id !== selectedId) {
+      setRespostaDraft('');
+      setFullEditorOpen(false);
+    }
     setSelectedId(id);
     setComposer({ tipo: 'none' });
     setMobilePane('detalhe');
@@ -175,6 +185,10 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
       const tag = (e.target as HTMLElement)?.tagName;
       const typing = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable;
       if (e.key === 'Escape') {
+        if (fullEditorOpen) {
+          setFullEditorOpen(false);
+          return;
+        }
         if (showHelp) {
           setShowHelp(false);
           return;
@@ -231,6 +245,7 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
     corpoDraft,
     tagsDraft,
     respostaDraft,
+    fullEditorOpen,
   ]);
 
   const patchFeedItem = useCallback(
@@ -344,6 +359,7 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
         autorEquipeId: equipeId,
       });
       setRespostaDraft('');
+      setFullEditorOpen(false);
       toast.success('Resposta publicada.');
       await refreshAfterMutation(detalhe.id);
     } catch (e: unknown) {
@@ -655,32 +671,90 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 min-h-0">
-        <StackHtmlViewer html={detalheView.corpo_html} />
-        {detalheView.editado && (
-          <p className="text-xs text-slate-600 dark:text-slate-400">
-            Editado em {new Date(detalheView.editado.editado_em).toLocaleString('pt-BR')}
-            {isStaff && detalheView.editado.por && isStackAutorStaff(detalheView.editado.por) && (
-              <> por {detalheView.editado.por.nome}</>
-            )}
+      <div className="shrink-0 px-4 pt-3 pb-2 space-y-3 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900/80">
+        <section
+          className="rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 shadow-sm px-4 py-3"
+          aria-label="Enunciado da pergunta"
+        >
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
+            Pergunta
           </p>
-        )}
-        {detalheView.reabertura && (
-          <div className="border-l-4 border-amber-500 bg-amber-50/90 dark:bg-amber-950/30 rounded-r-lg p-3">
-            <p className="text-xs font-semibold uppercase text-amber-900 dark:text-amber-100">Reabertura pela equipe</p>
-            <p className="text-sm mt-2 whitespace-pre-wrap dark:text-slate-200">{detalheView.reabertura.motivo}</p>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">{formatStackTimeAgo(detalheView.reabertura.created_at)}</p>
-            {isStaff && detalheView.reabertura.staff && isStackAutorStaff(detalheView.reabertura.staff) && (
-              <p className="text-xs text-slate-600 dark:text-slate-400">Por {detalheView.reabertura.staff.nome}</p>
-            )}
-          </div>
-        )}
+          <StackHtmlViewer html={detalheView.corpo_html} />
+          {detalheView.editado && (
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
+              Editado em {new Date(detalheView.editado.editado_em).toLocaleString('pt-BR')}
+              {isStaff && detalheView.editado.por && isStackAutorStaff(detalheView.editado.por) && (
+                <> por {detalheView.editado.por.nome}</>
+              )}
+            </p>
+          )}
+          {detalheView.reabertura && (
+            <div className="border-l-4 border-amber-500 bg-amber-50/90 dark:bg-amber-950/30 rounded-r-lg p-3 mt-3">
+              <p className="text-xs font-semibold uppercase text-amber-900 dark:text-amber-100">Reabertura pela equipe</p>
+              <p className="text-sm mt-2 whitespace-pre-wrap dark:text-slate-200">{detalheView.reabertura.motivo}</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">{formatStackTimeAgo(detalheView.reabertura.created_at)}</p>
+              {isStaff && detalheView.reabertura.staff && isStackAutorStaff(detalheView.reabertura.staff) && (
+                <p className="text-xs text-slate-600 dark:text-slate-400">Por {detalheView.reabertura.staff.nome}</p>
+              )}
+            </div>
+          )}
+        </section>
 
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{detalheView.resposta_count} respostas</h3>
-        {detalheView.respostas.map((r) => (
+        {detalheView.pode_responder && composer.tipo === 'none' && (
+          <section
+            className="rounded-xl border-2 border-indigo-400 dark:border-indigo-600 bg-indigo-50/90 dark:bg-indigo-950/35 shadow-md px-4 py-3"
+            aria-label="Escrever resposta"
+          >
+            <label htmlFor="stack-resposta-curta" className="text-sm font-semibold text-indigo-950 dark:text-indigo-100">
+              Sua resposta
+            </label>
+            <p className="text-xs text-indigo-800/80 dark:text-indigo-200/80 mt-0.5 mb-2">
+              Respostas curtas aqui; formatação avançada no editor completo.
+            </p>
+            <StackMinimalReplyEditor
+              id="stack-resposta-curta"
+              valueHtml={respostaDraft}
+              onChangeHtml={setRespostaDraft}
+              placeholder="Resposta curta…"
+            />
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <button
+                type="button"
+                disabled={salvando || isHtmlEmpty(respostaDraft)}
+                onClick={() => void publicarResposta()}
+                className={`px-4 py-2.5 min-h-[44px] bg-indigo-600 text-white rounded-lg text-sm disabled:opacity-50 ${touchControlClass}`}
+              >
+                Publicar resposta
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  respostasScrollBeforeFullEditor.current = respostasScrollRef.current?.scrollTop ?? 0;
+                  setFullEditorOpen(true);
+                }}
+                className={`px-4 py-2.5 min-h-[44px] text-sm rounded-lg border-2 border-indigo-500 text-indigo-900 dark:text-indigo-100 dark:border-indigo-400 bg-white/80 dark:bg-slate-900/80 ${touchControlClass}`}
+              >
+                Editor completo
+              </button>
+            </div>
+          </section>
+        )}
+      </div>
+
+      <div
+        ref={respostasScrollRef}
+        className="flex-1 overflow-y-auto min-h-0 px-4 py-3 bg-slate-100/70 dark:bg-slate-950/40"
+      >
+        <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-3">
+          {detalheView.resposta_count} respostas publicadas
+        </h3>
+        <div className="space-y-3">
+        {detalheView.respostas.map((r, idx, arr) => {
+          const allowCollapse = arr.length > 1 && idx < arr.length - 1;
+          return (
           <div
             key={r.id}
-            className={`rounded-xl border p-3 dark:border-slate-700 ${r.aceita ? 'border-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20' : ''}`}
+            className={`rounded-xl border p-3 bg-white dark:bg-slate-900 dark:border-slate-700 ${r.aceita ? 'border-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20' : 'border-slate-200'}`}
           >
             {r.aceita && (
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-2">
@@ -693,7 +767,7 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
                 <span className="text-slate-500 dark:text-slate-500"> · {r.autor.email}</span>
               )}
             </p>
-            <StackHtmlViewer html={r.corpo_html} />
+            <StackCollapsibleHtmlViewer html={r.corpo_html} allowCollapse={allowCollapse} />
             {r.editado && (
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
                 Editado em {new Date(r.editado.editado_em).toLocaleString('pt-BR')}
@@ -777,7 +851,13 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
               )}
             </div>
           </div>
-        ))}
+          );
+        })}
+
+        {detalheView.respostas.length === 0 && (
+          <p className="text-sm text-slate-500 dark:text-slate-400 py-4 text-center">Nenhuma resposta publicada ainda.</p>
+        )}
+        </div>
 
         {composer.tipo === 'editResposta' && (
           <div className="border rounded-lg p-3 dark:border-slate-600">
@@ -810,22 +890,6 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
           </div>
         )}
       </div>
-
-      {detalheView.pode_responder && composer.tipo === 'none' && (
-        <div className="shrink-0 border-t dark:border-slate-700 p-3 space-y-2 bg-white dark:bg-slate-900">
-          <div className="max-h-48 overflow-hidden border rounded-lg dark:border-slate-600">
-            <StackRichTextEditor value={respostaDraft} onChange={setRespostaDraft} placeholder="Sua resposta…" />
-          </div>
-          <button
-            type="button"
-            disabled={salvando || isHtmlEmpty(respostaDraft)}
-            onClick={() => void publicarResposta()}
-            className={`w-full sm:w-auto px-4 py-2.5 min-h-[44px] bg-indigo-600 text-white rounded-lg text-sm disabled:opacity-50 ${touchControlClass}`}
-          >
-            Publicar resposta
-          </button>
-        </div>
-      )}
 
       {detalheView.status === 'fechada' && (
         <div className="shrink-0 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-sm flex flex-wrap items-center gap-2 justify-between">
@@ -1020,6 +1084,26 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
         )}
 
         {showHelp && <StackHelpModal onClose={() => setShowHelp(false)} />}
+
+        {fullEditorOpen && detalhe && detalheView && (
+          <StackFullEditorModal
+            detalhe={detalheView}
+            isStaff={isStaff}
+            valueHtml={respostaDraft}
+            onChangeHtml={setRespostaDraft}
+            salvando={salvando}
+            onPublicar={() => void publicarResposta()}
+            onClose={() => {
+              setFullEditorOpen(false);
+              requestAnimationFrame(() => {
+                if (respostasScrollRef.current) {
+                  respostasScrollRef.current.scrollTop = respostasScrollBeforeFullEditor.current;
+                }
+              });
+            }}
+            touchControlClass={touchControlClass}
+          />
+        )}
 
         {reabrirOpen && detalhe && (
           <div

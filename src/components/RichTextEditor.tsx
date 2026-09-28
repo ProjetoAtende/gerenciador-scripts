@@ -21,6 +21,8 @@ interface RichTextEditorProps {
   aiContext?: AIContext;
   /** Oculta o menu de IA (ex.: Atende Stack). */
   hideAssistant?: boolean;
+  /** Área editável cresce com o container (modal Stack). */
+  fillHeight?: boolean;
 }
 
 const FONT_FAMILIES = [
@@ -104,6 +106,7 @@ export const RichTextEditor = ({
   scriptId,
   aiContext,
   hideAssistant = false,
+  fillHeight = false,
 }: RichTextEditorProps) => {
   const tb = (label: string) =>
     hideAssistant ? { title: label, 'aria-label': label } : { title: label };
@@ -745,7 +748,9 @@ export const RichTextEditor = ({
   }, []);
 
   return (
-    <div className={`rich-text-editor border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800 flex flex-col ${className}`}>
+    <div
+      className={`rich-text-editor border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800 flex flex-col ${fillHeight ? 'min-h-0 h-full' : ''} ${className}`}
+    >
       {/* Toolbar */}
       <div className="bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600 p-2 flex flex-wrap gap-1 items-center shrink-0">
         {/* Histórico */}
@@ -1074,7 +1079,9 @@ export const RichTextEditor = ({
         onDragOver={handleMediaDragOver}
         onDrop={handleMediaDrop}
         onDragLeave={handleMediaDragLeave}
-        className={`flex-1 min-h-[300px] p-4 focus:outline-none prose prose-sm dark:prose-invert max-w-none overflow-y-auto text-gray-900 dark:text-gray-100 ${
+        className={`flex-1 p-4 focus:outline-none prose prose-sm dark:prose-invert max-w-none overflow-y-auto text-gray-900 dark:text-gray-100 ${
+          fillHeight ? 'min-h-0' : 'min-h-[300px]'
+        } ${
           isDraggingMedia ? 'bg-purple-50 dark:bg-purple-900/30 border-2 border-dashed border-purple-300 dark:border-purple-600' : ''
         }`}
         style={{

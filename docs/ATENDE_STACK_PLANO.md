@@ -3,11 +3,13 @@
 Documento executável por fases: regras de negócio, backend (Supabase), frontend (UX), notificações e critérios de aceite.
 
 **Repositório:** Gerenciador Atende  
-**Última atualização:** 2026-09-27
+**Última atualização:** 2026-09-28
 
 **Status implementação (frontend v1):** concluído — ver seção 11 do plano + filtros por tag, paginação feed/busca, skeletons, help, atalhos, FAB mobile, `StackRichTextEditor` sem IA, snippets sanitizados (DOMPurify).
 
-**Operação, seeds e QA:** [ATENDE_STACK_OPERACAO.md](./ATENDE_STACK_OPERACAO.md)
+**Status implementação (frontend v2):** concluído — ver **seção 15** (detalhe: compositor mínimo, editor completo em modal, thread colapsável).
+
+**Operação, seeds e QA:** [ATENDE_STACK_OPERACAO.md](./ATENDE_STACK_OPERACAO.md) (inclui **Atende Stack v2**)
 
 ---
 
@@ -425,6 +427,39 @@ Fase 4 → Fase 6
 - Sugestão “perguntas similares” ao criar (FTS)
 - Trigram opcional para typos
 - Refator editor rich text compartilhado (se duplicação incomodar)
+- Colapso “Ver mais” na **lista/feed** (hoje só no detalhe — v2)
+- Toolbar enxuta dedicada ao compositor mínimo (v2 usa textarea plana)
+
+---
+
+## 15. Atende Stack v2 — detalhe e compositor (2026-09-28)
+
+Evolução **somente frontend** do painel de detalhe. Backend, RPCs e regras da seção 3 permanecem as da v1.
+
+### Problema endereçado
+
+O compositor de resposta no **rodapé**, com editor rich text completo limitado a ~192px (`max-h-48`), consumia espaço com a toolbar e dificultava respostas longas. Pergunta e respostas rolavam juntas, perdendo contexto do enunciado.
+
+### Decisões UX (v2)
+
+| Tema | Decisão |
+|------|---------|
+| Hierarquia visual | Três superfícies distintas: **pergunta** (neutra), **compositor** (indigo/ativo), **thread** (fundo neutro, scroll) |
+| Scroll | Pergunta + compositor **fixos**; scroll **apenas** em respostas publicadas |
+| Resposta curta | Textarea mínima inline; HTML simples gerado no cliente |
+| Resposta longa / rica | Botão **Editor completo** → modal 80vh, split ~55% editor / ~45% contexto |
+| Rascunho | Um único `respostaDraft` para inline e modal |
+| Leitura | Respostas **intermediárias** longas: **1 linha** + **Ver mais** / **Ver menos**; **única** ou **última** resposta sempre expandida |
+
+### Critérios de aceite (v2)
+
+- [x] Compositor mínimo abaixo da pergunta; sem editor rich no rodapé
+- [x] Modal editor completo com contexto (pergunta + respostas roláveis)
+- [x] Rascunho compartilhado e limpeza ao mudar de pergunta
+- [x] Colapso de respostas longas no detalhe (e contexto do modal)
+- [x] Ajuda in-app atualizada (`StackHelpModal`)
+
+Detalhes operacionais e checklist QA: [ATENDE_STACK_OPERACAO.md § v2](./ATENDE_STACK_OPERACAO.md#atende-stack-v2-2026-09-28).
 
 ---
 

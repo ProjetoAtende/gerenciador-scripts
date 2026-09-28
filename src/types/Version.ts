@@ -41,10 +41,39 @@ export interface UserVersionView {
  */
 export const CHANGELOG: Version[] = [
   {
+    version: '12.3',
+    date: '2026-09-28',
+    title: 'Identidade visual da Home',
+    isCurrent: true,
+    features: [
+      {
+        title: 'Cabeçalho institucional TJSP',
+        description:
+          'A Home passou a exibir o header institucional (brasão, título, slogan, logos eproc e TJSP Atende), alinhado ao layout do projeto NAPE.',
+        type: 'improvement',
+        area: 'Home',
+      },
+      {
+        title: 'Simulação de visualização desativada',
+        description:
+          'A barra de simulação de setor/equipe/papel foi preservada no código, porém desligada via HOME_VISUALIZACAO_SIMULACAO_ENABLED.',
+        type: 'improvement',
+        area: 'Home',
+      },
+      {
+        title: 'Rodapé e badge de versão enxutos',
+        description:
+          'Footer reduzido a ShadowFlow Technologies 2026; badge de versão oculto (VERSION_BADGE_ENABLED) mantendo o changelog no código.',
+        type: 'improvement',
+        area: 'Home',
+      },
+    ],
+  },
+  {
     version: '12.2',
     date: '2026-09-23',
     title: 'Exclusão de scripts na curadoria',
-    isCurrent: true,
+    isCurrent: false,
     features: [
       {
         title: 'Aprovação de exclusão no modal Scripts',

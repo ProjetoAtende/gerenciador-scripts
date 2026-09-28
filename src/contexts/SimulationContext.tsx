@@ -21,6 +21,9 @@ interface SimulationContextValue {
   reset: () => void;
 }
 
+/** Reative para exibir a barra de simulação na home e afetar permissões simuladas. */
+export const HOME_VISUALIZACAO_SIMULACAO_ENABLED = false;
+
 const STORAGE_KEY = 'home-visualizacao-simulada';
 
 const DEFAULT_STATE: SimulationState = {
@@ -33,7 +36,7 @@ const SimulationContext = createContext<SimulationContextValue | undefined>(unde
 
 export const SimulationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { userRole, equipeId } = useAuth();
-  const canSimulate = userRole === 'admin';
+  const canSimulate = HOME_VISUALIZACAO_SIMULACAO_ENABLED && userRole === 'admin';
   const [simulation, setSimulation] = useState<SimulationState>(() => {
     if (typeof window === 'undefined') return DEFAULT_STATE;
     try {

@@ -8,7 +8,7 @@ Stack: **React 18 + TypeScript + Vite**, backend **Supabase** (Auth, Postgres, R
 
 ## O que a aplicação faz
 
-Após login, o usuário escolhe a **equipe** e acessa uma **Home** com cards controlados por permissão:
+Após login, o usuário escolhe a **equipe** e acessa uma **Home** com cabeçalho institucional TJSP (brasão, título, slogan, logos **eproc** e **TJSP Atende**) e cards controlados por permissão:
 
 | Sistema | Descrição |
 |---------|-----------|
@@ -42,6 +42,15 @@ gerenciador/
 ```
 
 Detalhes da migração, cronologia de banco e decisões: [`docs/MEMORIA_MIGRACAO_GERENCIADOR_ATENDE.md`](docs/MEMORIA_MIGRACAO_GERENCIADOR_ATENDE.md).
+
+### Home — layout e flags de UI
+
+| Elemento | Arquivo / asset | Observação |
+|----------|-----------------|------------|
+| Cabeçalho institucional | `src/components/HomeInstitutionalHeader.tsx` | Layout alinhado ao projeto NAPE; imagens em `public/tjsp-logotipo-oficial.png`, `public/eproc-logo.png`, `public/tjsp-atende-logo.png` |
+| Simulação “Visualização” (admin) | `src/components/HomeVisualizacaoSimulada.tsx` | **Desativada** — flag `HOME_VISUALIZACAO_SIMULACAO_ENABLED` em `SimulationContext.tsx` |
+| Badge de versão / changelog | `src/components/VersionBadge.tsx` | **Oculto** — flag `VERSION_BADGE_ENABLED` |
+| Rodapé | `src/components/FooterShadowFlow.tsx` | Apenas “ShadowFlow Technologies 2026”, altura mínima |
 
 ---
 

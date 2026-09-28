@@ -5,6 +5,9 @@ import { Sparkles } from 'lucide-react';
 import { useVersions } from '../hooks/useVersions';
 import { ChangelogModal } from './ChangelogModal';
 
+/** Reative para exibir o badge de versão e o changelog na home. */
+export const VERSION_BADGE_ENABLED = false;
+
 interface VersionBadgeProps {
   userId: string | null;
 }
@@ -12,6 +15,10 @@ interface VersionBadgeProps {
 export const VersionBadge = ({ userId }: VersionBadgeProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { currentVersion, versions } = useVersions({ userId });
+
+  if (!VERSION_BADGE_ENABLED) {
+    return null;
+  }
 
   const handleOpenModal = () => {
     setIsModalOpen(true);

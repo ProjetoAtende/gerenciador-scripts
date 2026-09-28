@@ -1,6 +1,6 @@
 # Memória de execução — Gerenciador Atende
 
-Documento de continuidade da migração e recorte do **Gerenciador de Chamados** para o **Gerenciador Atende**. Atualizado em setembro/2026 (última revisão operacional: Boss Only, `admin-users`, retirada de e-mail no produto).
+Documento de continuidade da migração e recorte do **Gerenciador de Chamados** para o **Gerenciador Atende**. Atualizado em setembro/2026 (última revisão operacional: identidade visual da Home, Boss Only, `admin-users`, retirada de e-mail no produto).
 
 ---
 
@@ -133,6 +133,13 @@ SELECT vault.create_secret(
 - Home enxuta com cards por **permissão** (`home.card.*`).
 - Lazy load apenas dos modais do escopo Atende.
 - Pasquale abre `MelhorarTextoModal`; Gerador acoplado aos Scripts.
+
+#### Identidade visual e chrome (set/2026)
+
+- **Header:** `HomeInstitutionalHeader.tsx` — brasão TJSP, “Tribunal de Justiça / Estado de São Paulo”, slogan “A Justiça próxima do cidadão”, logo **eproc** e logo **TJSP Atende** (assets em `public/`, espelhando o header do repositório NAPE).
+- **Simulação de visualização (legado admin):** código preservado em `HomeVisualizacaoSimulada.tsx`, **não montado** na Home; efeito desligado globalmente com `HOME_VISUALIZACAO_SIMULACAO_ENABLED = false` em `SimulationContext.tsx` (sem alterar permissões reais por simulação).
+- **Version badge:** `VERSION_BADGE_ENABLED = false` em `VersionBadge.tsx` — changelog em `Version.ts` permanece para reativação futura.
+- **Footer:** `FooterShadowFlow.tsx` — somente “ShadowFlow Technologies 2026”, sem chips de stack nem título “Gerenciador de Chamados”.
 
 ### Notificações (`NotificationBadge.tsx`)
 

@@ -39,8 +39,9 @@ export function StackHelpModal({ onClose }: Props) {
           <section>
             <h3 className="font-semibold text-slate-800 dark:text-slate-100 mb-1">Tags</h3>
             <p>
-              Use tags para agrupar temas. A primeira grafia de uma tag vira o padrão; variações como “Precatório” e “precatorios”
-              unificam-se automaticamente.
+              Ao publicar, a IA sugere 2–3 tags em segundo plano (você não precisa esperar). Se o <strong>corpo</strong> da pergunta
+              for editado, as tags são recalculadas. Nos filtros, clique nos chips: vários selecionados exigem que a pergunta tenha{' '}
+              <strong>todas</strong> essas tags.
             </p>
           </section>
           <section>

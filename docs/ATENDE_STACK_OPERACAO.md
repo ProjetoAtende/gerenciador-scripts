@@ -81,6 +81,62 @@ Aplicar na ordem com `npm run sb:push` ou pipeline habitual:
 | `20260927268000_stack_html_assert_entities_data.sql` | Decode entidades + bloqueio `data:` |
 | `20260927269000_stack_qa_rodada8_html_equipe.sql` | Allowlist URL em `href`/`src`, `stack_autor_equipe_efetiva` (BUG-33) |
 | `20260927270000_stack_autor_self_visible.sql` | User vê **próprio** nome no payload `autor`; demais users continuam anônimos |
+| `20260928120000_stack_tags_ia.sql` | Tags IA assíncronas (`stack_tag_jobs`), filtro AND, nuvem, fallback «Sem classificação», staff |
+| `20260928130000_stack_tag_jobs_cron.sql` | Worker em lote (`stack_processar_tag_jobs_batch`), pg_cron */2 min |
+| `20260928140000_stack_tags_ia_security.sql` | REVOKE helpers (TIA-B1), caller batch/cron (TIA-B2), fallback autocurativo (TIA-B3), rate limit 30/h (TIA-B4), rótulo IA ≤40 chars |
+
+### Tags IA — produção (projeto linkado)
+
+**Estado (2026-09-28):** migrations aplicadas no remoto; **DeepSeek (Vault)** ok; **pg_cron** habilitado com job ativo abaixo. **Não é necessário** configurar `STACK_TAG_CRON_SECRET` nem cron HTTP na Edge Function para operação normal.
+
+| Camada | Função |
+|--------|--------|
+| **W3 (app)** | Após criar pergunta ou editar **corpo**, o modal chama `stack_processar_tag_job` (best-effort). |
+| **W1 (pg_cron)** | Job SQL a cada 2 min processa até 2 jobs pendentes. |
+| **Edge Function** | `stack-process-tag-jobs` deployada; **opcional** (backup ou automação externa). |
+
+**Pré-requisitos**
+
+- Extensão **pg_cron** enabled (Database → Extensions).
+- Vault **`DEEPSEEK_API_KEY`** (mesma RPC `chamar_deepseek` do Pasquale).
+- Seed demo: conta **staff** + `stack_staff_definir_tags` após create (`npm run stack:seed-demo`).
+
+**Verificar job pg_cron (SQL Editor)**
+
+```sql
+SELECT jobid, jobname, schedule, command, active
+FROM cron.job
+WHERE jobname = 'stack_processar_tag_jobs';
+```
+
+Esperado: uma linha, `schedule` = `*/2 * * * *`, `command` = `SELECT public.stack_processar_tag_jobs_batch(2);`, `active` = true.
+
+**Fila / jobs recentes (diagnóstico)**
+
+```sql
+SELECT id, pergunta_id, status, motivo, tentativas, ultimo_erro, created_at, finished_at
+FROM public.stack_tag_jobs
+ORDER BY created_at DESC
+LIMIT 20;
+```
+
+**Smoke worker (local, service role no `.env`)**
+
+```bash
+npm run stack:process-tag-jobs
+```
+
+Chama `stack_processar_tag_jobs_batch` via RPC (não exige secret).
+
+### Worker HTTP opcional (Edge Function)
+
+Só use se quiser cron **fora** do pg_cron (GitHub Action, etc.):
+
+1. Secret **`STACK_TAG_CRON_SECRET`** na function `stack-process-tag-jobs`.
+2. **POST** com header `x-stack-cron-secret: <mesmo valor>`.
+3. Deploy: `npm run sb:deploy-stack-tag-worker`.
+
+Com pg_cron ativo, este caminho é **redundante**.
 
 ---
 
@@ -133,6 +189,7 @@ Prefixo de título: **`[TESTE PAG]`**
 npm run stack:seed-demo             # 12 perguntas + 17 respostas variadas
 npm run stack:seed-demo:list        # lista IDs no feed
 npm run stack:seed-demo:clean       # exclusão em massa (staff)
+npm run stack:seed-demo:clean-tags  # remove tags teste-demo, demo-stack e QA (service role)
 ```
 
 Script: `scripts/atende-stack-seed-demo.mjs`

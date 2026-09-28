@@ -1,5 +1,7 @@
 export type StackStatus = 'aberta' | 'fechada' | 'oculta';
 
+export type StackTagsStatus = 'none' | 'pending' | 'ready' | 'failed';
+
 export type StackEquipeModo = 'todas' | 'criadas' | 'com_resposta';
 
 export type StackStatusFiltro = 'todas' | 'aberta' | 'fechada';
@@ -66,6 +68,7 @@ export interface StackFeedItem {
   favorito: boolean;
   usuario_votou: boolean;
   tags: StackTag[];
+  tags_status?: StackTagsStatus;
 }
 
 export interface StackResposta {
@@ -100,6 +103,7 @@ export interface StackPerguntaDetalhe {
   autor: StackAutor | null;
   editado: StackEditadoMeta | null;
   tags: StackTag[];
+  tags_status?: StackTagsStatus;
   reabertura: StackReabertura | null;
   favorito: boolean;
   usuario_votou: boolean;
@@ -109,6 +113,7 @@ export interface StackPerguntaDetalhe {
   pode_responder: boolean;
   pode_marcar_aceita: boolean;
   pode_deletar: boolean;
+  pode_gerenciar_tags?: boolean;
   respostas: StackResposta[];
 }
 

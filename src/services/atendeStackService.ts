@@ -74,18 +74,24 @@ export async function stackListarTags(q: string, limit = 20): Promise<StackTag[]
   return (data ?? []) as StackTag[];
 }
 
+export type StackTagNuvemItem = StackTag & { uso_count: number };
+
+export async function stackListarTagsNuvem(limit = 200): Promise<StackTagNuvemItem[]> {
+  const { data, error } = await supabase.rpc('stack_listar_tags_nuvem', { p_limit: limit });
+  if (error) throw error;
+  return (data ?? []) as StackTagNuvemItem[];
+}
+
 export async function stackCriarPergunta(params: {
   titulo: string;
   corpoHtml: string;
-  tagIds: string[];
-  tagNovos: string[];
   autorEquipeId: string | null;
 }): Promise<string> {
   const { data, error } = await supabase.rpc('stack_criar_pergunta', {
     p_titulo: params.titulo,
     p_corpo_html: params.corpoHtml,
-    p_tag_ids: params.tagIds,
-    p_tag_novos: params.tagNovos,
+    p_tag_ids: [],
+    p_tag_novos: [],
     p_autor_equipe_id: params.autorEquipeId,
   });
   if (error) throw error;
@@ -96,13 +102,40 @@ export async function stackEditarPergunta(params: {
   perguntaId: string;
   titulo: string;
   corpoHtml: string;
-  tagIds: string[];
-  tagNovos: string[];
 }): Promise<void> {
   const { error } = await supabase.rpc('stack_editar_pergunta', {
     p_pergunta_id: params.perguntaId,
     p_titulo: params.titulo,
     p_corpo_html: params.corpoHtml,
+    p_tag_ids: null,
+    p_tag_novos: [],
+  });
+  if (error) throw error;
+}
+
+/** Best-effort (W3): processa job de tags IA para a pergunta. */
+export async function stackProcessarTagJob(perguntaId: string): Promise<{ ok: boolean; reason?: string }> {
+  const { data, error } = await supabase.rpc('stack_processar_tag_job', {
+    p_job_id: null,
+    p_pergunta_id: perguntaId,
+  });
+  if (error) throw error;
+  const row = (data ?? {}) as { ok?: boolean; reason?: string };
+  return { ok: !!row.ok, reason: row.reason };
+}
+
+export async function stackRegenerarTags(perguntaId: string): Promise<void> {
+  const { error } = await supabase.rpc('stack_regenerar_tags', { p_pergunta_id: perguntaId });
+  if (error) throw error;
+}
+
+export async function stackStaffDefinirTags(params: {
+  perguntaId: string;
+  tagIds: string[];
+  tagNovos: string[];
+}): Promise<void> {
+  const { error } = await supabase.rpc('stack_staff_definir_tags', {
+    p_pergunta_id: params.perguntaId,
     p_tag_ids: params.tagIds,
     p_tag_novos: params.tagNovos,
   });

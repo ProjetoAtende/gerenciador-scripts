@@ -35,14 +35,17 @@ import {
   stackFechar,
   stackMarcarAceita,
   stackObterPergunta,
+  stackProcessarTagJob,
+  stackRegenerarTags,
   stackReabrir,
+  stackStaffDefinirTags,
   stackVotar,
 } from '../../services/atendeStackService';
 import { StackHtmlViewer } from './StackHtmlViewer';
 import { StackCollapsibleHtmlViewer } from './StackCollapsibleHtmlViewer';
 import { StackRichTextEditor } from './StackRichTextEditor';
 import { StackFiltrosPanel } from './StackFiltrosPanel';
-import { StackTagField } from './StackTagField';
+import { StackTagField } from './StackTagField'; // staff: fixar tags manualmente
 import { StackFeedSkeleton, StackDetalheSkeleton } from './StackFeedSkeleton';
 import { StackHighlightSnippet } from './StackHighlightSnippet';
 import { StackHelpModal } from './StackHelpModal';
@@ -111,9 +114,12 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
   >({ tipo: 'none' });
   const [tituloDraft, setTituloDraft] = useState('');
   const [corpoDraft, setCorpoDraft] = useState('');
-  const [tagsDraft, setTagsDraft] = useState<StackTag[]>([]);
+  const [corpoDraftInicial, setCorpoDraftInicial] = useState('');
   const [respostaDraft, setRespostaDraft] = useState('');
   const [salvando, setSalvando] = useState(false);
+  const [staffTagsOpen, setStaffTagsOpen] = useState(false);
+  const [staffTagsDraft, setStaffTagsDraft] = useState<StackTag[]>([]);
+  const [staffTagsSalvando, setStaffTagsSalvando] = useState(false);
 
   const [reabrirOpen, setReabrirOpen] = useState(false);
   const [reabrirMotivo, setReabrirMotivo] = useState('');
@@ -127,19 +133,30 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
 
   const detalheView = detalhe;
 
-  const loadDetalhe = useCallback(async (id: string) => {
-    setLoadingDetalhe(true);
+  const loadDetalhe = useCallback(async (id: string, opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoadingDetalhe(true);
     try {
       const p = await stackObterPergunta(id, previewStackRole);
       setDetalhe(p);
-      if (!p) toast.error('Pergunta não encontrada.');
+      if (!p && !opts?.silent) toast.error('Pergunta não encontrada.');
+      return p;
     } catch (e) {
       console.error(e);
-      toast.error('Erro ao carregar pergunta.');
+      if (!opts?.silent) toast.error('Erro ao carregar pergunta.');
+      return null;
     } finally {
-      setLoadingDetalhe(false);
+      if (!opts?.silent) setLoadingDetalhe(false);
     }
   }, [previewStackRole]);
+
+  const kickTagJob = useCallback((perguntaId: string) => {
+    void stackProcessarTagJob(perguntaId)
+      .then(() => loadDetalhe(perguntaId, { silent: true }))
+      .then((p) => {
+        if (p?.tags_status === 'ready' || p?.tags_status === 'failed') void refresh();
+      })
+      .catch((e) => console.warn('[Stack] tag job:', e));
+  }, [loadDetalhe, refresh]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -162,6 +179,16 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
     if (!isOpen || !selectedId) return;
     void loadDetalhe(selectedId);
   }, [previewStackRole]); // eslint-disable-line react-hooks/exhaustive-deps -- recarregar preview simulado
+
+  useEffect(() => {
+    if (!isOpen || !detalhe?.id || detalhe.tags_status !== 'pending') return;
+    const t = window.setInterval(() => {
+      void loadDetalhe(detalhe.id, { silent: true }).then((p) => {
+        if (p?.tags_status === 'ready' || p?.tags_status === 'failed') void refresh();
+      });
+    }, 4000);
+    return () => window.clearInterval(t);
+  }, [isOpen, detalhe?.id, detalhe?.tags_status, loadDetalhe, refresh]);
 
   const selectPergunta = (id: string) => {
     if (id !== selectedId) {
@@ -205,7 +232,7 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
 
         const draftPergunta =
           (composer.tipo === 'nova' || composer.tipo === 'editPergunta') &&
-          (tituloDraft.trim().length > 0 || !isHtmlEmpty(corpoDraft) || tagsDraft.length > 0);
+          (tituloDraft.trim().length > 0 || !isHtmlEmpty(corpoDraft));
         const draftResposta = composer.tipo === 'none' && !isHtmlEmpty(respostaDraft);
         const draftEditResposta = composer.tipo === 'editResposta' && !isHtmlEmpty(corpoDraft);
 
@@ -216,7 +243,7 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
           setComposer({ tipo: 'none' });
           setTituloDraft('');
           setCorpoDraft('');
-          setTagsDraft([]);
+          setCorpoDraftInicial('');
           return;
         }
         if (draftResposta) {
@@ -243,7 +270,6 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
     composer,
     tituloDraft,
     corpoDraft,
-    tagsDraft,
     respostaDraft,
     fullEditorOpen,
   ]);
@@ -296,7 +322,7 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
     setComposer({ tipo: 'nova' });
     setTituloDraft('');
     setCorpoDraft('');
-    setTagsDraft([]);
+    setCorpoDraftInicial('');
     setMobilePane('detalhe');
     setSelectedId(null);
     setDetalhe(null);
@@ -307,7 +333,7 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
     setComposer({ tipo: 'editPergunta', id: detalhe.id });
     setTituloDraft(detalhe.titulo);
     setCorpoDraft(detalhe.corpo_html);
-    setTagsDraft(detalhe.tags);
+    setCorpoDraftInicial(detalhe.corpo_html);
   };
 
   const salvarPergunta = async () => {
@@ -317,35 +343,67 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
     }
     setSalvando(true);
     try {
-      const tagIds = tagsDraft.filter((t) => !t.id.startsWith('new:')).map((t) => t.id);
-      const tagNovos = tagsDraft.filter((t) => t.id.startsWith('new:')).map((t) => t.rotulo);
       if (composer.tipo === 'nova') {
         const id = await stackCriarPergunta({
           titulo: tituloDraft.trim(),
           corpoHtml: corpoDraft,
-          tagIds,
-          tagNovos,
           autorEquipeId: equipeId,
         });
         toast.success('Pergunta publicada.');
         setComposer({ tipo: 'none' });
         selectPergunta(id);
+        kickTagJob(id);
       } else if (composer.tipo === 'editPergunta') {
+        const corpoMudou = corpoDraft !== corpoDraftInicial;
         await stackEditarPergunta({
           perguntaId: composer.id,
           titulo: tituloDraft.trim(),
           corpoHtml: corpoDraft,
-          tagIds,
-          tagNovos,
         });
         toast.success('Pergunta atualizada.');
         setComposer({ tipo: 'none' });
         await refreshAfterMutation(composer.id);
+        if (corpoMudou) kickTagJob(composer.id);
       }
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Erro ao salvar.');
     } finally {
       setSalvando(false);
+    }
+  };
+
+  const handleRegenerarTags = async () => {
+    if (!detalhe?.id) return;
+    try {
+      await stackRegenerarTags(detalhe.id);
+      toast.message('Regenerando tags…');
+      setDetalhe({ ...detalhe, tags_status: 'pending' });
+      kickTagJob(detalhe.id);
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao regenerar tags.');
+    }
+  };
+
+  const abrirStaffTags = () => {
+    if (!detalhe) return;
+    setStaffTagsDraft(detalhe.tags);
+    setStaffTagsOpen(true);
+  };
+
+  const salvarStaffTags = async () => {
+    if (!detalhe) return;
+    setStaffTagsSalvando(true);
+    try {
+      const tagIds = staffTagsDraft.filter((t) => !t.id.startsWith('new:')).map((t) => t.id);
+      const tagNovos = staffTagsDraft.filter((t) => t.id.startsWith('new:')).map((t) => t.rotulo);
+      await stackStaffDefinirTags({ perguntaId: detalhe.id, tagIds, tagNovos });
+      toast.success('Tags atualizadas.');
+      setStaffTagsOpen(false);
+      await refreshAfterMutation(detalhe.id);
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao salvar tags.');
+    } finally {
+      setStaffTagsSalvando(false);
     }
   };
 
@@ -477,8 +535,13 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
                           <span>{item.resposta_count} resp.</span>
                           <span>{formatStackTimeAgo(item.ultima_atividade_em)}</span>
                         </div>
-                        {item.tags.length > 0 && (
+                        {(item.tags.length > 0 || item.tags_status === 'pending') && (
                           <div className="flex flex-wrap gap-1 mt-1.5">
+                            {item.tags_status === 'pending' && item.tags.length === 0 && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 animate-pulse">
+                                Tags…
+                              </span>
+                            )}
                             {item.tags.slice(0, 2).map((t) => (
                               <span
                                 key={t.id}
@@ -535,7 +598,9 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
         />
         <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 text-right">{tituloDraft.length}/200</p>
       </div>
-      <StackTagField tags={tagsDraft} onChange={setTagsDraft} placeholder="Tags (Enter para adicionar)" />
+      <p className="text-xs text-slate-600 dark:text-slate-400">
+        As tags são geradas automaticamente pela IA após publicar (2–3 temas). Se o corpo for editado, elas são recalculadas.
+      </p>
       <div className="flex-1 min-h-[200px] border rounded-lg dark:border-slate-600 overflow-hidden">
         <StackRichTextEditor value={corpoDraft} onChange={setCorpoDraft} placeholder="Descreva sua dúvida…" />
       </div>
@@ -579,12 +644,56 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
             >
               {stackStatusLabel({ status: detalheView.status, tem_solucao: !!detalheView.resposta_aceita_id })}
             </span>
+            {detalheView.tags_status === 'pending' && (
+              <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full text-slate-500 animate-pulse">
+                Classificando tags…
+              </span>
+            )}
             {detalheView.tags.map((t) => (
               <span key={t.id} className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
                 {t.rotulo}
               </span>
             ))}
+            {detalheView.tags_status === 'failed' && detalheView.tags.length === 0 && (
+              <span className="text-amber-700 dark:text-amber-400">Tags indisponíveis</span>
+            )}
           </div>
+          {detalheView.pode_gerenciar_tags && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              <button
+                type="button"
+                className="text-xs px-2 py-1 rounded border dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800"
+                onClick={() => void handleRegenerarTags()}
+              >
+                Regenerar tags (IA)
+              </button>
+              <button
+                type="button"
+                className="text-xs px-2 py-1 rounded border dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800"
+                onClick={abrirStaffTags}
+              >
+                Fixar tags manualmente
+              </button>
+            </div>
+          )}
+          {staffTagsOpen && detalheView.pode_gerenciar_tags && (
+            <div className="mt-3 p-3 rounded-lg border dark:border-slate-600 bg-slate-50/80 dark:bg-slate-900/50 w-full">
+              <StackTagField tags={staffTagsDraft} onChange={setStaffTagsDraft} placeholder="Tags staff…" />
+              <div className="flex gap-2 mt-2 justify-end">
+                <button type="button" className="text-xs px-3 py-1.5 rounded border dark:border-slate-600" onClick={() => setStaffTagsOpen(false)}>
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={staffTagsSalvando}
+                  className="text-xs px-3 py-1.5 rounded bg-indigo-600 text-white disabled:opacity-50"
+                  onClick={() => void salvarStaffTags()}
+                >
+                  {staffTagsSalvando ? 'Salvando…' : 'Salvar tags'}
+                </button>
+              </div>
+            </div>
+          )}
           <p className="text-xs text-slate-600 dark:text-slate-400 mt-1.5">
             {stackPublicadoPorLine(detalheView.autor, detalheView.created_at)}
             {isStaff && isStackAutorStaff(detalheView.autor) && (
@@ -705,10 +814,10 @@ export function AtendeStackModal({ isOpen, onClose, initialPerguntaId }: Props) 
             className="rounded-xl border-2 border-indigo-400 dark:border-indigo-600 bg-indigo-50/90 dark:bg-indigo-950/35 shadow-md px-4 py-3"
             aria-label="Escrever resposta"
           >
-            <label htmlFor="stack-resposta-curta" className="text-sm font-semibold text-indigo-950 dark:text-indigo-100">
+            <label htmlFor="stack-resposta-curta" className="text-sm font-semibold text-indigo-950 dark:text-indigo-50">
               Sua resposta
             </label>
-            <p className="text-xs text-indigo-800/80 dark:text-indigo-200/80 mt-0.5 mb-2">
+            <p className="text-xs text-indigo-800/90 dark:text-indigo-100/90 mt-0.5 mb-2">
               Respostas curtas aqui; formatação avançada no editor completo.
             </p>
             <StackMinimalReplyEditor

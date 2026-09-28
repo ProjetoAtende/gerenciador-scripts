@@ -11,6 +11,8 @@ Documento executável por fases: regras de negócio, backend (Supabase), fronten
 
 **Operação, seeds e QA:** [ATENDE_STACK_OPERACAO.md](./ATENDE_STACK_OPERACAO.md) (inclui **Atende Stack v2**)
 
+**Tags com IA (produção):** [ATENDE_STACK_TAGS_IA_PLANO.md](./ATENDE_STACK_TAGS_IA_PLANO.md) · operação/pg_cron: [ATENDE_STACK_OPERACAO.md](./ATENDE_STACK_OPERACAO.md#tags-ia--produção-projeto-linkado) — classificação assíncrona DeepSeek, filtro chips (AND), W3 + pg_cron.
+
 ---
 
 ## 1. Objetivo e visão

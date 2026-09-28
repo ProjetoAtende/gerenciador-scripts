@@ -5,6 +5,7 @@
  * Uso (raiz do repo, .env com Supabase + credenciais):
  *   node scripts/atende-stack-seed-demo.mjs
  *   node scripts/atende-stack-seed-demo.mjs --clean
+ *   node scripts/atende-stack-seed-demo.mjs --clean-tags
  *   node scripts/atende-stack-seed-demo.mjs --clean --seed
  *   node scripts/atende-stack-seed-demo.mjs --list
  *
@@ -12,6 +13,7 @@
  *   VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
  *   SMOKE_TEST_EMAIL, SMOKE_TEST_PASSWORD — conta principal (cria perguntas; staff para --clean)
  *   SMOKE_TEST_USER_EMAIL, SMOKE_TEST_USER_PASSWORD — opcional; segunda conta para algumas respostas
+ *   VITE_SUPABASE_SERVICE_ROLE_KEY — necessário para --clean-tags (DELETE em stack_tags)
  */
 import fs from 'fs';
 import path from 'path';
@@ -41,6 +43,7 @@ loadEnv();
 
 const url = process.env.VITE_SUPABASE_URL;
 const anon = process.env.VITE_SUPABASE_ANON_KEY;
+const serviceRole = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 const email = process.env.SMOKE_TEST_EMAIL;
 const password = process.env.SMOKE_TEST_PASSWORD;
 const userEmail = process.env.SMOKE_TEST_USER_EMAIL;
@@ -48,8 +51,22 @@ const userPassword = process.env.SMOKE_TEST_USER_PASSWORD;
 
 const args = process.argv.slice(2);
 const CLEAN = args.includes('--clean');
+const CLEAN_TAGS = args.includes('--clean-tags');
 const LIST = args.includes('--list');
 const RESeed = args.includes('--seed');
+
+/** Tags de seed/QA removíveis (nunca incluir tags de produção). */
+const TEST_TAG_SLUGS = [
+  'teste-demo',
+  'demo-stack',
+  'teste-canonico',
+  'teste-stack-qa',
+  'teste-stack-qa-2',
+  'teste-stack-qa-3',
+  'teste-stack-qa-4',
+  'teste-stack-qa-5',
+  'teste-stack-qa-6',
+];
 
 /** Prefixo visível — use na busca ou filtro para achar tudo. */
 const PREFIX = '[TESTE DEMO]';
@@ -67,6 +84,35 @@ if (!email || !password) {
 
 function client() {
   return createClient(url, anon);
+}
+
+function adminClient() {
+  if (!serviceRole) {
+    throw new Error('Defina VITE_SUPABASE_SERVICE_ROLE_KEY no .env para --clean-tags');
+  }
+  return createClient(url, serviceRole);
+}
+
+async function cleanTags() {
+  const admin = adminClient();
+  const { data: tags, error: selErr } = await admin
+    .from('stack_tags')
+    .select('id, slug, rotulo')
+    .in('slug', TEST_TAG_SLUGS);
+  if (selErr) throw selErr;
+  const rows = tags ?? [];
+  if (rows.length === 0) {
+    console.log('Nenhuma tag de teste encontrada.');
+    return;
+  }
+  console.log(`Removendo ${rows.length} tag(s) de teste…`);
+  for (const t of rows) {
+    const { error: ptErr } = await admin.from('stack_pergunta_tags').delete().eq('tag_id', t.id);
+    if (ptErr) console.warn('  vínculos', t.slug, ptErr.message);
+    const { error: delErr } = await admin.from('stack_tags').delete().eq('id', t.id);
+    if (delErr) console.warn('  tag', t.slug, delErr.message);
+    else console.log('  ok', t.slug, `(${t.rotulo})`);
+  }
 }
 
 async function signIn(supabase, mail, pass) {
@@ -207,11 +253,21 @@ async function criarPergunta(supabase, scenario) {
     p_titulo: scenario.titulo,
     p_corpo_html: scenario.corpo,
     p_tag_ids: [],
-    p_tag_novos: scenario.tags ?? [TAG],
+    p_tag_novos: [],
     p_autor_equipe_id: null,
   });
   if (error) throw new Error(`criar_pergunta: ${scenario.titulo}: ${error.message}`);
-  return data;
+  const id = data;
+  const tags = scenario.tags ?? [TAG];
+  if (tags.length > 0) {
+    const { error: tagErr } = await supabase.rpc('stack_staff_definir_tags', {
+      p_pergunta_id: id,
+      p_tag_ids: [],
+      p_tag_novos: tags,
+    });
+    if (tagErr) throw new Error(`staff_definir_tags: ${scenario.titulo}: ${tagErr.message}`);
+  }
+  return id;
 }
 
 async function criarResposta(supabase, perguntaId, html) {
@@ -267,6 +323,11 @@ if (LIST) {
   const rows = await listTestIds(supabaseMain);
   console.log(`${rows.length} item(ns) ${PREFIX}:`);
   for (const r of rows) console.log(' ', r.id, r.titulo);
+  process.exit(0);
+}
+
+if (CLEAN_TAGS) {
+  await cleanTags();
   process.exit(0);
 }
 

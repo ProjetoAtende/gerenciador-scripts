@@ -380,6 +380,9 @@ verify_jwt = false
 [functions.admin-users]
 verify_jwt = false
 
+[functions.stack-process-tag-jobs]
+verify_jwt = false
+
 [analytics]
 enabled = false
 port = 54327

@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
-import type { StackFiltros, StackTag } from '../../types/atendeStack';
+import type { StackFiltros } from '../../types/atendeStack';
 import { defaultStackFiltros } from '../../types/atendeStack';
-import { stackListarTags } from '../../services/atendeStackService';
+import { StackTagChipFilter } from './StackTagChipFilter';
 
 interface Props {
   filtros: StackFiltros;
@@ -10,48 +9,11 @@ interface Props {
 }
 
 export function StackFiltrosPanel({ filtros, onChange, equipeFiltroDisabled }: Props) {
-  const [tagQuery, setTagQuery] = useState('');
-  const [tagSugestoes, setTagSugestoes] = useState<StackTag[]>([]);
-  const [tagLabels, setTagLabels] = useState<StackTag[]>([]);
-
-  useEffect(() => {
-    if (!tagQuery.trim()) {
-      setTagSugestoes([]);
-      return;
-    }
-    const t = setTimeout(() => {
-      void stackListarTags(tagQuery, 10).then(setTagSugestoes).catch(() => setTagSugestoes([]));
-    }, 200);
-    return () => clearTimeout(t);
-  }, [tagQuery]);
-
-  useEffect(() => {
-    setTagLabels((prev) => {
-      const map = new Map(prev.map((t) => [t.id, t]));
-      filtros.tag_ids.forEach((id) => {
-        if (!map.has(id)) map.set(id, { id, slug: id, rotulo: id.slice(0, 8) });
-      });
-      return filtros.tag_ids.map((id) => map.get(id)!);
-    });
-  }, [filtros.tag_ids]);
-
   const toggleMinhas = (key: 'fiz' | 'respondi' | 'favoritas') => {
     onChange({
       ...filtros,
       minhas: { ...filtros.minhas, [key]: !filtros.minhas[key] },
     });
-  };
-
-  const addFilterTag = (tag: StackTag) => {
-    if (filtros.tag_ids.includes(tag.id)) return;
-    setTagLabels((l) => [...l.filter((t) => t.id !== tag.id), tag]);
-    onChange({ ...filtros, tag_ids: [...filtros.tag_ids, tag.id] });
-    setTagQuery('');
-    setTagSugestoes([]);
-  };
-
-  const removeFilterTag = (id: string) => {
-    onChange({ ...filtros, tag_ids: filtros.tag_ids.filter((x) => x !== id) });
   };
 
   return (
@@ -138,43 +100,10 @@ export function StackFiltrosPanel({ filtros, onChange, equipeFiltroDisabled }: P
 
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-300 mb-2">Tags</p>
-        <div className="flex flex-wrap gap-1 mb-2">
-          {tagLabels.map((t) => (
-            <span
-              key={t.id}
-              className="text-xs bg-violet-100 dark:bg-violet-900/40 text-violet-900 dark:text-violet-200 px-2 py-0.5 rounded-full inline-flex items-center"
-            >
-              {t.rotulo}
-              <button type="button" className="ml-1" onClick={() => removeFilterTag(t.id)} aria-label="Remover">
-                ×
-              </button>
-            </span>
-          ))}
-        </div>
-        <input
-          value={tagQuery}
-          onChange={(e) => setTagQuery(e.target.value)}
-          placeholder="Filtrar por tag…"
-          aria-label="Filtrar por tag"
-          className="w-full rounded-lg border border-slate-200 dark:border-slate-600 px-2 py-1.5 text-sm dark:bg-slate-800"
+        <StackTagChipFilter
+          selectedIds={filtros.tag_ids}
+          onChangeSelectedIds={(tag_ids) => onChange({ ...filtros, tag_ids })}
         />
-        {tagSugestoes.length > 0 && (
-          <ul className="mt-1 border rounded-lg dark:border-slate-600 overflow-hidden max-h-32 overflow-y-auto">
-            {tagSugestoes
-              .filter((t) => !filtros.tag_ids.includes(t.id))
-              .map((t) => (
-                <li key={t.id}>
-                  <button
-                    type="button"
-                    className="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
-                    onClick={() => addFilterTag(t)}
-                  >
-                    {t.rotulo}
-                  </button>
-                </li>
-              ))}
-          </ul>
-        )}
       </div>
 
       <button

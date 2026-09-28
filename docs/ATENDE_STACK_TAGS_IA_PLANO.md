@@ -176,6 +176,7 @@ RETURNS void
 RETURNS jsonb
 ```
 
+- Apenas tags **em uso** (`stack_pergunta_tags`, `uso_count > 0`); exclui `sem-classificacao` e resquícios de perguntas apagadas (migration `20260928150000`).
 - Top por `uso_count` + relevância trigram (`idx_stack_tags_rotulo_trgm`) a partir do título/plain.
 - Formato: `[{ id, rotulo, slug, uso_count }, ...]`.
 
@@ -200,9 +201,25 @@ RETURNS jsonb
 RETURNS jsonb  -- [{ id, rotulo, slug, uso_count }, ...] ORDER BY uso_count DESC
 ```
 
+- Só tags com **`uso_count > 0`** (pergunta ainda vinculada). Tags órfãs não aparecem no painel de filtros.
+- Front (`StackTagChipFilter`) também descarta `uso_count === 0` por defesa em profundidade.
+
 Substitui autocomplete por texto no painel de filtros.
 
-### 6.4 Filtro feed/busca — AND
+### 6.4 Tags órfãs (catálogo)
+
+Excluir uma pergunta remove vínculos em `stack_pergunta_tags` (`ON DELETE CASCADE`), mas **não** apaga a linha em `stack_tags`. Sem limpeza, a tag reaparecia na nuvem com contagem 0 e ainda entrava no catálogo enviado à IA.
+
+**`stack_purge_tags_orfas()`** (interna, sem GRANT para `authenticated`):
+
+- `DELETE` em `stack_tags` sem linha em `stack_pergunta_tags`, **exceto** `slug = 'sem-classificacao'`.
+- Retorna quantidade removida.
+- Disparada automaticamente após **`stack_deletar`** e **`stack_aplicar_tags_pergunta`** (create/edit/reclassificação IA, staff fixar tags, fallback).
+- Migration `20260928150000` executa um purge único na aplicação.
+
+**Operação manual** (wipe SQL direto, restore parcial): `npm run stack:delete-unused-tags` — ver [ATENDE_STACK_OPERACAO.md](./ATENDE_STACK_OPERACAO.md).
+
+### 6.5 Filtro feed/busca — AND
 
 Alterar `stack_feed_where` (e busca agrupada):
 
@@ -245,7 +262,8 @@ Parser tolerante a markdown fences (mesmo padrão de `useAutoScriptClassificatio
 ### 7.4 Segurança e custo
 
 - Enviar **plain** (`stack_html_to_plain`), não HTML.
-- Rate limit: jobs/usuário/hora via contagem em `stack_tag_jobs` + `autor_id` da pergunta.
+- Rate limit: **30** jobs/usuário/hora (última hora) via `stack_enqueue_tag_job` + `autor_id` da pergunta (migration `20260928140000`).
+- Purge de tags órfãs (§6.4) reduz ruído no catálogo e evita chips “fantasma” no filtro.
 - Log em `catalogo_snapshot` / `resposta_ia` para auditoria staff.
 
 ---
@@ -439,6 +457,6 @@ Opcional: o front chama (2) logo após (1) (**W3**) para não esperar cron.
 - [x] [ATENDE_STACK_OPERACAO.md](./ATENDE_STACK_OPERACAO.md) — tags IA, pg_cron, smoke.
 - [x] Link no [ATENDE_STACK_PLANO.md](./ATENDE_STACK_PLANO.md).
 - [x] `StackHelpModal` — tags automáticas, filtro AND.
-- [x] Supabase remoto: migrations `20260928120000`, `20260928130000`.
+- [x] Supabase remoto: migrations `20260928120000`, `20260928130000`, `20260928140000`, `20260928150000`.
 - [x] pg_cron: job `stack_processar_tag_jobs` verificado (ativo, batch 2, */2 min).
 - [ ] `STACK_TAG_CRON_SECRET` — **omitir** salvo uso da Edge Function por HTTP.

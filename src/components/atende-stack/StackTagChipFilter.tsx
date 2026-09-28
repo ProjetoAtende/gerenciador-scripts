@@ -47,9 +47,10 @@ export function StackTagChipFilter({ selectedIds, onChangeSelectedIds }: Props) 
   );
 
   const visibleNuvem = useMemo(() => {
+    const emUso = nuvem.filter((t) => t.uso_count > 0);
     const q = busca.trim().toLowerCase();
-    if (!q) return nuvem;
-    return nuvem.filter(
+    if (!q) return emUso;
+    return emUso.filter(
       (t) => t.rotulo.toLowerCase().includes(q) || t.slug.toLowerCase().includes(q),
     );
   }, [nuvem, busca]);

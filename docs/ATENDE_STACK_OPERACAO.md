@@ -84,6 +84,7 @@ Aplicar na ordem com `npm run sb:push` ou pipeline habitual:
 | `20260928120000_stack_tags_ia.sql` | Tags IA assíncronas (`stack_tag_jobs`), filtro AND, nuvem, fallback «Sem classificação», staff |
 | `20260928130000_stack_tag_jobs_cron.sql` | Worker em lote (`stack_processar_tag_jobs_batch`), pg_cron */2 min |
 | `20260928140000_stack_tags_ia_security.sql` | REVOKE helpers (TIA-B1), caller batch/cron (TIA-B2), fallback autocurativo (TIA-B3), rate limit 30/h (TIA-B4), rótulo IA ≤40 chars |
+| `20260928150000_stack_tags_orfas.sql` | Purge tags sem vínculo (`stack_purge_tags_orfas`), nuvem/catálogo IA só tags em uso, purge após deletar pergunta ou reclassificar |
 
 ### Tags IA — produção (projeto linkado)
 
@@ -137,6 +138,17 @@ Só use se quiser cron **fora** do pg_cron (GitHub Action, etc.):
 3. Deploy: `npm run sb:deploy-stack-tag-worker`.
 
 Com pg_cron ativo, este caminho é **redundante**.
+
+### Tags órfãs (catálogo e filtro)
+
+| Comportamento | Detalhe |
+|---------------|---------|
+| **Nuvem de filtros** | `stack_listar_tags_nuvem` — só tags com pelo menos uma pergunta vinculada (`uso_count > 0`). |
+| **Catálogo IA** | `stack_montar_catalogo_tags` — mesma regra; órfãs não são “preferenciais” para novas classificações. |
+| **Limpeza automática** | `stack_purge_tags_orfas()` após `stack_deletar` e após `stack_aplicar_tags_pergunta` (reclassificação). Preserva sempre `sem-classificacao`. |
+| **Limpeza manual** | `npm run stack:delete-unused-tags` (service role; `--dry-run` opcional). |
+
+Migration: `20260928150000_stack_tags_orfas.sql`. Plano funcional: [ATENDE_STACK_TAGS_IA_PLANO.md §6.4](./ATENDE_STACK_TAGS_IA_PLANO.md).
 
 ---
 
@@ -194,6 +206,16 @@ npm run stack:seed-demo:clean-tags  # remove tags teste-demo, demo-stack e QA (s
 
 Script: `scripts/atende-stack-seed-demo.mjs`
 
+### Manutenção do catálogo de tags
+
+```bash
+npm run stack:delete-unused-tags          # remove tags sem pergunta (exc. Sem classificação)
+node scripts/atende-stack-delete-unused-tags.mjs --dry-run
+npm run stack:wipe-all                    # apaga perguntas/respostas; preserva tag sem-classificacao
+```
+
+Scripts: `scripts/atende-stack-delete-unused-tags.mjs`, `scripts/atende-stack-wipe-all.mjs`.
+
 | Marca | Valor |
 |-------|--------|
 | Prefixo do título | **`[TESTE DEMO]`** |
@@ -248,4 +270,5 @@ Estado após rodada 7 (reteste GrokBot): **30 bugs corrigidos**, parciais **BUG-
 
 1. Preferir `npm run stack:seed-demo:clean` e `npm run stack:seed-pag:clean` (conta staff).
 2. Busca no app: `[TESTE DEMO]`, `[TESTE PAG]`, ou tags `teste-demo` / `teste-canonico` (QA antigo).
-3. Não usar DELETE direto no banco salvo em manutenção com RLS desligado.
+3. Tags órfãs após wipe parcial ou DELETE manual: `npm run stack:delete-unused-tags` (ou aguardar purge automático na próxima exclusão/reclassificação, migration 28150000).
+4. Não usar DELETE direto no banco salvo em manutenção com RLS desligado.

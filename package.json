@@ -5,6 +5,7 @@
   "type": "module",
   "homepage": "https://github.com/ProjetoAtende/gerenciador-scripts#readme",
   "scripts": {
+    "logo:eproc": "node scripts/make-eproc-logo-transparent.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:android": "cross-env CAPACITOR=true tsc -b && cross-env CAPACITOR=true vite build",

@@ -45,9 +45,11 @@ Detalhes da migração, cronologia de banco e decisões: [`docs/MEMORIA_MIGRACAO
 
 ### Home — layout e flags de UI
 
+Detalhes (header, eproc dark, assets): [`docs/HOME_UI_CHROME.md`](docs/HOME_UI_CHROME.md).
+
 | Elemento | Arquivo / asset | Observação |
 |----------|-----------------|------------|
-| Cabeçalho institucional | `src/components/HomeInstitutionalHeader.tsx` | Layout alinhado ao projeto NAPE; imagens em `public/tjsp-logotipo-oficial.png`, `public/eproc-logo.png`, `public/tjsp-atende-logo.png` |
+| Cabeçalho institucional | `src/components/HomeInstitutionalHeader.tsx` | Layout NAPE; `public/tjsp-logotipo-oficial.png`, `public/eproc-logo.png`, `public/eproc-logo-dark.png` (dark), `public/tjsp-atende-logo.png` — `npm run logo:eproc` |
 | Simulação “Visualização” (admin) | `src/components/HomeVisualizacaoSimulada.tsx` | **Desativada** — flag `HOME_VISUALIZACAO_SIMULACAO_ENABLED` em `SimulationContext.tsx` |
 | Badge de versão / changelog | `src/components/VersionBadge.tsx` | **Oculto** — flag `VERSION_BADGE_ENABLED` |
 | Rodapé | `src/components/FooterShadowFlow.tsx` | Apenas “ShadowFlow Technologies 2026”, altura mínima |

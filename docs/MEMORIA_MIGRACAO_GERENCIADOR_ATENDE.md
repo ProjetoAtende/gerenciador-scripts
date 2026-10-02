@@ -1,6 +1,6 @@
 # Memória de execução — Gerenciador Atende
 
-Documento de continuidade da migração e recorte do **Gerenciador de Chamados** para o **Gerenciador Atende**. Atualizado em setembro/2026 (última revisão operacional: identidade visual da Home, Boss Only, `admin-users`, retirada de e-mail no produto).
+Documento de continuidade da migração e recorte do **Gerenciador de Chamados** para o **Gerenciador Atende**. Atualizado em outubro/2026 (última revisão operacional: logo eproc no dark mode da Home, identidade visual, Boss Only, `admin-users`, retirada de e-mail no produto).
 
 ---
 
@@ -134,9 +134,12 @@ SELECT vault.create_secret(
 - Lazy load apenas dos modais do escopo Atende.
 - Pasquale abre `MelhorarTextoModal`; Gerador acoplado aos Scripts.
 
-#### Identidade visual e chrome (set/2026)
+#### Identidade visual e chrome (set/2026 — eproc dark out/2026)
 
-- **Header:** `HomeInstitutionalHeader.tsx` — brasão TJSP, “Tribunal de Justiça / Estado de São Paulo”, slogan “A Justiça próxima do cidadão”, logo **eproc** e logo **TJSP Atende** (assets em `public/`, espelhando o header do repositório NAPE).
+Guia operacional: [`docs/HOME_UI_CHROME.md`](HOME_UI_CHROME.md).
+
+- **Header:** `HomeInstitutionalHeader.tsx` — brasão TJSP, “Tribunal de Justiça / Estado de São Paulo”, slogan “A Justiça próxima do cidadão”, logo **eproc** e logo **TJSP Atende** (assets em `public/`, layout alinhado ao NAPE).
+- **eproc no dark mode (out/2026):** dois PNG com fundo transparente — `eproc-logo.png` (tema claro, `dark:hidden`) e `eproc-logo-dark.png` (tema escuro, `hidden dark:block`), pois o Tailwind usa `darkMode: 'class'`. A variante escura **não** inverte o ícone azul; o script `scripts/make-eproc-logo-transparent.mjs` (`npm run logo:eproc`) só clareia o texto “eproc”. Evitar fundo sólido ou filtros CSS no logo (tom diferente do header).
 - **Simulação de visualização (legado admin):** código preservado em `HomeVisualizacaoSimulada.tsx`, **não montado** na Home; efeito desligado globalmente com `HOME_VISUALIZACAO_SIMULACAO_ENABLED = false` em `SimulationContext.tsx` (sem alterar permissões reais por simulação).
 - **Version badge:** `VERSION_BADGE_ENABLED = false` em `VersionBadge.tsx` — changelog em `Version.ts` permanece para reativação futura.
 - **Footer:** `FooterShadowFlow.tsx` — somente “ShadowFlow Technologies 2026”, sem chips de stack nem título “Gerenciador de Chamados”.

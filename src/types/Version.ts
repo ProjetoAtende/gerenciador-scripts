@@ -67,6 +67,13 @@ export const CHANGELOG: Version[] = [
         type: 'improvement',
         area: 'Home',
       },
+      {
+        title: 'Logo eproc no dark mode',
+        description:
+          'PNG transparente no claro e eproc-logo-dark.png no escuro (azuis preservados, texto claro), gerados por npm run logo:eproc; documentado em docs/HOME_UI_CHROME.md.',
+        type: 'improvement',
+        area: 'Home',
+      },
     ],
   },
   {

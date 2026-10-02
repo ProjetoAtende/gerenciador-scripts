@@ -32,7 +32,13 @@ export function HomeInstitutionalHeader() {
             <img
               src={`${import.meta.env.BASE_URL}eproc-logo.png`}
               alt="Logotipo do eproc"
-              className="h-[56px] w-auto object-contain lg:h-[68px]"
+              className="h-[56px] w-auto shrink-0 object-contain lg:h-[68px] dark:hidden"
+            />
+            <img
+              src={`${import.meta.env.BASE_URL}eproc-logo-dark.png`}
+              alt=""
+              aria-hidden
+              className="hidden h-[56px] w-auto shrink-0 object-contain lg:h-[68px] dark:block"
             />
             <img
               src={`${import.meta.env.BASE_URL}tjsp-atende-logo.png`}

@@ -29,7 +29,8 @@ src/
 
 ### Supabase Client
 - Use `supabaseClient.ts` para operações com RLS (usuário autenticado)
-- Use `supabaseServiceRole.ts` para operações admin em scripts
+- **Nunca** use service role no browser (`src/`). Admin via Edge Function `admin-users`
+- Scripts Node usam `SUPABASE_SERVICE_ROLE_KEY` (sem prefixo `VITE_`) — ver `scripts/lib/serviceRoleEnv.mjs`
 - Scripts leem `.env` manualmente com `loadEnv()` pattern
 
 ### Sistema Oráculo (Busca Inteligente)
@@ -55,12 +56,14 @@ const { data } = await supabase.rpc('chamar_deepseek', {
 ```
 
 ### Variáveis de Ambiente
-Prefixo `VITE_` obrigatório para variáveis acessíveis no frontend:
+Prefixo `VITE_` **somente** para variáveis intencionalmente expostas no bundle:
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
-- `VITE_SUPABASE_SERVICE_ROLE_KEY` (apenas para scripts locais)
 - `VITE_OPENAI_API_KEY`
 - `VITE_DEEPSEEK_API_KEY`
+
+Secrets de servidor / scripts locais (**sem** `VITE_`):
+- `SUPABASE_SERVICE_ROLE_KEY` — scripts em `scripts/` e Edge Functions; nunca referenciar em `src/`
 
 ## Comandos de Desenvolvimento
 

@@ -1,6 +1,6 @@
 /**
  * Remove TODAS as perguntas/respostas do Atende Stack e tags do catálogo (preserva «Sem classificação»).
- * Requer VITE_SUPABASE_URL + VITE_SUPABASE_SERVICE_ROLE_KEY no .env
+ * Requer VITE_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY no .env
  *
  *   node scripts/atende-stack-wipe-all.mjs
  *   node scripts/atende-stack-wipe-all.mjs --dry-run
@@ -9,6 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
+import { readSupabaseServiceRoleKey, SERVICE_ROLE_ENV_HINT } from './lib/serviceRoleEnv.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const envPath = path.join(root, '.env');
@@ -32,11 +33,11 @@ function loadEnv() {
 loadEnv();
 
 const url = process.env.VITE_SUPABASE_URL;
-const serviceRole = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const serviceRole = readSupabaseServiceRoleKey();
 const dryRun = process.argv.includes('--dry-run');
 
 if (!url || !serviceRole) {
-  console.error('Faltam VITE_SUPABASE_URL ou VITE_SUPABASE_SERVICE_ROLE_KEY no .env');
+  console.error(`Faltam VITE_SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY no .env. ${SERVICE_ROLE_ENV_HINT}`);
   process.exit(1);
 }
 

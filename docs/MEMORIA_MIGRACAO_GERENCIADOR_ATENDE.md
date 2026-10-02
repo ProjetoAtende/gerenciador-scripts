@@ -175,7 +175,8 @@ Guia operacional: [`docs/HOME_UI_CHROME.md`](HOME_UI_CHROME.md).
 
 ### Build
 
-- `npm run build` validado após ajustes TS.
+- `npm run build` = `tsc -b` + `vite build` + `node scripts/check-client-bundle-secrets.mjs` (falha se `src/` ou `dist/assets` referenciarem service role).
+- **Service role:** `SUPABASE_SERVICE_ROLE_KEY` só no `.env` local e em scripts Node (`scripts/lib/serviceRoleEnv.mjs`); **não** no GitHub Pages build nem com prefixo `VITE_`.
 
 ---
 
@@ -198,7 +199,7 @@ Origem no código: `src/pages/Home.tsx`, hooks de scripts, serviços de exclusã
 - **URL pública (Pages):** `https://projetoatende.github.io/gerenciador-scripts/#/home` — links em e-mails usam [`src/config/appUrls.ts`](../src/config/appUrls.ts) (`VITE_APP_PUBLIC_ORIGIN` opcional no build).
 - **Remoto Git (referência local):** variável `GITHUB` no `.env` (não versionado) → `https://github.com/ProjetoAtende/gerenciador-scripts`.
 - **Push Git:** pacote inicial grande (**HTTP 408**); depois **GH013** por tokens em `archive/legacy/`. Histórico reescrito sem `archive/`; **`archive/`**, dumps e corpo de `migrations_legacy/` no `.gitignore`. Push para `main` concluído com sucesso após limpeza; **Pages** via workflow no push em `main`.
-- **Variáveis:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (e opcionais no workflow); `.env` local não versionado. **Não** colocar token da CLI (`supabase login`) nem PAT pessoal no `.env` versionado — só no ambiente de quem opera.
+- **Variáveis:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (e opcionais no workflow de **build**); `.env` local não versionado. **`SUPABASE_SERVICE_ROLE_KEY`** apenas para scripts locais — removida do `deploy.yml` (out/2026). **Não** colocar token da CLI (`supabase login`) nem PAT pessoal no `.env` versionado — só no ambiente de quem opera.
 - **Edge Function em uso:** `admin-users` (gestão de usuários via `adminService.ts`). **Implantada no remoto** `lhofkimrmzyjazfpqesd` (set/2026); redeploy com `npm run sb:deploy-admin-users` após mudanças na função. Código: `supabase/functions/admin-users/index.ts`.
 - **Postgres remoto:** major version **17** — alinhar `supabase/config.toml` ao linkar (`major_version = 17`).
 - **Acesso Supabase:** operadores convidados como **Developer** na org podem `supabase login`, `link` e deploy de functions; **Owner/Admin** convida em Dashboard → Organization → Team. Token da CLI **não** vai para `.env` nem para este documento.

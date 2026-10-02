@@ -67,6 +67,8 @@ VITE_SUPABASE_URL=https://<project-ref>.supabase.co
 VITE_SUPABASE_ANON_KEY=<anon-key>
 ```
 
+**Service role (scripts locais apenas):** use `SUPABASE_SERVICE_ROLE_KEY` no `.env` — **nunca** prefixo `VITE_` (o Vite embute `VITE_*` no bundle do browser). Modelo em `.env.example`. Operações admin no app usam a Edge Function `admin-users`.
+
 Para **Pasquale**, a chave fica no Supabase Vault como `DEEPSEEK_API_KEY` (RPC `chamar_deepseek`; ver `supabase/migrations/20260927230000_chamar_deepseek_db6.sql`). Smoke opcional: `node scripts/migracao/run-mgmt-sql.mjs --file=scripts/migracao/smoke-deepseek.sql`.
 
 ---
@@ -76,14 +78,15 @@ Para **Pasquale**, a chave fica no Supabase Vault como `DEEPSEEK_API_KEY` (RPC `
 ```bash
 npm install
 npm run dev          # desenvolvimento local
-npm run build        # build de produção (tsc + vite)
+npm run build        # tsc + vite + verificação anti service-role no bundle
+npm run check:client-secrets   # só a checagem (após build ou em src/)
 npm run test:run     # testes Vitest
 npm run sb:push      # aplica migrations em supabase/migrations/ no projeto linkado
 ```
 
 Deploy: push na branch `main` → GitHub Pages em **https://projetoatende.github.io/gerenciador-scripts/** (repositório [`ProjetoAtende/gerenciador-scripts`](https://github.com/ProjetoAtende/gerenciador-scripts), alinhado ao `base` em `vite.config.ts`).
 
-Variáveis de build no repositório: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, etc. Opcional: `VITE_APP_PUBLIC_ORIGIN` para sobrescrever a URL pública em e-mails.
+Secrets de build no GitHub (Pages): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, chaves de IA com prefixo `VITE_` se usadas no client, e opcional `VITE_APP_PUBLIC_ORIGIN`. **Não** incluir service role no workflow de build — ver `scripts/check-client-bundle-secrets.mjs`.
 
 ---
 

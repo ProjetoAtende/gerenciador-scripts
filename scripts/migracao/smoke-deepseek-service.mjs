@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
+import { readSupabaseServiceRoleKey } from '../lib/serviceRoleEnv.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const envPath = path.join(root, '.env');
@@ -20,7 +21,7 @@ for (const line of fs.readFileSync(envPath, 'utf8').split(/\r?\n/)) {
 }
 
 const url = process.env.VITE_SUPABASE_URL;
-const key = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const key = readSupabaseServiceRoleKey();
 if (!url || !key) {
   console.log('SKIP: sem service role no .env');
   process.exit(0);

@@ -41,7 +41,6 @@ jobs:
         # Variáveis de ambiente para o build
         VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
         VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-        VITE_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.VITE_SUPABASE_SERVICE_ROLE_KEY }}
         VITE_DEEPSEEK_API_KEY: ${{ secrets.VITE_DEEPSEEK_API_KEY }}
         VITE_OPENAI_API_KEY: ${{ secrets.VITE_OPENAI_API_KEY }}
         VITE_APP_PUBLIC_ORIGIN: ${{ secrets.VITE_APP_PUBLIC_ORIGIN }}

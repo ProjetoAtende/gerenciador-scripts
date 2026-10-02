@@ -4,14 +4,15 @@
  *
  * Env:
  *   VITE_SUPABASE_URL ou SUPABASE_URL
- *   SUPABASE_SERVICE_ROLE_KEY
+ *   SUPABASE_SERVICE_ROLE_KEY (fallback legado: VITE_SUPABASE_SERVICE_ROLE_KEY)
  *   STACK_TAG_CRON_SECRET (opcional; se setado, chama a Edge Function)
  *   STACK_TAG_WORKER_LIMIT (default 3)
  */
 import { createClient } from '@supabase/supabase-js';
+import { readSupabaseServiceRoleKey } from './lib/serviceRoleEnv.mjs';
 
 const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const serviceKey = readSupabaseServiceRoleKey();
 const cronSecret = process.env.STACK_TAG_CRON_SECRET;
 const limit = Number(process.env.STACK_TAG_WORKER_LIMIT || '3');
 

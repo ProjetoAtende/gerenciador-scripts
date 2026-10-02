@@ -13,12 +13,13 @@
  *   VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
  *   SMOKE_TEST_EMAIL, SMOKE_TEST_PASSWORD — conta principal (cria perguntas; staff para --clean)
  *   SMOKE_TEST_USER_EMAIL, SMOKE_TEST_USER_PASSWORD — opcional; segunda conta para algumas respostas
- *   VITE_SUPABASE_SERVICE_ROLE_KEY — necessário para --clean-tags (DELETE em stack_tags)
+ *   SUPABASE_SERVICE_ROLE_KEY — necessário para --clean-tags (DELETE em stack_tags)
  */
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
+import { readSupabaseServiceRoleKey, SERVICE_ROLE_ENV_HINT } from './lib/serviceRoleEnv.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const envPath = path.join(root, '.env');
@@ -43,7 +44,7 @@ loadEnv();
 
 const url = process.env.VITE_SUPABASE_URL;
 const anon = process.env.VITE_SUPABASE_ANON_KEY;
-const serviceRole = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const serviceRole = readSupabaseServiceRoleKey();
 const email = process.env.SMOKE_TEST_EMAIL;
 const password = process.env.SMOKE_TEST_PASSWORD;
 const userEmail = process.env.SMOKE_TEST_USER_EMAIL;
@@ -88,7 +89,7 @@ function client() {
 
 function adminClient() {
   if (!serviceRole) {
-    throw new Error('Defina VITE_SUPABASE_SERVICE_ROLE_KEY no .env para --clean-tags');
+    throw new Error(`Defina SUPABASE_SERVICE_ROLE_KEY no .env para --clean-tags. ${SERVICE_ROLE_ENV_HINT}`);
   }
   return createClient(url, serviceRole);
 }

@@ -176,6 +176,7 @@ No `.env` (nunca commitar). Modelo em `.env.example`.
 | Variável | Uso |
 |----------|-----|
 | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Cliente do app e scripts Node |
+| `SUPABASE_SERVICE_ROLE_KEY` | Scripts de manutenção (`stack:wipe-all`, `--clean-tags`, worker CLI) — **não** usar prefixo `VITE_` |
 | `SMOKE_TEST_EMAIL`, `SMOKE_TEST_PASSWORD` | Conta **staff/admin** — seed paginação, demo, `--clean` via `stack_deletar` |
 | `SMOKE_TEST_USER_EMAIL`, `SMOKE_TEST_USER_PASSWORD` | Conta **user** opcional — réplicas/tréplicas no seed demo |
 | `SMOKE_TEST_USER2_EMAIL`, `SMOKE_TEST_USER2_PASSWORD` | Reservado (terceira conta; scripts atuais não usam) |

@@ -73,7 +73,16 @@ export const DESENVOLVIMENTO_SUBTIPOS: { value: string; label: string }[] = [];
 
 export type UnidadeMedida = 'unidades' | 'horas';
 
-export type PeriodoEstatistica = '24h' | '48h' | '72h' | '7d' | '30d' | 'all';
+export type PeriodoEstatistica = '24h' | '48h' | '72h' | '7d' | '30d' | 'all' | 'custom';
+
+/** Intervalo inclusive por data de execução (YYYY-MM-DD, fuso America/Sao_Paulo no backend). */
+export interface PeriodoEstatisticasCustom {
+  preset: 'custom';
+  dataInicio: string;
+  dataFim: string;
+}
+
+export type PeriodoEstatisticasRequest = PeriodoEstatistica | PeriodoEstatisticasCustom;
 
 /** Período de filtro nas abas Meus Serviços / Serviços da Equipe */
 export type FiltroPeriodo = '24h' | '48h' | '72h' | '7d' | '30d' | 'all';
@@ -114,6 +123,27 @@ export interface ServicoConfig {
   icone: string;
   /** Dica exibida abaixo do input de quantidade */
   dica: string;
+}
+
+/** Registro do catálogo `servico_tipos` no Supabase */
+export interface ServicoTipoRow {
+  codigo: string;
+  label: string;
+  unidade: UnidadeMedida;
+  icone: string;
+  dica: string;
+  ativo: boolean;
+  eh_personalizado: boolean;
+}
+
+export function servicoTipoRowToConfig(row: ServicoTipoRow): ServicoConfig {
+  return {
+    tipo: row.codigo as TipoServico,
+    label: row.label,
+    unidade: row.unidade,
+    icone: row.icone,
+    dica: row.dica,
+  };
 }
 
 /** Dado de estatística retornado pela RPC obter_servicos_estatisticas */
@@ -569,11 +599,19 @@ export const TAREFA_SERVICO_EQUIVALENTE: Record<TipoTarefa, TipoServico> = {
 // Helpers
 // ──────────────────────────────────────────────────────────────
 
-/** Retorna a configuração completa de um tipo de serviço. */
-export function getServicoConfig(tipo: TipoServico): ServicoConfig {
-  const config = SERVICOS_CONFIG.find((c) => c.tipo === tipo);
+/** Retorna a configuração completa de um tipo de serviço (catálogo estático). */
+export function getServicoConfig(tipo: TipoServico, configs: ServicoConfig[] = SERVICOS_CONFIG): ServicoConfig {
+  const config = configs.find((c) => c.tipo === tipo);
   if (!config) {
-    throw new Error(`Tipo de serviço desconhecido: ${tipo}`);
+    const fallback = SERVICOS_CONFIG.find((c) => c.tipo === tipo);
+    if (fallback) return fallback;
+    return {
+      tipo,
+      label: String(tipo).replace(/_/g, ' '),
+      unidade: 'unidades',
+      icone: '📋',
+      dica: '',
+    };
   }
   return config;
 }
@@ -584,8 +622,8 @@ export function getTipoServicoParaTarefa(tipo: TipoTarefa | null | undefined): T
 }
 
 /** Retorna a unidade de medida de um tipo de serviço. */
-export function getUnidadeLabel(tipo: TipoServico): UnidadeMedida {
-  return getServicoConfig(tipo).unidade;
+export function getUnidadeLabel(tipo: TipoServico, configs?: ServicoConfig[]): UnidadeMedida {
+  return getServicoConfig(tipo, configs).unidade;
 }
 
 /** Retorna o label legível de um tipo de serviço. */
@@ -602,8 +640,8 @@ export function getServicoIcone(tipo: TipoServico): string {
  * Formata quantidade + unidade para exibição.
  * Ex: "3 horas", "5 unidades"
  */
-export function formatarQuantidade(tipo: TipoServico, quantidade: number): string {
-  const unidade = getUnidadeLabel(tipo);
+export function formatarQuantidade(tipo: TipoServico, quantidade: number, configs?: ServicoConfig[]): string {
+  const unidade = getUnidadeLabel(tipo, configs);
   if (unidade === 'horas') {
     return `${quantidade} ${quantidade === 1 ? 'hora' : 'horas'}`;
   }
@@ -1037,18 +1075,35 @@ const EMPTY_KPIS: EstatisticasCompletasKpis = {
  */
 export async function obterEstatisticasCompletas(
   equipeId: string,
-  periodo: PeriodoEstatistica = '30d'
+  periodo: PeriodoEstatisticasRequest = '30d'
 ): Promise<EstatisticasCompletasResult> {
-  const { data, error } = await supabase.rpc('obter_servicos_estatisticas_completas', {
+  const isCustom = typeof periodo === 'object' && periodo.preset === 'custom';
+  const preset: string = typeof periodo === 'string' ? periodo : 'custom';
+  const rpcArgs: {
+    p_equipe_id: string;
+    p_periodo: string;
+    p_data_inicio?: string;
+    p_data_fim?: string;
+  } = {
     p_equipe_id: equipeId,
-    p_periodo: periodo,
-  });
+    p_periodo: preset,
+  };
+  if (isCustom) {
+    rpcArgs.p_data_inicio = periodo.dataInicio;
+    rpcArgs.p_data_fim = periodo.dataFim;
+  }
+
+  const { data, error } = await supabase.rpc('obter_servicos_estatisticas_completas', rpcArgs);
+
+  const periodoLabel: string = isCustom
+    ? `custom:${periodo.dataInicio}:${periodo.dataFim}`
+    : preset;
 
   if (error) {
     console.error('[servicosService] obterEstatisticasCompletas error:', error);
     return {
       sucesso: false,
-      periodo,
+      periodo: periodoLabel,
       kpis: EMPTY_KPIS,
       por_tipo: [],
       por_membro: [],
@@ -1061,9 +1116,23 @@ export async function obterEstatisticasCompletas(
   }
 
   const res = data as EstatisticasCompletasResult;
+  if (res.sucesso === false && res.erro) {
+    return {
+      sucesso: false,
+      periodo: periodoLabel,
+      kpis: EMPTY_KPIS,
+      por_tipo: [],
+      por_membro: [],
+      por_dia_semana: [],
+      por_faixa_horaria: [],
+      serie_temporal: [],
+      volume_diario: [],
+      erro: res.erro,
+    };
+  }
   return {
     sucesso: res.sucesso,
-    periodo: res.periodo ?? periodo,
+    periodo: res.periodo ?? periodoLabel,
     kpis: res.kpis ?? EMPTY_KPIS,
     por_tipo: res.por_tipo ?? [],
     por_membro: res.por_membro ?? [],
@@ -1073,4 +1142,81 @@ export async function obterEstatisticasCompletas(
     volume_diario: res.volume_diario ?? [],
     erro: res.erro,
   };
+}
+
+// ──────────────────────────────────────────────────────────────
+// Catálogo dinâmico (servico_tipos)
+// ──────────────────────────────────────────────────────────────
+
+export async function listarServicoTipos(
+  incluirInativos = false
+): Promise<{ sucesso: boolean; tipos: ServicoTipoRow[]; erro?: string }> {
+  const { data, error } = await supabase.rpc('listar_servico_tipos', {
+    p_incluir_inativos: incluirInativos,
+  });
+
+  if (error) {
+    if (error.code === 'PGRST202' || error.message.includes('Could not find')) {
+      return { sucesso: false, tipos: [], erro: 'Catálogo de serviços ainda não disponível no banco.' };
+    }
+    console.error('[servicosService] listarServicoTipos error:', error);
+    return { sucesso: false, tipos: [], erro: error.message };
+  }
+
+  const res = data as { sucesso: boolean; tipos?: ServicoTipoRow[]; erro?: string };
+  return {
+    sucesso: res.sucesso !== false,
+    tipos: res.tipos ?? [],
+    erro: res.erro,
+  };
+}
+
+export async function criarServicoTipo(params: {
+  codigo: string;
+  label: string;
+  unidade: UnidadeMedida;
+  icone?: string;
+  dica?: string;
+}): Promise<{ sucesso: boolean; codigo?: string; erro?: string }> {
+  const { data, error } = await supabase.rpc('criar_servico_tipo', {
+    p_codigo: params.codigo,
+    p_label: params.label,
+    p_unidade: params.unidade,
+    p_icone: params.icone ?? '📋',
+    p_dica: params.dica ?? '',
+  });
+
+  if (error) {
+    console.error('[servicosService] criarServicoTipo error:', error);
+    return { sucesso: false, erro: error.message };
+  }
+
+  return data as { sucesso: boolean; codigo?: string; erro?: string };
+}
+
+export async function atualizarServicoTipo(
+  codigo: string,
+  campos: {
+    label?: string;
+    unidade?: UnidadeMedida;
+    icone?: string;
+    dica?: string;
+    ativo?: boolean;
+  }
+): Promise<{ sucesso: boolean; erro?: string }> {
+  const { data, error } = await supabase.rpc('atualizar_servico_tipo', {
+    p_codigo: codigo,
+    p_label: campos.label ?? null,
+    p_unidade: campos.unidade ?? null,
+    p_icone: campos.icone ?? null,
+    p_dica: campos.dica ?? null,
+    p_ativo: campos.ativo ?? null,
+  });
+
+  if (error) {
+    console.error('[servicosService] atualizarServicoTipo error:', error);
+    return { sucesso: false, erro: error.message };
+  }
+
+  return data as { sucesso: boolean; erro?: string };
 }

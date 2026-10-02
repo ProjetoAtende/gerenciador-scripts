@@ -17,28 +17,30 @@ import { X, Plus, Pencil, Trash2, Check, ChevronDown, Loader2, RefreshCw, ArrowU
 import { toast } from 'sonner';
 import { useEffectiveAuth } from '../hooks/useEffectiveAuth';
 import {
-  SERVICOS_CONFIG,
   TipoServico,
   FiltroPeriodo,
   Servico,
+  ServicoConfig,
   criarServico,
   atualizarServico,
   excluirServico,
   listarServicosUsuarioFiltrado,
   listarServicosEquipeFiltrado,
-  getServicoConfig,
   formatarQuantidade,
 } from '../services/servicosService';
+import { useServicoTipos } from '../contexts/ServicoTiposContext';
+import { podeGerenciarTiposServico } from '../contexts/AuthContext';
 import { supabase } from '../services/supabaseClient';
 import { RichTextEditor } from './RichTextEditor';
 
 const ServicosEstatisticasTab = React.lazy(() => import('./ServicosEstatisticasTab'));
+const ServicosGerenciamentoTab = React.lazy(() => import('./ServicosGerenciamentoTab'));
 
 // ─────────────────────────────────────────────────────────────
 // Tipos locais
 // ─────────────────────────────────────────────────────────────
 
-type Aba = 'novoServico' | 'meusServicos' | 'servicosEquipe' | 'estatisticas';
+type Aba = 'novoServico' | 'meusServicos' | 'servicosEquipe' | 'estatisticas' | 'gerenciamento';
 
 interface MembroEquipe {
   id: string;
@@ -71,7 +73,7 @@ function ListaSugestoesTiposServico({
   className = '',
   itemClassName = '',
 }: {
-  itens: typeof SERVICOS_CONFIG;
+  itens: ServicoConfig[];
   tipoSelecionado: TipoServico | null;
   onSelecionar: (tipo: TipoServico) => void;
   className?: string;
@@ -109,6 +111,7 @@ function ListaSugestoesTiposServico({
 
 export const OutrosServicosModal: React.FC<OutrosServicosModalProps> = ({ isOpen, onClose }) => {
   const { user, equipeId, userRole } = useEffectiveAuth();
+  const { configs: servicosConfigCatalogo, getConfig: getServicoConfigFromCatalogo } = useServicoTipos();
 
   // ── Navegação ──────────────────────────────────────────────
   const [abaAtiva, setAbaAtiva] = useState<Aba>('novoServico');
@@ -176,11 +179,11 @@ export const OutrosServicosModal: React.FC<OutrosServicosModalProps> = ({ isOpen
   // ─────────────────────────────────────────────────────────
   // Config do tipo selecionado – reativa
   // ─────────────────────────────────────────────────────────
-  const configAtual = tipoSelecionado ? getServicoConfig(tipoSelecionado) : null;
+  const configAtual = tipoSelecionado ? getServicoConfigFromCatalogo(tipoSelecionado) : null;
 
   const tiposServicoOrdenados = useMemo(
-    () => [...SERVICOS_CONFIG].sort((a, b) => a.label.localeCompare(b.label, 'pt-BR')),
-    []
+    () => [...servicosConfigCatalogo].sort((a, b) => a.label.localeCompare(b.label, 'pt-BR')),
+    [servicosConfigCatalogo]
   );
 
   const buscaTipoNormalizada = buscaTipoSidebar.trim().toLowerCase();
@@ -198,8 +201,8 @@ export const OutrosServicosModal: React.FC<OutrosServicosModalProps> = ({ isOpen
   const selecionarTipoServico = useCallback((tipo: TipoServico) => {
     setTipoSelecionado(tipo);
     setQuantidadeStr('');
-    setBuscaTipoSidebar(getServicoConfig(tipo).label);
-  }, []);
+    setBuscaTipoSidebar(getServicoConfigFromCatalogo(tipo).label);
+  }, [getServicoConfigFromCatalogo]);
 
   const handleBuscaTipoKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && tiposServicoSugeridos.length > 0) {
@@ -438,6 +441,7 @@ export const OutrosServicosModal: React.FC<OutrosServicosModalProps> = ({ isOpen
   };
 
   const isAdmin = userRole === 'admin';
+  const podeGerenciarCatalogoServicos = podeGerenciarTiposServico(userRole);
 
   // ─────────────────────────────────────────────────────────
   // Helpers de UI
@@ -516,7 +520,7 @@ export const OutrosServicosModal: React.FC<OutrosServicosModalProps> = ({ isOpen
     mostrarDono?: boolean;
     podeEditar?: boolean;
   }) => {
-    const config = getServicoConfig(servico.tipo);
+    const config = getServicoConfigFromCatalogo(servico.tipo);
     const emEdicao = edicao?.id === servico.id;
 
     return (
@@ -550,7 +554,7 @@ export const OutrosServicosModal: React.FC<OutrosServicosModalProps> = ({ isOpen
                   }}
                   className="w-full appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500 pr-8"
                 >
-                  {SERVICOS_CONFIG.map((c) => (
+                  {servicosConfigCatalogo.map((c) => (
                     <option key={c.tipo} value={c.tipo}>
                       {c.icone} {c.label}
                     </option>
@@ -563,7 +567,7 @@ export const OutrosServicosModal: React.FC<OutrosServicosModalProps> = ({ isOpen
             {/* Quantidade */}
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                Quantidade ({getServicoConfig(edicao.tipo).unidade})
+                Quantidade ({getServicoConfigFromCatalogo(edicao.tipo).unidade})
               </label>
               <input
                 type="number"
@@ -652,7 +656,7 @@ export const OutrosServicosModal: React.FC<OutrosServicosModalProps> = ({ isOpen
                     {config.label}
                   </span>
                   <span className="text-sm font-bold text-gray-800 dark:text-gray-200">
-                    {formatarQuantidade(servico.tipo, servico.quantidade)}
+                    {formatarQuantidade(servico.tipo, servico.quantidade, servicosConfigCatalogo)}
                   </span>
                 </div>
                 {mostrarDono && (
@@ -723,6 +727,7 @@ export const OutrosServicosModal: React.FC<OutrosServicosModalProps> = ({ isOpen
     { id: 'meusServicos',   label: 'Meus Serviços',     labelCurto: 'Meus',   icon: '👤' },
     { id: 'servicosEquipe', label: 'Serviços da Equipe', labelCurto: 'Equipe', icon: '👥' },
     { id: 'estatisticas',   label: 'Estatísticas',       labelCurto: 'Stats',  icon: '📊' },
+    { id: 'gerenciamento', label: 'Gerenciamento de Serviços', labelCurto: 'Gestão', icon: '⚙️' },
   ];
 
   // ─────────────────────────────────────────────────────────
@@ -846,7 +851,7 @@ export const OutrosServicosModal: React.FC<OutrosServicosModalProps> = ({ isOpen
                   Resumo
                 </p>
                 <div className="space-y-1.5">
-                  {SERVICOS_CONFIG.map((c) => {
+                  {servicosConfigCatalogo.map((c) => {
                     const count = meusServicos.filter((s) => s.tipo === c.tipo).length;
                     if (count === 0) return null;
                     return (
@@ -1116,7 +1121,7 @@ export const OutrosServicosModal: React.FC<OutrosServicosModalProps> = ({ isOpen
                       className="appearance-none bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-1.5 text-xs text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 pr-7"
                     >
                       <option value="">🔧 Todos os tipos</option>
-                      {SERVICOS_CONFIG.map((c) => (
+                      {servicosConfigCatalogo.map((c) => (
                         <option key={c.tipo} value={c.tipo}>{c.icone} {c.label}</option>
                       ))}
                     </select>
@@ -1195,6 +1200,19 @@ export const OutrosServicosModal: React.FC<OutrosServicosModalProps> = ({ isOpen
               </Suspense>
             )}
 
+            {abaAtiva === 'gerenciamento' && (
+              <Suspense fallback={
+                <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                  <Loader2 size={32} className="animate-spin mb-3" />
+                  <span className="text-sm">Carregando gerenciamento...</span>
+                </div>
+              }>
+                <div className="p-6 md:p-8">
+                  <ServicosGerenciamentoTab somenteLeitura={!podeGerenciarCatalogoServicos} />
+                </div>
+              </Suspense>
+            )}
+
             {/* ────── ABA: Serviços da Equipe ────── */}
             {abaAtiva === 'servicosEquipe' && (
               <div className="p-6 md:p-8">
@@ -1257,7 +1275,7 @@ export const OutrosServicosModal: React.FC<OutrosServicosModalProps> = ({ isOpen
                       className="appearance-none bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-1.5 text-xs text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 pr-7"
                     >
                       <option value="">🔧 Todos os tipos</option>
-                      {SERVICOS_CONFIG.map((c) => (
+                      {servicosConfigCatalogo.map((c) => (
                         <option key={c.tipo} value={c.tipo}>{c.icone} {c.label}</option>
                       ))}
                     </select>

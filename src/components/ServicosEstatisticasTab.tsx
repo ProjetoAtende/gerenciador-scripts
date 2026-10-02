@@ -11,20 +11,27 @@
  * Carrega dados de qualquer equipe (seletor de equipe pills).
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Cell, AreaChart, Area,
 } from 'recharts';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, X, FileSpreadsheet } from 'lucide-react';
+import { toast } from 'sonner';
+import { exportServicosEstatisticasExcel } from '../utils/exportServicosEstatisticasExcel';
+import {
+  aguardarRenderCaptura,
+  exportServicosEstatisticasExcelImagens,
+} from '../utils/exportServicosEstatisticasExcelImages';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { supabase } from '../services/supabaseClient';
+import { format, subDays } from 'date-fns';
 import {
-  SERVICOS_CONFIG,
   getServicoConfig,
   type TipoServico,
   type PeriodoEstatistica,
+  type PeriodoEstatisticasRequest,
   type EstatisticasCompletasResult,
   obterEstatisticasCompletas,
   detalharServicosMembro,
@@ -59,7 +66,19 @@ const PERIOD_OPTIONS: { value: PeriodoEstatistica; label: string }[] = [
   { value: '7d',  label: '7 dias' },
   { value: '30d', label: '30 dias' },
   { value: 'all', label: 'Todo Período' },
+  { value: 'custom', label: 'Personalizado' },
 ];
+
+function intervaloCustomPadrao(): { inicio: string; fim: string } {
+  const fim = new Date();
+  const inicio = subDays(fim, 29);
+  return { inicio: format(inicio, 'yyyy-MM-dd'), fim: format(fim, 'yyyy-MM-dd') };
+}
+
+function formatarDataBr(iso: string): string {
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
 
 const CHART_COLORS = [
   '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
@@ -113,6 +132,8 @@ const ServicosEstatisticasTab: React.FC<ServicosEstatisticasTabProps> = ({ equip
   // ── State ──
   const [equipeId, setEquipeId] = useState(equipeIdInicial);
   const [periodo, setPeriodo] = useState<PeriodoEstatistica>('30d');
+  const [customDraft, setCustomDraft] = useState(intervaloCustomPadrao);
+  const [customAplicado, setCustomAplicado] = useState<{ inicio: string; fim: string } | null>(null);
   const [subAba, setSubAba] = useState<SubAba>('visaoGeral');
   const [isLoading, setIsLoading] = useState(false);
   const [dados, setDados] = useState<EstatisticasCompletasResult | null>(null);
@@ -122,6 +143,97 @@ const ServicosEstatisticasTab: React.FC<ServicosEstatisticasTabProps> = ({ equip
 
   // Modal detalhe membro
   const [membroModal, setMembroModal] = useState<{ nome: string; itens: ServicoDetalheMembroItem[] } | null>(null);
+  const [exportandoExcel, setExportandoExcel] = useState(false);
+  const [prepararCapturaExcel, setPrepararCapturaExcel] = useState(false);
+
+  const exportRefVisaoGeral = useRef<HTMLDivElement>(null);
+  const exportRefPorTipo = useRef<HTMLDivElement>(null);
+  const exportRefPorMembro = useRef<HTMLDivElement>(null);
+  const exportRefLinhaTempo = useRef<HTMLDivElement>(null);
+  const exportRunIdRef = useRef(0);
+
+  const equipeNome = useMemo(
+    () => equipes.find(e => e.id === equipeId)?.nome ?? 'Equipe',
+    [equipes, equipeId],
+  );
+
+  const periodoRequest: PeriodoEstatisticasRequest | null = useMemo(() => {
+    if (periodo === 'custom') {
+      if (!customAplicado) return null;
+      return {
+        preset: 'custom',
+        dataInicio: customAplicado.inicio,
+        dataFim: customAplicado.fim,
+      };
+    }
+    return periodo;
+  }, [periodo, customAplicado]);
+
+  const periodoLabel = useMemo(() => {
+    if (periodo === 'custom' && customAplicado) {
+      return `${formatarDataBr(customAplicado.inicio)} – ${formatarDataBr(customAplicado.fim)}`;
+    }
+    return PERIOD_OPTIONS.find(p => p.value === periodo)?.label ?? periodo;
+  }, [periodo, customAplicado]);
+
+  const customIntervaloInvalido =
+    !customDraft.inicio ||
+    !customDraft.fim ||
+    customDraft.fim < customDraft.inicio;
+
+  const hojeIso = format(new Date(), 'yyyy-MM-dd');
+
+  const handleExportExcel = useCallback(() => {
+    if (!dados || isLoading || exportandoExcel) return;
+    setExportandoExcel(true);
+    setPrepararCapturaExcel(true);
+  }, [dados, isLoading, exportandoExcel]);
+
+  useEffect(() => {
+    if (!prepararCapturaExcel || !dados) return;
+
+    const runId = ++exportRunIdRef.current;
+    let cancelled = false;
+
+    (async () => {
+      await aguardarRenderCaptura(1100);
+      if (cancelled || runId !== exportRunIdRef.current) return;
+
+      const meta = { equipeNome, periodoLabel };
+      const abas = [
+        { sheetName: 'Visão Geral', element: exportRefVisaoGeral.current },
+        { sheetName: 'Por Tipo', element: exportRefPorTipo.current },
+        { sheetName: 'Por Membro', element: exportRefPorMembro.current },
+        { sheetName: 'Linha do Tempo', element: exportRefLinhaTempo.current },
+      ].filter((a): a is { sheetName: string; element: HTMLDivElement } => a.element != null);
+
+      try {
+        if (abas.length < 4) {
+          throw new Error('Painéis de captura não montados.');
+        }
+        await exportServicosEstatisticasExcelImagens(abas, meta, darkMode);
+        toast.success('Excel baixado com capturas das abas.');
+      } catch (err) {
+        console.error('[EstatisticasTab] Export Excel (captura):', err);
+        try {
+          exportServicosEstatisticasExcel(dados, meta);
+          toast.message('Captura visual indisponível; baixamos a versão com dados tabulares.');
+        } catch (fallbackErr) {
+          console.error('[EstatisticasTab] Export Excel (fallback):', fallbackErr);
+          toast.error('Não foi possível gerar o Excel.');
+        }
+      } finally {
+        if (!cancelled && runId === exportRunIdRef.current) {
+          setPrepararCapturaExcel(false);
+          setExportandoExcel(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [prepararCapturaExcel, dados, darkMode, equipeNome, periodoLabel]);
 
   // ── Load teams ──
   useEffect(() => {
@@ -137,17 +249,37 @@ const ServicosEstatisticasTab: React.FC<ServicosEstatisticasTabProps> = ({ equip
 
   // ── Load stats ──
   const loadData = useCallback(async () => {
-    if (!equipeId) return;
+    if (!equipeId || !periodoRequest) return;
     setIsLoading(true);
     try {
-      const res = await obterEstatisticasCompletas(equipeId, periodo);
+      const res = await obterEstatisticasCompletas(equipeId, periodoRequest);
+      if (!res.sucesso && res.erro) {
+        toast.error(res.erro);
+      }
       setDados(res);
     } catch (err) {
       console.error('[EstatisticasTab] Erro:', err);
+      toast.error('Erro ao carregar estatísticas.');
     } finally {
       setIsLoading(false);
     }
-  }, [equipeId, periodo]);
+  }, [equipeId, periodoRequest]);
+
+  const selecionarPeriodo = useCallback((value: PeriodoEstatistica) => {
+    setPeriodo(value);
+    if (value === 'custom') {
+      const padrao = intervaloCustomPadrao();
+      setCustomDraft(padrao);
+      setCustomAplicado(padrao);
+    } else {
+      setCustomAplicado(null);
+    }
+  }, []);
+
+  const aplicarPeriodoCustom = useCallback(() => {
+    if (customIntervaloInvalido) return;
+    setCustomAplicado({ ...customDraft });
+  }, [customDraft, customIntervaloInvalido]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -278,7 +410,7 @@ const ServicosEstatisticasTab: React.FC<ServicosEstatisticasTabProps> = ({ equip
   };
 
   // ─── Sub-aba: Por Tipo ──────────────────────────────────
-  const renderPorTipo = () => {
+  const renderPorTipo = (forCapture = false) => {
     const porTipo = dados?.por_tipo ?? [];
     if (porTipo.length === 0) return renderEmpty('Nenhum serviço registrado no período.');
 
@@ -293,10 +425,6 @@ const ServicosEstatisticasTab: React.FC<ServicosEstatisticasTabProps> = ({ equip
         return { ...t, label: t.tipo, icone: '❓', unidade: 'unidades' as const };
       }
     });
-
-    // Tipos não utilizados
-    const tiposUsados = new Set(porTipo.map(t => t.tipo));
-    const tiposNaoUsados = SERVICOS_CONFIG.filter(c => !tiposUsados.has(c.tipo));
 
     // Chart data for bar chart
     const barData = enriched.slice(0, 12).map(t => ({
@@ -344,10 +472,9 @@ const ServicosEstatisticasTab: React.FC<ServicosEstatisticasTabProps> = ({ equip
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-700/50">
-                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400">Tipo</th>
-                  <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400">Registros</th>
-                  <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400">Quantidade</th>
-                  <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400">%</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400 w-[55%]">Tipo</th>
+                  <th className="text-center px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400 w-[22%]">Quantidade</th>
+                  <th className="text-center px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400 w-[23%]">%</th>
                 </tr>
               </thead>
               <tbody>
@@ -364,10 +491,9 @@ const ServicosEstatisticasTab: React.FC<ServicosEstatisticasTabProps> = ({ equip
                         <span>{t.icone}</span>
                         <span className="text-gray-700 dark:text-gray-300 font-medium">{t.label}</span>
                       </td>
-                      <td className="px-4 py-2.5 text-right text-gray-500 dark:text-gray-400">{t.total_regs}</td>
-                      <td className="px-4 py-2.5 text-right font-semibold text-gray-700 dark:text-gray-200">{t.total_qtd}</td>
-                      <td className="px-4 py-2.5 text-right">
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                      <td className="px-4 py-2.5 text-center font-semibold text-gray-700 dark:text-gray-200 tabular-nums">{t.total_qtd}</td>
+                      <td className="px-4 py-2.5 text-center">
+                        <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full tabular-nums ${
                           pct >= 10 ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300'
                             : 'text-gray-400 dark:text-gray-500'
                         }`}>
@@ -380,24 +506,10 @@ const ServicosEstatisticasTab: React.FC<ServicosEstatisticasTabProps> = ({ equip
               </tbody>
             </table>
           </div>
-
-          {/* Tipos sem registro */}
-          {tiposNaoUsados.length > 0 && (
-            <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-700">
-              <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Sem registros no período:</p>
-              <div className="flex flex-wrap gap-1.5">
-                {tiposNaoUsados.map(c => (
-                  <span key={c.tipo} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 px-2 py-0.5 rounded-full">
-                    {c.icone} {c.label}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Evolução temporal do tipo selecionado */}
-        {tipoSelecionado && (
+        {/* Evolução temporal do tipo selecionado (omitida na captura Excel) */}
+        {!forCapture && tipoSelecionado && (
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -415,7 +527,7 @@ const ServicosEstatisticasTab: React.FC<ServicosEstatisticasTabProps> = ({ equip
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={evolucaoTipo} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="servicos-evolucao-tipo" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="servicos-evolucao-tipo-ui" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#14b8a6" stopOpacity={0.3} />
                         <stop offset="100%" stopColor="#14b8a6" stopOpacity={0} />
                       </linearGradient>
@@ -430,7 +542,7 @@ const ServicosEstatisticasTab: React.FC<ServicosEstatisticasTabProps> = ({ equip
                       itemStyle={tooltipItemStyle}
                       formatter={(value: number) => [`${value}`, 'Quantidade']}
                     />
-                    <Area type="monotone" dataKey="valor" stroke="#14b8a6" strokeWidth={2.5} fill="url(#servicos-evolucao-tipo)" dot={false} activeDot={{ r: 5, stroke: '#14b8a6', strokeWidth: 2, fill: darkMode ? '#0f172a' : '#ffffff' }} />
+                    <Area type="monotone" dataKey="valor" stroke="#14b8a6" strokeWidth={2.5} fill="url(#servicos-evolucao-tipo-ui)" dot={false} activeDot={{ r: 5, stroke: '#14b8a6', strokeWidth: 2, fill: darkMode ? '#0f172a' : '#ffffff' }} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -444,7 +556,7 @@ const ServicosEstatisticasTab: React.FC<ServicosEstatisticasTabProps> = ({ equip
   };
 
   // ─── Sub-aba: Por Membro ────────────────────────────────
-  const renderPorMembro = () => {
+  const renderPorMembro = (forCapture = false) => {
     const porMembro = dados?.por_membro ?? [];
     if (porMembro.length === 0) return renderEmpty('Nenhum serviço registrado no período.');
 
@@ -505,14 +617,22 @@ const ServicosEstatisticasTab: React.FC<ServicosEstatisticasTabProps> = ({ equip
                   setMembroModal({ nome: m.usuario_nome, itens });
                 }
               }}
-              className="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:border-teal-300 dark:hover:border-teal-700 transition-colors text-left"
+              className={`flex gap-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:border-teal-300 dark:hover:border-teal-700 transition-colors text-left ${
+                forCapture ? 'items-start py-5' : 'items-center'
+              }`}
             >
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0 mt-0.5"
                 style={{ background: CHART_COLORS[i % CHART_COLORS.length] }}>
                 {m.usuario_nome.charAt(0).toUpperCase()}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 truncate">{m.usuario_nome}</p>
+              <div className={`flex-1 min-w-0 ${forCapture ? 'overflow-visible' : ''}`}>
+                <p
+                  className={`text-sm font-semibold text-gray-700 dark:text-gray-300 ${
+                    forCapture ? 'leading-normal break-words pb-0.5' : 'truncate'
+                  }`}
+                >
+                  {m.usuario_nome}
+                </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500">
                   {m.tipos_distintos} tipo{m.tipos_distintos !== 1 ? 's' : ''} · {m.total_regs} registro{m.total_regs !== 1 ? 's' : ''}
                 </p>
@@ -529,7 +649,8 @@ const ServicosEstatisticasTab: React.FC<ServicosEstatisticasTabProps> = ({ equip
   };
 
   // ─── Sub-aba: Linha do Tempo ────────────────────────────
-  const renderLinhaTempo = () => {
+  const renderLinhaTempo = (forCapture = false) => {
+    const gradVolumeId = forCapture ? 'servicos-volume-diario-cap' : 'servicos-volume-diario-ui';
     const diaSemana = dados?.por_dia_semana ?? [];
     const volumeDiario = dados?.volume_diario ?? [];
 
@@ -570,7 +691,7 @@ const ServicosEstatisticasTab: React.FC<ServicosEstatisticasTabProps> = ({ equip
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={volumeDiario.map(d => ({ ...d, label: d.data.substring(8, 10) + '/' + d.data.substring(5, 7) }))} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="servicos-volume-diario" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id={gradVolumeId} x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#14b8a6" stopOpacity={0.3} />
                       <stop offset="100%" stopColor="#14b8a6" stopOpacity={0} />
                     </linearGradient>
@@ -585,7 +706,7 @@ const ServicosEstatisticasTab: React.FC<ServicosEstatisticasTabProps> = ({ equip
                     itemStyle={tooltipItemStyle}
                     formatter={(value: number, name: string) => [`${value}`, name === 'total_qtd' ? 'Quantidade' : 'Registros']}
                   />
-                  <Area type="monotone" dataKey="total_qtd" stroke="#14b8a6" fill="url(#servicos-volume-diario)" strokeWidth={2.5} dot={false} activeDot={{ r: 5, stroke: '#14b8a6', strokeWidth: 2, fill: darkMode ? '#0f172a' : '#ffffff' }} />
+                  <Area type="monotone" dataKey="total_qtd" stroke="#14b8a6" fill={`url(#${gradVolumeId})`} strokeWidth={2.5} dot={false} activeDot={{ r: 5, stroke: '#14b8a6', strokeWidth: 2, fill: darkMode ? '#0f172a' : '#ffffff' }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -701,41 +822,101 @@ const ServicosEstatisticasTab: React.FC<ServicosEstatisticasTabProps> = ({ equip
           )}
 
           {/* Período pills */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Período:</span>
-            {PERIOD_OPTIONS.map(p => (
-              <button
-                key={p.value}
-                onClick={() => setPeriodo(p.value)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 transform hover:scale-105 ${
-                  periodo === p.value
-                    ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
+          <div className="flex flex-col gap-2 flex-1 min-w-[280px]">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Período:</span>
+              {PERIOD_OPTIONS.map(p => (
+                <button
+                  key={p.value}
+                  type="button"
+                  onClick={() => selecionarPeriodo(p.value)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 transform hover:scale-105 ${
+                    periodo === p.value
+                      ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            {periodo === 'custom' && (
+              <div className="flex flex-wrap items-center gap-2 pl-0 sm:pl-[4.5rem]">
+                <label className="sr-only" htmlFor="stats-custom-inicio">Data inicial</label>
+                <input
+                  id="stats-custom-inicio"
+                  type="date"
+                  value={customDraft.inicio}
+                  max={customDraft.fim || hojeIso}
+                  onChange={e => setCustomDraft(d => ({ ...d, inicio: e.target.value }))}
+                  className="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-xs px-2 py-1.5"
+                />
+                <span className="text-xs text-gray-500 dark:text-gray-400">até</span>
+                <label className="sr-only" htmlFor="stats-custom-fim">Data final</label>
+                <input
+                  id="stats-custom-fim"
+                  type="date"
+                  value={customDraft.fim}
+                  min={customDraft.inicio}
+                  max={hojeIso}
+                  onChange={e => setCustomDraft(d => ({ ...d, fim: e.target.value }))}
+                  className="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-xs px-2 py-1.5"
+                />
+                <button
+                  type="button"
+                  onClick={aplicarPeriodoCustom}
+                  disabled={customIntervaloInvalido || isLoading}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-40"
+                >
+                  Aplicar
+                </button>
+                {customIntervaloInvalido && (
+                  <span className="text-xs text-red-500">Intervalo inválido</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* ── Navbar sub-abas ── */}
+      {/* ── Navbar sub-abas + Excel ── */}
       <div className="flex bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-1 gap-1">
-        {SUB_ABAS.map(sa => (
-          <button
-            key={sa.id}
-            onClick={() => setSubAba(sa.id)}
-            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-              subAba === sa.id
-                ? 'bg-teal-600 text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-            }`}
-          >
-            <span>{sa.icon}</span>
-            <span className="hidden sm:inline">{sa.label}</span>
-          </button>
-        ))}
+        <div className="flex flex-1 min-w-0 gap-1">
+          {SUB_ABAS.map(sa => (
+            <button
+              key={sa.id}
+              type="button"
+              onClick={() => setSubAba(sa.id)}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all min-w-0 ${
+                subAba === sa.id
+                  ? 'bg-teal-600 text-white shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
+            >
+              <span>{sa.icon}</span>
+              <span className="hidden sm:inline truncate">{sa.label}</span>
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={handleExportExcel}
+          disabled={isLoading || !dados || exportandoExcel}
+          title="Baixar Excel com captura visual de cada aba"
+          className="flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all
+            text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40
+            border border-emerald-200 dark:border-emerald-800
+            hover:bg-emerald-100 dark:hover:bg-emerald-900/50
+            disabled:opacity-40 disabled:pointer-events-none"
+        >
+          {exportandoExcel ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <FileSpreadsheet size={16} className="text-emerald-600 dark:text-emerald-400" />
+          )}
+          <span className="hidden md:inline">Excel</span>
+        </button>
       </div>
 
       {/* ── Conteúdo ── */}
@@ -746,6 +927,28 @@ const ServicosEstatisticasTab: React.FC<ServicosEstatisticasTabProps> = ({ equip
           {subAba === 'porMembro'  && renderPorMembro()}
           {subAba === 'linhaTempo' && renderLinhaTempo()}
         </>
+      )}
+
+      {/* Painéis off-screen para html2canvas (somente conteúdo das sub-abas) */}
+      {prepararCapturaExcel && dados && !isLoading && (
+        <div
+          aria-hidden
+          className={`fixed top-0 left-0 w-[1080px] opacity-0 pointer-events-none select-none overflow-visible ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}
+          style={{ zIndex: -1 }}
+        >
+          <div ref={exportRefVisaoGeral} className="p-2 pb-8 overflow-visible">
+            {renderVisaoGeral()}
+          </div>
+          <div ref={exportRefPorTipo} className="p-2 pb-8 mt-8 overflow-visible">
+            {renderPorTipo(true)}
+          </div>
+          <div ref={exportRefPorMembro} className="p-2 pb-8 mt-8 overflow-visible">
+            {renderPorMembro(true)}
+          </div>
+          <div ref={exportRefLinhaTempo} className="p-2 pb-8 mt-8 overflow-visible">
+            {renderLinhaTempo(true)}
+          </div>
+        </div>
       )}
 
       {/* ── Modal: Detalhes do Membro ── */}

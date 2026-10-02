@@ -3,7 +3,12 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User } from "@supabase/supabase-js";
 import { supabase } from "../services/supabaseClient";
 
-type GerenciadorUserRole = 'user' | 'supervisor' | 'coordenador' | 'admin';
+export type GerenciadorUserRole = 'user' | 'supervisor' | 'coordenador' | 'admin';
+
+/** Supervisor, coordenador ou admin — acima do perfil operacional `user`. */
+export function podeGerenciarTiposServico(role: GerenciadorUserRole | null | undefined): boolean {
+  return role === 'supervisor' || role === 'coordenador' || role === 'admin';
+}
 
 interface AuthContextType {
   user: User | null;

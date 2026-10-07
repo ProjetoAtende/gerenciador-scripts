@@ -26,6 +26,7 @@ const EscalaModal = lazy(() => import('../components/escala/EscalaModal').then((
 const AtendeStackModal = lazy(() =>
   import('../components/atende-stack/AtendeStackModal').then((m) => ({ default: m.AtendeStackModal })),
 );
+const PrioridadesModal = lazy(() => import('../components/prioridades/PrioridadesModal'));
 
 const containerVariants = {
   hidden: {},
@@ -50,6 +51,7 @@ const HOME_MODALS = {
   copilot: false,
   bossOnly: false,
   atendeStack: false,
+  prioridades: false,
 } as const;
 
 type HomeModalKey = keyof typeof HOME_MODALS;
@@ -96,6 +98,13 @@ const HOME_CARD_CONFIGS: HomeCardConfig[] = [
     descricao: '🗨 Perguntas e respostas da operação',
     cor: 'bg-gradient-to-br from-indigo-100 via-violet-100 to-purple-100 dark:from-indigo-900/30 dark:via-violet-900/30 dark:to-purple-900/30',
     modal: 'atendeStack',
+  },
+  {
+    titulo: 'Prioridades e Urgências',
+    descricao: '⚖️ Anotações de prioridade e urgência entre o TJSP Atende e as UPJs',
+    cor: 'bg-gradient-to-br from-rose-100 via-red-100 to-orange-100 dark:from-rose-900/30 dark:via-red-900/30 dark:to-orange-900/30',
+    modal: 'prioridades',
+    permissionCode: 'home.card.prioridades_urgencias',
   },
   {
     titulo: 'Outros Serviços',
@@ -151,11 +160,20 @@ export default function Home() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const modalParam = params.get('modal') as HomeModalKey | null;
-    if (modalParam && modalParam in HOME_MODALS) {
-      setModals((prev) => ({ ...prev, [modalParam]: true }));
-      setOpenedViaQueryParam(true);
+    if (!modalParam || !(modalParam in HOME_MODALS)) return;
+
+    // PU-14: a URL não pode abrir um módulo cujo card o usuário não tem
+    // permissão de ver. O servidor já protege os dados, mas a tela não deve
+    // abrir por parâmetro aquilo que o card esconde.
+    const config = HOME_CARD_CONFIGS.find((card) => card.modal === modalParam);
+    if (config?.permissionCode && !temPermissao(config.permissionCode)) {
+      navigate('/home', { replace: true });
+      return;
     }
-  }, [location.search]);
+
+    setModals((prev) => ({ ...prev, [modalParam]: true }));
+    setOpenedViaQueryParam(true);
+  }, [location.search, temPermissao, navigate]);
 
   const handleVoltarAoDashboard = useCallback(() => {
     setOpenedViaQueryParam(false);
@@ -353,6 +371,12 @@ export default function Home() {
             onClose={closeAtendeStack}
             initialPerguntaId={stackPerguntaId}
           />
+        </Suspense>
+      )}
+
+      {modals.prioridades && (
+        <Suspense fallback={null}>
+          <PrioridadesModal isOpen onClose={() => toggleModal('prioridades')} />
         </Suspense>
       )}
 

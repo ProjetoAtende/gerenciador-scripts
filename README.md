@@ -21,6 +21,7 @@ Após login, o usuário escolhe a **equipe** e acessa uma **Home** com cabeçalh
 | **Boss Only** | Gestão de setores, equipes, usuários e matriz de permissões (perfis supervisor/coordenador) |
 | **Configurações** | Preferências pessoais (ex.: tema) |
 | **Notificações** | Alertas de scripts e pedidos de exclusão pendentes |
+| **Prioridades e Urgências** | Anotações de prioridade/urgência (Atendente → Gestor → UPJ); ver `docs/COMO_USAR_PRIORIDADES_URGENCIAS.md` e entrega out/2026 em `docs/PRIORIDADES_URGENCIAS_RECLASSIFICACAO_ENTREGA.md` |
 
 Este repositório é um **recorte** do antigo Gerenciador de Chamados: não inclui Distribuidor, Oráculo, Radar SMAX, Tarefas, Pastelaria nem robôs de integração SMAX na interface principal.
 
@@ -92,7 +93,7 @@ Secrets de build no GitHub (Pages): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY
 
 ## Banco de dados
 
-- Schema evolutivo via **`supabase/migrations/`** (bootstrap, permissões, outros serviços, links, escala, scripts, DeepSeek).
+- Schema evolutivo via **`supabase/migrations/`** (bootstrap, permissões, outros serviços, links, escala, scripts, DeepSeek, Prioridades e Urgências).
 - Permissões de cards da Home e scripts documentadas na migration `20260926500000_home_cards_gerenciador_atende.sql`.
 
 ### ⚠️ Legado — não executar

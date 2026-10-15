@@ -75,6 +75,7 @@ export async function obterMeuPerfil(): Promise<{
   }
 
   const perfil = linhas[0];
+  perfil.ver_somente_vinculadas = perfil.ver_somente_vinculadas ?? false;
   const designacoes = perfil.designacoes_ativas ?? [];
 
   // A designação prevalece sobre o perfil base quando habilita um módulo
@@ -537,6 +538,38 @@ export async function listarAnotacoesAnteriores(
   return (data ?? []) as AnotacaoAnterior[];
 }
 
+export interface LinhaPainel {
+  id: number;
+  status: PrioridadeStatus;
+  reiterada: boolean;
+  urgentissimo: boolean;
+  urgentissimo_auto: boolean;
+  conferente_vinculado_id: string | null;
+  conferido_por_id: string | null;
+}
+
+/** Linhas usadas nos contadores do painel. A RLS já recorta quem pode ver. */
+export async function listarLinhasPainel(): Promise<LinhaPainel[]> {
+  const { data, error } = await supabase
+    .from('prioridades_anotacoes')
+    .select('id, status, reiterada, urgentissimo, urgentissimo_auto, conferente_vinculado_id, conferido_por_id');
+
+  if (error) {
+    console.error('[prioridadesService] listarLinhasPainel error:', error);
+    return [];
+  }
+
+  return ((data ?? []) as Array<Partial<LinhaPainel>>).map((linha) => ({
+    id: linha.id ?? 0,
+    status: linha.status as PrioridadeStatus,
+    reiterada: linha.reiterada ?? false,
+    urgentissimo: linha.urgentissimo ?? false,
+    urgentissimo_auto: linha.urgentissimo_auto ?? false,
+    conferente_vinculado_id: linha.conferente_vinculado_id ?? null,
+    conferido_por_id: linha.conferido_por_id ?? null,
+  }));
+}
+
 /** Contadores do painel lateral (RF-GES-08 / RF-UPJ-02). */
 export async function contarPorStatus(): Promise<{
   porStatus: Record<string, number>;
@@ -670,4 +703,70 @@ export async function analisarAnotacao(d: DecisaoUpj): Promise<RespostaRpc> {
  */
 export async function processarPrazosVencidos(): Promise<RespostaRpc> {
   return chamarRpc('prioridades_processar_prazos_vencidos', {});
+}
+
+export async function marcarEmAnalise(anotacaoId: number): Promise<RespostaRpc> {
+  return chamarRpc('prioridades_marcar_em_analise', { p_anotacao_id: anotacaoId });
+}
+
+export async function corrigirRetornada(anotacaoId: number, descricao: string): Promise<RespostaRpc> {
+  return chamarRpc('prioridades_corrigir_retornada', {
+    p_anotacao_id: anotacaoId,
+    p_descricao: descricao,
+  });
+}
+
+export async function registrarAcessoPrivilegiado(anotacaoId: number): Promise<void> {
+  await chamarRpc('prioridades_registrar_acesso_privilegiado', { p_anotacao_id: anotacaoId });
+}
+
+export interface DiaSemExpediente {
+  data: string;
+  descricao: string;
+  origem: string;
+}
+
+export async function listarDiasSemExpediente(): Promise<DiaSemExpediente[]> {
+  const { data, error } = await supabase.rpc('prioridades_dias_listar');
+  if (error) {
+    console.error('[prioridadesService] listarDiasSemExpediente error:', error);
+    return [];
+  }
+  return (data ?? []) as DiaSemExpediente[];
+}
+
+export async function incluirDiaSemExpediente(data: string, descricao: string): Promise<RespostaRpc> {
+  return chamarRpc('prioridades_dia_incluir', { p_data: data, p_descricao: descricao });
+}
+
+export async function removerDiaSemExpediente(data: string): Promise<RespostaRpc> {
+  return chamarRpc('prioridades_dia_remover', { p_data: data });
+}
+
+export interface RegraEspecial {
+  id: string;
+  upj_id: string;
+  tipo_prioridade: string;
+  texto: string;
+}
+
+export async function listarRegrasEspeciais(): Promise<RegraEspecial[]> {
+  const { data, error } = await supabase.rpc('prioridades_regras_listar');
+  if (error) {
+    console.error('[prioridadesService] listarRegrasEspeciais error:', error);
+    return [];
+  }
+  return (data ?? []) as RegraEspecial[];
+}
+
+export async function salvarRegraEspecial(upjId: string, tipo: string, texto: string): Promise<RespostaRpc> {
+  return chamarRpc('prioridades_regra_salvar', {
+    p_upj_id: upjId,
+    p_tipo: tipo,
+    p_texto: texto,
+  });
+}
+
+export async function definirVisaoFila(somenteVinculadas: boolean): Promise<RespostaRpc> {
+  return chamarRpc('prioridades_definir_visao_fila', { p_somente_vinculadas: somenteVinculadas });
 }

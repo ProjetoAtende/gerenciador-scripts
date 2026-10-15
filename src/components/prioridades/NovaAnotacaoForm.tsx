@@ -19,12 +19,13 @@ import {
 import {
   criarAnotacao,
   listarAnotacoesAnteriores,
+  listarRegrasEspeciais,
   listarTiposPrioridade,
   listarTiposSolicitante,
   listarUpjs,
   resolverUpjPorOrgao,
 } from '../../services/prioridadesService';
-import type { CatalogoItem } from '../../services/prioridadesService';
+import type { CatalogoItem, RegraEspecial } from '../../services/prioridadesService';
 import { StatusBadge } from './PrioridadesUi';
 
 interface NovaAnotacaoProps {
@@ -45,6 +46,7 @@ const ESTADO_INICIAL: NovaAnotacaoPayload = {
   nome_orgao_djen: null,
   tipo_solicitante: '',
   descricao_solicitante: '',
+  nome_solicitante: '',
   tipo_prioridade: '',
   descricao_tipo_outros: '',
   evento_folha: '',
@@ -74,19 +76,24 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
   const [salvando, setSalvando] = useState(false);
   const [erroGeral, setErroGeral] = useState<string | null>(null);
   const [pendentes, setPendentes] = useState<string[]>([]);
+  const [incluirNomeSolicitante, setIncluirNomeSolicitante] = useState(false);
+  const [regras, setRegras] = useState<RegraEspecial[]>([]);
+  const [regraModal, setRegraModal] = useState<string | null>(null);
 
   const ultimaConsulta = useRef<string>('');
 
   useEffect(() => {
     (async () => {
-      const [ts, tp, us] = await Promise.all([
+      const [ts, tp, us, rs] = await Promise.all([
         listarTiposSolicitante(),
         listarTiposPrioridade(),
         listarUpjs(),
+        listarRegrasEspeciais(),
       ]);
       setTiposSolicitante(ts);
       setTiposPrioridade(tp);
       setUpjs(us);
+      setRegras(rs);
     })();
   }, []);
 
@@ -109,6 +116,22 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
   const digitosAtuais = somenteDigitos(form.processo).length;
   const podeVerificar = digitosAtuais === 20 || digitosAtuais === 13;
   const precisaComplementar = digitosAtuais === 13;
+  const consultaConcluida = resultadoDjen !== null;
+  const mostrarSolicitante = consultaConcluida;
+  const mostrarTipo = mostrarSolicitante && form.tipo_solicitante !== '';
+  const mostrarRestante = mostrarTipo && form.tipo_prioridade !== '';
+
+  const abrirRegra = useCallback(
+    (upj: string | null, tipoPrioridade: string) => {
+      if (!upj || !tipoPrioridade) {
+        setRegraModal(null);
+        return;
+      }
+      const regra = regras.find((r) => r.upj_id === upj && r.tipo_prioridade === tipoPrioridade && r.texto.trim());
+      setRegraModal(regra?.texto ?? null);
+    },
+    [regras]
+  );
 
   /**
    * RF-ATD-03/04: consulta o DJEN e resolve a UPJ.
@@ -247,6 +270,7 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
       const resposta = await criarAnotacao({
         ...form,
         processo: somenteDigitos(form.processo),
+        nome_solicitante: incluirNomeSolicitante ? form.nome_solicitante.trim() : '',
       });
 
       if (!resposta.sucesso) {
@@ -384,7 +408,6 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
                 <strong>UPJ:</strong>{' '}
                 {upjDetectada?.nome ? (
                   <span className="font-semibold text-emerald-800 dark:text-emerald-300">
-                    {upjDetectada.codigo ? `${upjDetectada.codigo} — ` : ''}
                     {upjDetectada.nome}
                   </span>
                 ) : (
@@ -408,8 +431,8 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
         </div>
       )}
 
-      {/* ── Solicitante (RF-ATD-05) ──────────────────────────── */}
-      <div>
+      {/* ── Solicitante (RF-ATD-05) — só depois da consulta do processo ─ */}
+      {mostrarSolicitante && <div>
         <label htmlFor="pu-solicitante" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
           Solicitante <span className="text-red-600">*</span>
         </label>
@@ -426,9 +449,31 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
             </option>
           ))}
         </select>
-      </div>
+        <label className="mt-2 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+          <input
+            type="checkbox"
+            className="h-4 w-4"
+            checked={incluirNomeSolicitante}
+            onChange={(e) => {
+              setIncluirNomeSolicitante(e.target.checked);
+              if (!e.target.checked) atualizar('nome_solicitante', '');
+            }}
+          />
+          Incluir o nome do(a) Solicitante
+        </label>
+        {incluirNomeSolicitante && (
+          <input
+            id="pu-nome-solicitante"
+            type="text"
+            value={form.nome_solicitante}
+            onChange={(e) => atualizar('nome_solicitante', e.target.value)}
+            placeholder="Nome do solicitante"
+            className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+          />
+        )}
+      </div>}
 
-      {form.tipo_solicitante === 'outros' && (
+      {mostrarSolicitante && form.tipo_solicitante === 'outros' && (
         <div>
           <label htmlFor="pu-solicitante-outros" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
             Descrição do(s) Solicitante <span className="text-red-600">*</span>
@@ -444,14 +489,18 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
       )}
 
       {/* ── Tipo de Prioridade (RF-ATD-06/07) ────────────────── */}
-      <div>
+      {mostrarTipo && <div>
         <label htmlFor="pu-prioridade" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
           Tipo de Prioridade/Urgência <span className="text-red-600">*</span>
         </label>
         <select
           id="pu-prioridade"
           value={form.tipo_prioridade}
-          onChange={(e) => atualizar('tipo_prioridade', e.target.value as TipoPrioridade)}
+          onChange={(e) => {
+            const valor = e.target.value as TipoPrioridade;
+            atualizar('tipo_prioridade', valor);
+            abrirRegra(form.upj_id, valor);
+          }}
           className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
         >
           <option value="">Selecione…</option>
@@ -461,10 +510,10 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
             </option>
           ))}
         </select>
-      </div>
+      </div>}
 
       {/* RF-ATD-07: aviso contextual do tipo selecionado. */}
-      {tipoPrioridadeSelecionado?.aviso && (
+      {mostrarTipo && tipoPrioridadeSelecionado?.aviso && (
         <div className="rounded-lg border border-blue-300 bg-blue-50 p-3 text-sm text-blue-900 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-100">
           <p className="font-semibold">Aviso</p>
           <p className="mt-1">{tipoPrioridadeSelecionado.aviso}</p>
@@ -477,7 +526,7 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
         </div>
       )}
 
-      {form.tipo_prioridade === 'outros' && (
+      {mostrarRestante && form.tipo_prioridade === 'outros' && (
         <div>
           <label htmlFor="pu-prioridade-outros" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
             Descrição do Tipo de Prioridade/Urgência (Outros) <span className="text-red-600">*</span>
@@ -501,6 +550,7 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
           sistema o processo tramita, e o número CNJ não carrega essa
           informação — então o dado passa a ser fornecido pelo atendente.
           Opcional: não bloqueia o envio. */}
+      {mostrarRestante && <>
       <div>
         <label htmlFor="pu-plataforma" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
           Sistema
@@ -530,13 +580,17 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
         <select
           id="pu-upj"
           value={form.upj_id ?? ''}
-          onChange={(e) => atualizar('upj_id', e.target.value || null)}
+          onChange={(e) => {
+            const valor = e.target.value || null;
+            atualizar('upj_id', valor);
+            abrirRegra(valor, form.tipo_prioridade);
+          }}
           className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
         >
           <option value="">Não definida</option>
           {upjs.map((u) => (
             <option key={u.id} value={u.id}>
-              {u.codigo} — {u.nome}
+              {u.nome}
             </option>
           ))}
         </select>
@@ -588,9 +642,28 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
           className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
         />
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Anotações internas do TJSP Atende (não serão repassadas às UPJs).
+          Anotações internas do TJSP Atende (não serão repassadas às UPJs). Campo opcional.
         </p>
       </div>
+      </>}
+
+      {regraModal && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 p-4" role="alertdialog">
+          <div className="max-w-lg rounded-xl bg-white p-5 shadow-xl dark:bg-gray-800">
+            <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Regra especial desta UPJ</h3>
+            <p className="mt-3 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-200">{regraModal}</p>
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setRegraModal(null)}
+                className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+              >
+                Entendi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
         <span className="mr-auto text-xs text-gray-500 dark:text-gray-400">

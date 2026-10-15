@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissoes } from '../../contexts/PermissoesContext';
 import { usePrioridadesModal } from '../../hooks/usePrioridadesModal';
@@ -19,8 +19,9 @@ interface PrioridadesModalProps {
  */
 const PrioridadesModal: React.FC<PrioridadesModalProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
-  const { temPermissao, isAdmin } = usePermissoes();
+  const { isAdmin } = usePermissoes();
   const estado = usePrioridadesModal(isOpen);
+  const [painelRecolhido, setPainelRecolhido] = useState(false);
 
   // Fecha com Esc.
   useEffect(() => {
@@ -34,10 +35,10 @@ const PrioridadesModal: React.FC<PrioridadesModalProps> = ({ isOpen, onClose }) 
 
   if (!isOpen) return null;
 
-  const temDesignacoes =
-    temPermissao('prioridades.designacoes') ||
-    estado.perfil?.perfil === 'gestor' ||
-    estado.perfil?.perfil === 'coordenador';
+  const ehGestor = estado.perfil?.perfil === 'gestor' || estado.perfilEfetivo === 'gestor';
+  const ehCoordenador = estado.perfil?.perfil === 'coordenador' || estado.perfilEfetivo === 'coordenador';
+  const temDesignacoes = ehGestor || ehCoordenador || isAdmin;
+  const temConfiguracoes = estado.perfil?.perfil === 'gestor';
 
   const nomeUsuario = user?.email ?? '';
 
@@ -62,16 +63,17 @@ const PrioridadesModal: React.FC<PrioridadesModalProps> = ({ isOpen, onClose }) 
 
       <div className="flex min-h-0 flex-1">
         <PrioridadesSidebar
-          modulo={estado.modulo}
-          setModulo={estado.setModulo}
           perfil={estado.perfil}
           perfilEfetivo={estado.perfilEfetivo}
           nomeUsuario={nomeUsuario}
+          upjs={estado.upjs}
           contadores={estado.contadores}
           tela={estado.tela}
           irPara={estado.irPara}
           temDesignacoes={temDesignacoes}
-          ehAdmin={isAdmin}
+          temConfiguracoes={temConfiguracoes}
+          recolhido={painelRecolhido}
+          alternarRecolhido={() => setPainelRecolhido((atual) => !atual)}
         />
         <PrioridadesContent {...estado} nomeUsuario={nomeUsuario} />
       </div>

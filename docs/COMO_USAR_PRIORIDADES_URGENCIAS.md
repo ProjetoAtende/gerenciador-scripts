@@ -5,7 +5,15 @@ Gerenciador Atende. Cada seção narrativa é também um caso de teste executáv
 tem pré-condições, passo a passo e o resultado esperado.
 
 Base: Especificação Técnica v1.0 (out/2026). Decisões de projeto e a integração
-com o DJEN estão em [PRIORIDADES_URGENCIAS_DJEN.md](PRIORIDADES_URGENCIAS_DJEN.md).
+com o DJEN estão em [PRIORIDADES_URGENCIAS_DJEN.md](implementation-guides/PRIORIDADES_URGENCIAS_DJEN.md).
+
+> **Reclassificação (out/2026).** Status e marcas (Nova, Em Análise, Reiterada,
+> Urgentíssima automática, prazo 24 h, Configurações) estão descritos em
+> [PRIORIDADES_URGENCIAS_RECLASSIFICACAO_ENTREGA.md](PRIORIDADES_URGENCIAS_RECLASSIFICACAO_ENTREGA.md).
+> Roteiro focado nas mudanças:
+> [PRIORIDADES_URGENCIAS_RECLASSIFICACAO_TESTES.md](PRIORIDADES_URGENCIAS_RECLASSIFICACAO_TESTES.md).
+> Este guia cobre o fluxo completo do app; onde houver divergência de rótulo ou
+> menu, prevalece a documentação de reclassificação.
 
 > **Sobre este roteiro.** Ele foi escrito executando os casos, não apenas
 > descrevendo a intenção. Três defeitos reais apareceram nesse processo e foram
@@ -35,11 +43,11 @@ leitura. O sistema entregue mantém **visibilidade restrita** e
 > (`Configurações → abrir cards em nova aba`). Se preferir o modal na mesma
 > página, desative essa opção nas configurações do usuário.
 
-### Os três módulos
+### Painel por perfil (sem abas de módulo)
 
-O módulo exibido é derivado do **seu perfil**, não escolhido livremente — cada
-pessoa tem um perfil no app, e uma designação em vigor pode habilitar o módulo
-correspondente.
+O menu lateral é derivado do **seu perfil** (e designações), não há alternância
+Atendente / Gestor / UPJ na interface. Cada pessoa vê as listas da sua função;
+Gestor e Conferente designado compartilham o painel com seções Atendentes e UPJs.
 
 | Módulo | Perfis | O que se faz |
 |---|---|---|

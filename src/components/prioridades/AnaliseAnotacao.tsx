@@ -24,7 +24,7 @@ export const AnaliseAnotacao: React.FC<Props> = ({ anotacao, onConcluir, onVolta
   const [decisao, setDecisao] = useState<Decisao>('resolver');
   const [observacaoUpj, setObservacaoUpj] = useState(anotacao.observacao_adicional_upj ?? '');
   const [justificativa, setJustificativa] = useState('');
-  const [arquivamentoAutomatico, setArquivamentoAutomatico] = useState(false);
+  const [rejeicaoAutomatica, setRejeicaoAutomatica] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -37,7 +37,7 @@ export const AnaliseAnotacao: React.FC<Props> = ({ anotacao, onConcluir, onVolta
         decisao,
         observacaoUpj,
         justificativa,
-        arquivamentoAutomatico,
+        arquivamentoAutomatico: decisao === 'devolver' ? rejeicaoAutomatica : false,
       });
 
       if (!resposta.sucesso) {
@@ -49,8 +49,8 @@ export const AnaliseAnotacao: React.FC<Props> = ({ anotacao, onConcluir, onVolta
         decisao === 'resolver'
           ? `Anotação ${anotacao.id} resolvida pela UPJ.`
           : decisao === 'devolver'
-            ? `Anotação ${anotacao.id} devolvida ao TJSP Atende com prazo de 24 h.`
-            : `Anotação ${anotacao.id} arquivada (rejeitada pela UPJ).`;
+            ? `Anotação ${anotacao.id} retornada ao TJSP Atende com prazo de 24 h.`
+            : `Anotação ${anotacao.id} rejeitada pela UPJ.`;
       await onConcluir(rotulo);
     } finally {
       setEnviando(false);
@@ -63,7 +63,12 @@ export const AnaliseAnotacao: React.FC<Props> = ({ anotacao, onConcluir, onVolta
         <div className="flex flex-wrap items-center gap-3">
           <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Análise de Anotação</h2>
           <StatusBadge status={anotacao.status} />
-          {anotacao.urgentissimo && (
+          {anotacao.reiterada && (
+            <span className="rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-semibold text-orange-800 dark:bg-orange-900/40 dark:text-orange-200">
+              🔁 Reiterada
+            </span>
+          )}
+          {(anotacao.urgentissimo || anotacao.urgentissimo_auto) && (
             <span className="rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-bold text-white">
               ⚡ Urgentíssimo
             </span>
@@ -95,6 +100,7 @@ export const AnaliseAnotacao: React.FC<Props> = ({ anotacao, onConcluir, onVolta
           Teor da anotação
         </h3>
         <CampoLeitura label="Solicitante" valor={anotacao.tipo_solicitante} />
+        {anotacao.nome_solicitante && <CampoLeitura label="Nome do Solicitante" valor={anotacao.nome_solicitante} />}
         {anotacao.descricao_solicitante && (
           <CampoLeitura label="Descrição do Solicitante" valor={anotacao.descricao_solicitante} />
         )}
@@ -129,7 +135,7 @@ export const AnaliseAnotacao: React.FC<Props> = ({ anotacao, onConcluir, onVolta
             {(
               [
                 ['resolver', 'Resolver'],
-                ['devolver', 'Devolver'],
+                ['devolver', 'Retornar'],
                 ['rejeitar', 'Rejeitar'],
               ] as Array<[Decisao, string]>
             ).map(([valor, label]) => (
@@ -178,20 +184,20 @@ export const AnaliseAnotacao: React.FC<Props> = ({ anotacao, onConcluir, onVolta
           </div>
         )}
 
-        {decisao === 'rejeitar' && (
+        {decisao === 'devolver' && (
           <div className="rounded-md border border-stone-300 bg-stone-50 p-3 dark:border-stone-600 dark:bg-stone-700/40">
             <label className="flex items-center gap-2 text-sm text-stone-800 dark:text-stone-200">
               <input
                 type="checkbox"
-                checked={arquivamentoAutomatico}
-                onChange={(e) => setArquivamentoAutomatico(e.target.checked)}
+                checked={rejeicaoAutomatica}
+                onChange={(e) => setRejeicaoAutomatica(e.target.checked)}
                 className="h-4 w-4"
               />
-              Incluir Arquivamento Automático
+              Rejeição automática
             </label>
             <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">
-              ⚠️ Comportamento não definido na especificação (pendência 5). O valor é registrado, mas nenhuma ação
-              automática é executada até a regra ser homologada.
+              Se o Gestor não corrigir a anotação no prazo de 24 h — sem contar sábado, domingo e dias sem expediente
+              —, a UPJ a rejeita automaticamente.
             </p>
           </div>
         )}
@@ -210,7 +216,7 @@ export const AnaliseAnotacao: React.FC<Props> = ({ anotacao, onConcluir, onVolta
             disabled={enviando}
             className="rounded-lg bg-blue-700 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-800 disabled:bg-gray-400"
           >
-            {enviando ? 'Processando…' : decisao === 'devolver' ? 'Enviar Devolução' : 'Arquivar'}
+            {enviando ? 'Processando…' : decisao === 'devolver' ? 'Retornar' : decisao === 'rejeitar' ? 'Rejeitar' : 'Resolver'}
           </button>
         </div>
       </div>

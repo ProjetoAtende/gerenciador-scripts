@@ -1,6 +1,7 @@
 import React from 'react';
 import type { AnotacaoPrioridade, PrioridadeStatus } from '../../types/Prioridades';
 import { STATUS_CLASSE, STATUS_LABEL } from '../../types/Prioridades';
+import { ehUrgentissima } from './prioridadesListas';
 import { formatarProcessoCnj } from '../../services/prioridadesDjenService';
 import { formatarDataHora, prazoRestante } from './prioridadesUtils';
 
@@ -60,7 +61,12 @@ export const AnotacaoCard: React.FC<AnotacaoCardProps> = ({ anotacao, onAbrir, u
           {formatarProcessoCnj(anotacao.processo)}
         </span>
         <StatusBadge status={anotacao.status} />
-        {anotacao.urgentissimo && <UrgentissimoBadge />}
+        {anotacao.reiterada && (
+          <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-800 dark:bg-orange-900/40 dark:text-orange-200">
+            🔁 Reiterada
+          </span>
+        )}
+        {ehUrgentissima(anotacao) && <UrgentissimoBadge />}
         {anotacao.correcao_automatica && (
           <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900/40 dark:text-orange-200">
             Correção automática engatilhada

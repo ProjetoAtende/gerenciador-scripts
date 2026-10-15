@@ -2,16 +2,18 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissoes } from '../../contexts/PermissoesContext';
 import type { UsePrioridadesModal } from '../../hooks/usePrioridadesModal';
-import { listarAnotacoes } from '../../services/prioridadesService';
-import type { AnotacaoPrioridade } from '../../types/Prioridades';
-import { gruposDoModulo } from '../../types/Prioridades';
+import { listarAnotacoes, marcarEmAnalise, registrarAcessoPrivilegiado } from '../../services/prioridadesService';
+import type { AnotacaoPrioridade, PrioridadePerfil } from '../../types/Prioridades';
 import { AnotacaoCard } from './PrioridadesUi';
 import { NovaAnotacaoForm } from './NovaAnotacaoForm';
 import { ConferenciaAnotacao } from './ConferenciaAnotacao';
 import { AnaliseAnotacao } from './AnaliseAnotacao';
 import { RespostaDevolucao } from './RespostaDevolucao';
+import { CorrecaoRetornada } from './CorrecaoRetornada';
 import { DesignacoesTela } from './DesignacoesTela';
+import { ConfiguracoesTela } from './ConfiguracoesTela';
 import { HistoricoTela } from './HistoricoTela';
+import { anotacaoNaLista, type ChaveLista } from './prioridadesListas';
 
 interface PrioridadesContentProps extends UsePrioridadesModal {
   /** Mantido para o cabeçalho de contexto; o nome já aparece no painel lateral. */
@@ -19,58 +21,76 @@ interface PrioridadesContentProps extends UsePrioridadesModal {
 }
 
 /** Tela "Inicial" dos módulos Atendentes (7.2), Gestores (7.3) e UPJs (7.4). */
+const ROTULO_LISTA: Record<string, string> = {
+  'ag-conferencia': 'Ag. Conferência',
+  devolvidas: 'Devolvidas',
+  aprovadas: 'Aprovadas',
+  reprovadas: 'Reprovadas',
+  urgentissimas: 'Urgentíssimas',
+  reiteradas: 'Reiteradas',
+  retornadas: 'Retornadas',
+  novas: 'Novas',
+  'em-analise': 'Em Análise',
+  resolvidas: 'Resolvidas',
+  rejeitadas: 'Rejeitadas',
+};
+
 const TelaInicial: React.FC<{
-  modulo: UsePrioridadesModal['modulo'];
+  perfilEfetivo: PrioridadePerfil | null;
   anotacoes: AnotacaoPrioridade[];
+  contexto: { perfilEfetivo: PrioridadePerfil | null; usuarioId: string | null; somenteVinculadas: boolean };
   onAbrir: (a: AnotacaoPrioridade) => void;
   onVerLista: (grupo: string) => void;
   onNova: () => void;
-}> = ({ modulo, anotacoes, onAbrir, onVerLista, onNova }) => {
+}> = ({ perfilEfetivo, anotacoes, contexto, onAbrir, onVerLista, onNova }) => {
   const secoes = useMemo(() => {
-    if (modulo === 'atendente') {
-      return [{ grupo: 'devolvidas', titulo: 'Anotações Devolvidas' }];
-    }
-    if (modulo === 'gestor') {
+    if (perfilEfetivo === 'coordenador' || perfilEfetivo === 'analista') {
       return [
-        { grupo: 'ag-conferencia', titulo: 'Anotações Aguardando Conferência' },
+        { grupo: 'urgentissimas', titulo: 'Anotações Urgentíssimas' },
         { grupo: 'reiteradas', titulo: 'Anotações Reiteradas' },
-        { grupo: 'devolvidas', titulo: 'Devolvidas da UPJ' },
+        { grupo: 'novas', titulo: 'Anotações Novas' },
+      ];
+    }
+    if (perfilEfetivo === 'gestor' || perfilEfetivo === 'conferente') {
+      return [
+        { grupo: 'ag-conferencia', titulo: 'Aguardando Conferência' },
+        { grupo: 'devolvidas', titulo: 'Devolvidas' },
+        { grupo: 'retornadas', titulo: 'Retornadas pela UPJ' },
+        { grupo: 'novas', titulo: 'Novas na UPJ' },
       ];
     }
     return [
-      { grupo: 'urgentissimas', titulo: 'Anotações Urgentíssimas' },
-      { grupo: 'reiteradas', titulo: 'Anotações Reiteradas' },
-      { grupo: 'pendentes', titulo: 'Anotações Pendentes' },
+      { grupo: 'devolvidas', titulo: 'Anotações Devolvidas' },
+      { grupo: 'ag-conferencia', titulo: 'Aguardando Conferência' },
     ];
-  }, [modulo]);
+  }, [perfilEfetivo]);
 
   const porSecao = useMemo(() => {
     const resultado: Record<string, AnotacaoPrioridade[]> = {};
     for (const secao of secoes) {
-      if (secao.grupo === 'urgentissimas') {
-        resultado[secao.grupo] = anotacoes.filter((a) => a.urgentissimo && a.status === 'upj-pendente');
-      } else {
-        const grupo = gruposDoModulo(modulo).find((g) => g.chave === secao.grupo);
-        resultado[secao.grupo] = grupo
-          ? anotacoes.filter((a) => grupo.status.includes(a.status))
-          : [];
-      }
+      resultado[secao.grupo] = anotacoes.filter((a) =>
+        anotacaoNaLista(a, secao.grupo as ChaveLista, contexto)
+      );
     }
     return resultado;
-  }, [anotacoes, secoes, modulo]);
+  }, [anotacoes, secoes, contexto]);
 
   return (
     <div className="space-y-6 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">
-            {modulo === 'atendente' ? 'Painel do Atendente' : modulo === 'gestor' ? 'Painel do Gestor' : 'Painel da UPJ'}
+            {perfilEfetivo === 'coordenador' || perfilEfetivo === 'analista'
+              ? 'Painel da UPJ'
+              : perfilEfetivo === 'gestor' || perfilEfetivo === 'conferente'
+                ? 'Painel do Gestor'
+                : 'Painel do Atendente'}
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Registro guiado de anotações de prioridade e urgência, com rastreabilidade integral.
           </p>
         </div>
-        {modulo === 'atendente' && (
+        {(perfilEfetivo === 'atendente' || perfilEfetivo === 'gestor' || perfilEfetivo === 'conferente' || !perfilEfetivo) && (
           <button
             type="button"
             onClick={onNova}
@@ -118,7 +138,6 @@ const TelaInicial: React.FC<{
 };
 
 export const PrioridadesContent: React.FC<PrioridadesContentProps> = ({
-  modulo,
   perfil,
   perfilEfetivo,
   upjs,
@@ -137,7 +156,7 @@ export const PrioridadesContent: React.FC<PrioridadesContentProps> = ({
     (upjId: string | null): string | null => {
       if (!upjId) return null;
       const u = upjs.find((x) => x.id === upjId);
-      return u ? `${u.codigo} — ${u.nome}` : null;
+      return u ? u.nome : null;
     },
     [upjs]
   );
@@ -154,21 +173,44 @@ export const PrioridadesContent: React.FC<PrioridadesContentProps> = ({
 
   useEffect(() => {
     void carregar();
-  }, [carregar, modulo, tela]);
+  }, [carregar, tela]);
+
+  const contextoLista = useMemo(
+    () => ({
+      perfilEfetivo,
+      usuarioId: user?.id ?? null,
+      somenteVinculadas: perfil?.ver_somente_vinculadas ?? false,
+    }),
+    [perfilEfetivo, perfil?.ver_somente_vinculadas, user?.id]
+  );
 
   const abrirAnotacao = useCallback(
     (a: AnotacaoPrioridade) => {
+      if (isAdmin) void registrarAcessoPrivilegiado(a.id);
+
+      const podeConferir = perfilEfetivo === 'gestor' || perfilEfetivo === 'conferente';
+      const podeAnalisar = perfilEfetivo === 'coordenador' || perfilEfetivo === 'analista';
+
+      if (podeAnalisar && a.status === 'upj-pendente') {
+        void marcarEmAnalise(a.id).then(() => {
+          void carregar();
+          void atualizar();
+        });
+      }
+
       const modo =
-        a.status === 'gestor-conferencia'
+        a.status === 'gestor-conferencia' && podeConferir
           ? 'conferencia'
-          : a.status === 'upj-pendente'
+          : (a.status === 'upj-pendente' || a.status === 'upj-analisada') && podeAnalisar
             ? 'analise'
-            : a.status === 'gestor-devolvida' || a.status === 'upj-devolvida'
+            : a.status === 'gestor-devolvida'
               ? 'resposta'
-              : 'consulta';
+              : a.status === 'upj-devolvida' && podeConferir
+                ? 'correcao'
+                : 'consulta';
       irPara({ tipo: 'detalhe', anotacaoId: a.id, modo });
     },
-    [irPara]
+    [irPara, isAdmin, perfilEfetivo, carregar, atualizar]
   );
 
   const aposAcao = useCallback(
@@ -182,12 +224,9 @@ export const PrioridadesContent: React.FC<PrioridadesContentProps> = ({
 
   const itensDaLista = useMemo(() => {
     if (tela.tipo !== 'lista') return [];
-    if (tela.grupo === 'urgentissimas') {
-      return anotacoes.filter((a) => a.urgentissimo && a.status === 'upj-pendente');
-    }
-    const grupo = gruposDoModulo(modulo).find((g) => g.chave === tela.grupo);
-    return grupo ? anotacoes.filter((a) => grupo.status.includes(a.status)) : [];
-  }, [tela, anotacoes, modulo]);
+    if (!(tela.grupo in ROTULO_LISTA)) return [];
+    return anotacoes.filter((a) => anotacaoNaLista(a, tela.grupo as ChaveLista, contextoLista));
+  }, [tela, anotacoes, contextoLista]);
 
   const anotacaoEmFoco = useMemo(
     () => (tela.tipo === 'detalhe' ? anotacoes.find((a) => a.id === tela.anotacaoId) ?? null : null),
@@ -238,8 +277,9 @@ export const PrioridadesContent: React.FC<PrioridadesContentProps> = ({
 
       {tela.tipo === 'inicial' && (
         <TelaInicial
-          modulo={modulo}
+          perfilEfetivo={perfilEfetivo}
           anotacoes={anotacoes}
+          contexto={contextoLista}
           onAbrir={abrirAnotacao}
           onVerLista={(grupo) => irPara({ tipo: 'lista', grupo })}
           onNova={() => irPara({ tipo: 'nova' })}
@@ -250,9 +290,7 @@ export const PrioridadesContent: React.FC<PrioridadesContentProps> = ({
         <div className="space-y-3 p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">
-              {tela.grupo === 'urgentissimas'
-                ? 'Urgentíssimas'
-                : gruposDoModulo(modulo).find((g) => g.chave === tela.grupo)?.label ?? 'Lista'}
+              {ROTULO_LISTA[tela.grupo] ?? 'Lista'}
               <span className="ml-2 text-sm font-normal text-gray-500">({itensDaLista.length})</span>
             </h2>
             <button
@@ -316,6 +354,10 @@ export const PrioridadesContent: React.FC<PrioridadesContentProps> = ({
         <RespostaDevolucao anotacao={anotacaoEmFoco} onConcluir={aposAcao} onVoltar={voltarInicial} />
       )}
 
+      {tela.tipo === 'detalhe' && anotacaoEmFoco && tela.modo === 'correcao' && (
+        <CorrecaoRetornada anotacao={anotacaoEmFoco} onConcluir={aposAcao} onVoltar={voltarInicial} />
+      )}
+
       {tela.tipo === 'detalhe' && anotacaoEmFoco && tela.modo === 'consulta' && (
         <ConferenciaAnotacao
           anotacao={anotacaoEmFoco}
@@ -332,6 +374,15 @@ export const PrioridadesContent: React.FC<PrioridadesContentProps> = ({
           perfil={perfil}
           ehAdmin={isAdmin}
           upjs={upjs}
+          onVoltar={voltarInicial}
+          onAtualizar={atualizar}
+        />
+      )}
+
+      {tela.tipo === 'configuracoes' && (
+        <ConfiguracoesTela
+          upjs={upjs}
+          somenteVinculadas={perfil?.ver_somente_vinculadas ?? false}
           onVoltar={voltarInicial}
           onAtualizar={atualizar}
         />

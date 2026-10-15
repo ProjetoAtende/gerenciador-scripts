@@ -131,6 +131,8 @@ export interface PerfilUsuarioPrioridades {
   perfil: PrioridadePerfil;
   upj_id: string | null;
   vinculacao_automatica: boolean;
+  /** Preferência do Gestor nas listas Ag. Conferência e Retornadas. */
+  ver_somente_vinculadas: boolean;
   designacoes_ativas: DesignacaoAtiva[];
 }
 
@@ -199,6 +201,7 @@ export interface AnotacaoPrioridade {
 
   tipo_solicitante: TipoSolicitante;
   descricao_solicitante: string | null;
+  nome_solicitante: string | null;
   tipo_prioridade: TipoPrioridade;
   descricao_tipo_outros: string | null;
   evento_folha: string;
@@ -215,7 +218,12 @@ export interface AnotacaoPrioridade {
   correcao_automatica: boolean;
   texto_correcao_automatica: string | null;
   observacao_adicional_gestor: string | null;
+  /** Marcação manual do Gestor ou do Conferente. */
   urgentissimo: boolean;
+  /** Marcação objetiva: 3 ou mais anotações do processo ainda em andamento. */
+  urgentissimo_auto: boolean;
+  /** Marca cumulativa: 2 ou mais anotações do processo ainda em andamento. */
+  reiterada: boolean;
 
   data_remessa_upj: string | null;
   analista_vinculado_id: string | null;
@@ -226,6 +234,8 @@ export interface AnotacaoPrioridade {
   justificativa_rejeicao_upj: string | null;
   observacao_adicional_upj: string | null;
   arquivamento_automatico: boolean;
+  /** PD-07. Engatilhada quando a UPJ retorna a anotação. */
+  rejeicao_automatica: boolean;
 
   devolvida_por: 'gestor' | 'upj' | null;
   data_devolucao: string | null;
@@ -263,6 +273,7 @@ export interface NovaAnotacaoPayload {
   nome_orgao_djen: string | null;
   tipo_solicitante: TipoSolicitante | '';
   descricao_solicitante: string;
+  nome_solicitante: string;
   tipo_prioridade: TipoPrioridade | '';
   descricao_tipo_outros: string;
   evento_folha: string;
@@ -287,14 +298,14 @@ export interface RespostaRpc<T = unknown> {
 export const STATUS_LABEL: Record<PrioridadeStatus, string> = {
   'gestor-conferencia': 'Ag. Conferência',
   'gestor-aprovada': 'Aprovada',
-  'gestor-devolvida': 'Devolvida (Gestor)',
-  'gestor-rejeitada': 'Rejeitada (Gestor)',
-  'upj-pendente': 'Pendente (UPJ)',
-  'upj-reiterada': 'Reiterada (UPJ)',
-  'upj-analisada': 'Analisada (UPJ)',
-  'upj-resolvida': 'Resolvida (UPJ)',
-  'upj-devolvida': 'Devolvida (UPJ)',
-  'upj-rejeitada': 'Rejeitada (UPJ)',
+  'gestor-devolvida': 'Devolvida',
+  'gestor-rejeitada': 'Reprovada',
+  'upj-pendente': 'Nova',
+  'upj-reiterada': 'Reiterada',
+  'upj-analisada': 'Em Análise',
+  'upj-resolvida': 'Resolvida',
+  'upj-devolvida': 'Retornada',
+  'upj-rejeitada': 'Rejeitada',
 };
 
 /**
@@ -314,8 +325,8 @@ export const STATUS_CLASSE: Record<PrioridadeStatus, string> = {
   'upj-rejeitada': 'bg-stone-200 text-stone-700 dark:bg-stone-700/60 dark:text-stone-200',
 };
 
-/** Status em que a anotação aguarda ação do autor (RF-ATD-13/14). */
-export const STATUS_DEVOLVIDA: PrioridadeStatus[] = ['gestor-devolvida', 'upj-devolvida'];
+/** Devolução que volta ao Atendente. Retorno da UPJ fica com o Gestor. */
+export const STATUS_DEVOLVIDA: PrioridadeStatus[] = ['gestor-devolvida'];
 
 /** Status encerrados — não admitem mais transição operacional. */
 export const STATUS_ENCERRADO: PrioridadeStatus[] = [
@@ -323,61 +334,6 @@ export const STATUS_ENCERRADO: PrioridadeStatus[] = [
   'upj-rejeitada',
   'upj-resolvida',
 ];
-
-/** Agrupamento usado nos contadores do painel lateral (RF-GES-08 / RF-UPJ-02). */
-export interface GrupoPainel {
-  chave: string;
-  label: string;
-  status: PrioridadeStatus[];
-  /**
-   * PU-12: "Urgentíssimas" não é um status — é um recorte por
-   * `urgentissimo = true` sobre as anotações pendentes. Sem esta marca, o
-   * contador somava TODAS as `upj-pendente` e divergia da lista exibida.
-   */
-  somenteUrgentissimos?: boolean;
-}
-
-export const GRUPOS_PAINEL_ATENDENTE: GrupoPainel[] = [
-  { chave: 'ag-conferencia', label: 'Ag. Conferência', status: ['gestor-conferencia'] },
-  { chave: 'devolvidas', label: 'Devolvidas', status: STATUS_DEVOLVIDA },
-  { chave: 'aprovadas', label: 'Aprovadas', status: ['gestor-aprovada', 'upj-pendente', 'upj-analisada'] },
-  { chave: 'resolvidas', label: 'Resolvidas', status: ['upj-resolvida'] },
-  { chave: 'rejeitadas', label: 'Rejeitadas', status: ['gestor-rejeitada', 'upj-rejeitada'] },
-];
-
-export const GRUPOS_PAINEL_GESTOR: GrupoPainel[] = [
-  { chave: 'ag-conferencia', label: 'Ag. Conferência', status: ['gestor-conferencia'] },
-  { chave: 'reiteradas', label: 'Reiteradas', status: ['upj-reiterada'] },
-  { chave: 'pendentes', label: 'Pendentes', status: ['upj-pendente'] },
-  {
-    chave: 'analisadas',
-    label: 'Analisadas',
-    // Pendência 11 do documento: nos Gestores, "Aprovadas" = Analisadas + Devolvidas.
-    status: ['upj-analisada', 'upj-devolvida'],
-  },
-  { chave: 'resolvidas', label: 'Resolvidas', status: ['upj-resolvida'] },
-  { chave: 'devolvidas', label: 'Devolvidas', status: ['gestor-devolvida'] },
-  { chave: 'aprovadas', label: 'Aprovadas', status: ['gestor-aprovada'] },
-  { chave: 'rejeitadas', label: 'Rejeitadas', status: ['gestor-rejeitada', 'upj-rejeitada'] },
-];
-
-export const GRUPOS_PAINEL_UPJ: GrupoPainel[] = [
-  // Recorte por marcação, não por status: ver `somenteUrgentissimos`.
-  { chave: 'urgentissimas', label: 'Urgentíssimas', status: ['upj-pendente'], somenteUrgentissimos: true },
-  { chave: 'reiteradas', label: 'Reiteradas', status: ['upj-reiterada'] },
-  { chave: 'pendentes', label: 'Pendentes', status: ['upj-pendente'] },
-  { chave: 'analisadas', label: 'Analisadas', status: ['upj-analisada'] },
-  { chave: 'resolvidas', label: 'Resolvidas', status: ['upj-resolvida'] },
-  { chave: 'devolvidas', label: 'Devolvidas', status: ['upj-devolvida'] },
-  { chave: 'aprovadas', label: 'Aprovadas', status: ['gestor-aprovada'] },
-  { chave: 'rejeitadas', label: 'Rejeitadas', status: ['gestor-rejeitada', 'upj-rejeitada'] },
-];
-
-export function gruposDoModulo(modulo: PrioridadeModulo): GrupoPainel[] {
-  if (modulo === 'atendente') return GRUPOS_PAINEL_ATENDENTE;
-  if (modulo === 'gestor') return GRUPOS_PAINEL_GESTOR;
-  return GRUPOS_PAINEL_UPJ;
-}
 
 export const PERFIL_LABEL: Record<PrioridadePerfil, string> = {
   atendente: 'Atendente',

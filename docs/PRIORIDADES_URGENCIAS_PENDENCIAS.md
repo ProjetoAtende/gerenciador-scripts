@@ -8,11 +8,13 @@ que é necessário para fechar.
 levantados na implementação. Nada aqui foi decidido — todos aguardam definição da
 área de negócio ou da STI.
 
-**Estado atual:** o fluxo funcional está implementado e testado de ponta a ponta
-(registro, conferência, devolução, resposta, análise e histórico). O que segue em
-aberto não impede o uso, mas **três itens** afetam regra de negócio em produção:
-PD-01 (prazo de 24 h), PD-02 (status Reiterada) e PD-03 (status Analisada). Os
-demais são de escopo, nomenclatura ou auditoria.
+**Estado atual (15/10/2026):** as decisões deste documento foram **implementadas**
+na reclassificação de out/2026 — ver
+[PRIORIDADES_URGENCIAS_RECLASSIFICACAO_ENTREGA.md](PRIORIDADES_URGENCIAS_RECLASSIFICACAO_ENTREGA.md)
+e testes em
+[PRIORIDADES_URGENCIAS_RECLASSIFICACAO_TESTES.md](PRIORIDADES_URGENCIAS_RECLASSIFICACAO_TESTES.md).
+O texto abaixo permanece como **registro histórico** das opções discutidas antes
+da entrega. Itens ainda em aberto com a área: [PRIORIDADES_URGENCIAS_DUVIDAS.md](PRIORIDADES_URGENCIAS_DUVIDAS.md).
 
 ## Resumo
 
@@ -429,7 +431,11 @@ ser consciente, porque altera prazos que o Atendente já viu na tela.
 
 | Assunto | Documento |
 |---|---|
-| Uso do app e roteiro de testes | [COMO_USAR_PRIORIDADES_URGENCIAS.md](COMO_USAR_PRIORIDADES_URGENCIAS.md) |
+| Entrega da reclassificação (out/2026) | [PRIORIDADES_URGENCIAS_RECLASSIFICACAO_ENTREGA.md](PRIORIDADES_URGENCIAS_RECLASSIFICACAO_ENTREGA.md) |
+| Roteiro de testes da reclassificação | [PRIORIDADES_URGENCIAS_RECLASSIFICACAO_TESTES.md](PRIORIDADES_URGENCIAS_RECLASSIFICACAO_TESTES.md) |
+| Uso do app e roteiro de testes (fluxo completo) | [COMO_USAR_PRIORIDADES_URGENCIAS.md](COMO_USAR_PRIORIDADES_URGENCIAS.md) |
 | Integração com o DJEN, decisões técnicas e correções de segurança | [PRIORIDADES_URGENCIAS_DJEN.md](implementation-guides/PRIORIDADES_URGENCIAS_DJEN.md) |
-| Relatório de teste adversarial (07/10/2026) | `reports/prioridades-urgencias-2026-10-07/` |
+| Dúvidas ainda abertas pós-entrega | [PRIORIDADES_URGENCIAS_DUVIDAS.md](PRIORIDADES_URGENCIAS_DUVIDAS.md) |
+| Relatório de teste adversarial (07/10/2026) | `reports/prioridades-urgencias-2026-10-07/` (local, `.gitignore`) |
+| Relatório bateria reclassificação (15/10/2026) | `reports/prioridades-reclassificacao-2026-10-15/` (local, `.gitignore`) |
 | Especificação de origem | Especificação Técnica de Requisitos v1.0 — out/2026 (seção 11) |

@@ -11,10 +11,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  contarPorStatus,
+  listarLinhasPainel,
   listarUpjs,
   obterMeuPerfil,
 } from '../services/prioridadesService';
+import type { LinhaPainel } from '../services/prioridadesService';
 import type {
   AnotacaoPrioridade,
   PerfilUsuarioPrioridades,
@@ -22,14 +23,15 @@ import type {
   PrioridadePerfil,
   Upj,
 } from '../types/Prioridades';
-import { gruposDoModulo } from '../types/Prioridades';
+import { contagemDaLista, type ChaveLista } from '../components/prioridades/prioridadesListas';
 
 export type TelaPrioridades =
   | { tipo: 'inicial' }
   | { tipo: 'lista'; grupo: string }
   | { tipo: 'nova' }
-  | { tipo: 'detalhe'; anotacaoId: number; modo: 'conferencia' | 'analise' | 'resposta' | 'consulta' }
+  | { tipo: 'detalhe'; anotacaoId: number; modo: 'conferencia' | 'analise' | 'resposta' | 'correcao' | 'consulta' }
   | { tipo: 'designacoes' }
+  | { tipo: 'configuracoes' }
   | { tipo: 'historico' };
 
 export interface UsePrioridadesModal {
@@ -40,7 +42,7 @@ export interface UsePrioridadesModal {
   modulo: PrioridadeModulo;
   setModulo: (m: PrioridadeModulo) => void;
   upjs: Upj[];
-  contadores: Record<string, number>;
+  contadores: Record<string, { total: number; reiteradas: number; urgentissimas: number }>;
   tela: TelaPrioridades;
   irPara: (tela: TelaPrioridades) => void;
   voltarInicial: () => void;
@@ -58,17 +60,12 @@ export function usePrioridadesModal(isOpen: boolean): UsePrioridadesModal {
   const [perfilEfetivo, setPerfilEfetivo] = useState<PrioridadePerfil | null>(null);
   const [modulo, setModulo] = useState<PrioridadeModulo>('atendente');
   const [upjs, setUpjs] = useState<Upj[]>([]);
-  const [contadores, setContadores] = useState<Record<string, number>>({});
-  // PU-12: contagem própria das Urgentíssimas, que são um recorte por marcação
-  // e não um status.
-  const [totalUrgentissimos, setTotalUrgentissimos] = useState(0);
+  const [linhasPainel, setLinhasPainel] = useState<LinhaPainel[]>([]);
   const [tela, setTela] = useState<TelaPrioridades>({ tipo: 'inicial' });
   const [anotacaoAberta, setAnotacaoAberta] = useState<AnotacaoPrioridade | null>(null);
 
   const atualizar = useCallback(async () => {
-    const { porStatus, urgentissimos } = await contarPorStatus();
-    setContadores(porStatus);
-    setTotalUrgentissimos(urgentissimos);
+    setLinhasPainel(await listarLinhasPainel());
   }, []);
 
   useEffect(() => {
@@ -107,20 +104,31 @@ export function usePrioridadesModal(isOpen: boolean): UsePrioridadesModal {
     };
   }, [isOpen, user, atualizar]);
 
-  const grupos = useMemo(() => gruposDoModulo(modulo), [modulo]);
-
-  // Contadores agregados por grupo do painel lateral (RF-GES-08 / RF-UPJ-02).
   const contadoresPorGrupo = useMemo(() => {
-    const resultado: Record<string, number> = {};
-    for (const grupo of grupos) {
-      // "Urgentíssimas" usa a contagem por marcação, não a soma por status —
-      // senão divergiria da lista exibida (PU-12).
-      resultado[grupo.chave] = grupo.somenteUrgentissimos
-        ? totalUrgentissimos
-        : grupo.status.reduce((acc, status) => acc + (contadores[status] ?? 0), 0);
+    const ctx = {
+      perfilEfetivo,
+      usuarioId: user?.id ?? null,
+      somenteVinculadas: perfil?.ver_somente_vinculadas ?? false,
+    };
+    const chaves: ChaveLista[] = [
+      'ag-conferencia',
+      'devolvidas',
+      'aprovadas',
+      'reprovadas',
+      'urgentissimas',
+      'reiteradas',
+      'retornadas',
+      'novas',
+      'em-analise',
+      'resolvidas',
+      'rejeitadas',
+    ];
+    const resultado: Record<string, { total: number; reiteradas: number; urgentissimas: number }> = {};
+    for (const chave of chaves) {
+      resultado[chave] = contagemDaLista(linhasPainel, chave, ctx);
     }
     return resultado;
-  }, [grupos, contadores, totalUrgentissimos]);
+  }, [linhasPainel, perfilEfetivo, perfil?.ver_somente_vinculadas, user?.id]);
 
   const irPara = useCallback((nova: TelaPrioridades) => setTela(nova), []);
   const voltarInicial = useCallback(() => setTela({ tipo: 'inicial' }), []);

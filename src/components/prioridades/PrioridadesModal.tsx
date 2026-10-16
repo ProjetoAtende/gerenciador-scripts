@@ -39,6 +39,7 @@ const PrioridadesModal: React.FC<PrioridadesModalProps> = ({ isOpen, onClose }) 
   const ehCoordenador = estado.perfil?.perfil === 'coordenador' || estado.perfilEfetivo === 'coordenador';
   const temDesignacoes = ehGestor || ehCoordenador || isAdmin;
   const temConfiguracoes = estado.perfil?.perfil === 'gestor';
+  const temLogAcessos = ehGestor || ehCoordenador;
 
   const nomeUsuario = user?.email ?? '';
 
@@ -72,6 +73,7 @@ const PrioridadesModal: React.FC<PrioridadesModalProps> = ({ isOpen, onClose }) 
           irPara={estado.irPara}
           temDesignacoes={temDesignacoes}
           temConfiguracoes={temConfiguracoes}
+          temLogAcessos={temLogAcessos}
           recolhido={painelRecolhido}
           alternarRecolhido={() => setPainelRecolhido((atual) => !atual)}
         />

@@ -32,7 +32,8 @@ export type TelaPrioridades =
   | { tipo: 'detalhe'; anotacaoId: number; modo: 'conferencia' | 'analise' | 'resposta' | 'correcao' | 'consulta' }
   | { tipo: 'designacoes' }
   | { tipo: 'configuracoes' }
-  | { tipo: 'historico' };
+  | { tipo: 'historico' }
+  | { tipo: 'log-acessos' };
 
 export interface UsePrioridadesModal {
   carregando: boolean;

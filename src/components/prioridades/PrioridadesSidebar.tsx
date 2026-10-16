@@ -35,6 +35,7 @@ interface PrioridadesSidebarProps {
   irPara: (t: TelaPrioridades) => void;
   temDesignacoes: boolean;
   temConfiguracoes: boolean;
+  temLogAcessos: boolean;
   recolhido: boolean;
   alternarRecolhido: () => void;
 }
@@ -46,10 +47,16 @@ function lista(chave: ChaveLista, label: string, realce?: ItemMenu['realce'], se
 function blocosDoPerfil(
   perfilEfetivo: PrioridadePerfil | null,
   temDesignacoes: boolean,
-  temConfiguracoes: boolean
+  temConfiguracoes: boolean,
+  temLogAcessos: boolean
 ): BlocoMenu[] {
   const nova: ItemMenu = { chave: 'nova', label: 'Nova Anotação', tela: { tipo: 'nova' } };
   const historico: ItemMenu = { chave: 'historico', label: 'Histórico Geral', tela: { tipo: 'historico' } };
+  const logAcessos: ItemMenu = {
+    chave: 'log-acessos',
+    label: 'Log de acessos',
+    tela: { tipo: 'log-acessos' },
+  };
 
   if (perfilEfetivo === 'coordenador' || perfilEfetivo === 'analista') {
     const blocos: BlocoMenu[] = [
@@ -69,11 +76,12 @@ function blocosDoPerfil(
         itens: [lista('resolvidas', 'Resolvidas'), lista('rejeitadas', 'Rejeitadas'), historico],
       },
     ];
+    const rodapeUpj: ItemMenu[] = [];
     if (temDesignacoes && (perfilEfetivo === 'coordenador' || perfilEfetivo === 'analista')) {
-      blocos.push({
-        itens: [{ chave: 'designacoes', label: 'Designações', tela: { tipo: 'designacoes' } }],
-      });
+      rodapeUpj.push({ chave: 'designacoes', label: 'Designações', tela: { tipo: 'designacoes' } });
     }
+    if (temLogAcessos) rodapeUpj.push(logAcessos);
+    if (rodapeUpj.length > 0) blocos.push({ itens: rodapeUpj });
     return blocos;
   }
 
@@ -117,6 +125,7 @@ function blocosDoPerfil(
     if (perfilEfetivo === 'gestor' && temConfiguracoes) {
       rodape.push({ chave: 'configuracoes', label: 'Configurações', tela: { tipo: 'configuracoes' } });
     }
+    if (temLogAcessos) rodape.push(logAcessos);
     if (rodape.length > 0) blocos.push({ itens: rodape });
     return blocos;
   }
@@ -173,10 +182,11 @@ export const PrioridadesSidebar: React.FC<PrioridadesSidebarProps> = ({
   irPara,
   temDesignacoes,
   temConfiguracoes,
+  temLogAcessos,
   recolhido,
   alternarRecolhido,
 }) => {
-  const blocos = blocosDoPerfil(perfilEfetivo, temDesignacoes, temConfiguracoes);
+  const blocos = blocosDoPerfil(perfilEfetivo, temDesignacoes, temConfiguracoes, temLogAcessos);
   const upj = perfil?.upj_id ? upjs.find((u) => u.id === perfil.upj_id) : null;
   const mostraUpj = perfilEfetivo === 'coordenador' || perfilEfetivo === 'analista';
 

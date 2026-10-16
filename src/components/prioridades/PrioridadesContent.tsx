@@ -13,6 +13,7 @@ import { CorrecaoRetornada } from './CorrecaoRetornada';
 import { DesignacoesTela } from './DesignacoesTela';
 import { ConfiguracoesTela } from './ConfiguracoesTela';
 import { HistoricoTela } from './HistoricoTela';
+import { LogAcessosTela } from './LogAcessosTela';
 import { anotacaoNaLista, type ChaveLista } from './prioridadesListas';
 
 interface PrioridadesContentProps extends UsePrioridadesModal {
@@ -186,7 +187,9 @@ export const PrioridadesContent: React.FC<PrioridadesContentProps> = ({
 
   const abrirAnotacao = useCallback(
     (a: AnotacaoPrioridade) => {
-      if (isAdmin) void registrarAcessoPrivilegiado(a.id);
+      const auditoriaAdmin =
+        isAdmin && perfilEfetivo !== 'coordenador' && perfilEfetivo !== 'analista';
+      if (auditoriaAdmin) void registrarAcessoPrivilegiado(a.id);
 
       const podeConferir = perfilEfetivo === 'gestor' || perfilEfetivo === 'conferente';
       const podeAnalisar = perfilEfetivo === 'coordenador' || perfilEfetivo === 'analista';
@@ -391,6 +394,8 @@ export const PrioridadesContent: React.FC<PrioridadesContentProps> = ({
       {tela.tipo === 'historico' && (
         <HistoricoTela usuarioId={user?.id ?? null} anotacoes={anotacoes} onAbrir={abrirAnotacao} onVoltar={voltarInicial} />
       )}
+
+      {tela.tipo === 'log-acessos' && <LogAcessosTela onVoltar={voltarInicial} />}
     </main>
   );
 };

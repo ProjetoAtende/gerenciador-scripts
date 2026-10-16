@@ -6,9 +6,10 @@ Documento para a área, depois da leitura de
 O que já estava decidido foi implementado. Aqui ficam só os pontos em que a
 redação não fecha, ou que foram adiados de propósito.
 
-Migrations: `20261015112854_prioridades_reclassificacao.sql` e
-`20261015121603_prioridades_fix_pr_g7_pr_h2.sql` (correções PR-G7/PR-H2).
-Aplicadas no projeto remoto em 15/10/2026; detalhes em
+Migrations: `20261015112854_prioridades_reclassificacao.sql`,
+`20261015121603_prioridades_fix_pr_g7_pr_h2.sql` e
+`20261016103000_prioridades_respostas_area_out2026.sql` (respostas da área
+15/10/2026). Detalhes em
 [PRIORIDADES_URGENCIAS_RECLASSIFICACAO_ENTREGA.md](PRIORIDADES_URGENCIAS_RECLASSIFICACAO_ENTREGA.md).
 
 ## Adiado de propósito
@@ -27,61 +28,38 @@ Prioridades e Urgências, não um módulo novo ao lado da Escala.
 
 ## Dúvidas que impedem de seguir
 
-### 1. Qual faixa de Varas é qual UPJ (I a IX)
+### 1. Qual faixa de Varas é qual UPJ (I a IX) — **respondido**
 
-O item 3.1.1.4 pede o rótulo `Xª a Yª Varas Cíveis (UPJ Z)`, com Z em
-algarismo romano de I a IX, e avisa que a numeração das UPJs não é sequencial.
+Correspondência oficial (resposta 15/10/2026):
 
-No aplicativo as unidades estão gravadas pela faixa:
+| UPJ (romano) | Código interno | Nome |
+|:---:|:---:|:---|
+| VI | FCC-01-05 | UPJ da 1ª a 5ª Varas Cíveis |
+| VIII | FCC-06-10 | UPJ da 6ª a 10ª Varas Cíveis |
+| IX | FCC-11-15 | UPJ da 11ª a 15ª Varas Cíveis |
+| V | FCC-16-20 | UPJ da 16ª a 20ª Varas Cíveis |
+| III | FCC-21-25 | UPJ da 21ª a 25ª Varas Cíveis |
+| II | FCC-26-30 | UPJ da 26ª a 30ª Varas Cíveis |
+| IV | FCC-31-35 | UPJ da 31ª a 35ª Varas Cíveis |
+| VII | FCC-36-40 | UPJ da 36ª a 40ª Varas Cíveis |
+| I | FCC-41-45 | UPJ da 41ª a 45ª Varas Cíveis |
 
-| Código interno | Nome atual |
-|---|---|
-| FCC-01-05 | UPJ da 1ª a 5ª Varas Cíveis |
-| FCC-06-10 | UPJ da 6ª a 10ª Varas Cíveis |
-| FCC-11-15 | UPJ da 11ª a 15ª Varas Cíveis |
-| FCC-16-20 | UPJ da 16ª a 20ª Varas Cíveis |
-| FCC-21-25 | UPJ da 21ª a 25ª Varas Cíveis |
-| FCC-26-30 | UPJ da 26ª a 30ª Varas Cíveis |
-| FCC-31-35 | UPJ da 31ª a 35ª Varas Cíveis |
-| FCC-36-40 | UPJ da 36ª a 40ª Varas Cíveis |
-| FCC-41-45 | UPJ da 41ª a 45ª Varas Cíveis |
+A UI continua exibindo o nome da faixa (sem `FCC-XX-YY`). Incluir o algarismo
+romano no rótulo é melhoria cosmética opcional.
 
-Não há, no material recebido, a tabela que diz qual dessas faixas é a UPJ I,
-qual é a II, e assim por diante. Um chamado antigo no Gerenciador cita
-“UPJ IX — 11ª a 15ª Varas Cíveis”, o que confirma que a ordem não é a da
-primeira Vara. Sem a tabela oficial, colocar I–IX inventados entregaria a
-anotação com a UPJ errada na lista.
+### 2. Itens 3.1.2.1 e 3.1.3.1 — **respondido**
 
-O que já mudou: a lista “UPJ de destino” mostra o nome da faixa
-(“UPJ da 1ª a 5ª Varas Cíveis”) e deixou de exibir o código `FCC-XX-YY`.
-O número romano entra assim que a área devolver a correspondência.
+Ordem única para Atendente, Gestor e Conferente Designado: processo →
+Solicitante (+ nome opcional) → tipo → Sistema (+ UPJ só se a consulta não
+trouxer UPJ) → Evento/Folha + Descrição + Observações. UPJ manual oculta
+quando detectada pelo DJEN.
 
-### 2. Itens 3.1.2.1 e 3.1.3.1 não descrevem campos
+### 3. Log de acesso privilegiado — **respondido e implementado**
 
-Os títulos falam em “Exibição dos campos da tela Nova Anotação”, para
-Atendentes e para Gestores/Conferentes. O texto embaixo é o mesmo parágrafo
-do painel lateral (item 3.1.1.1), sem dizer quais campos aparecem, em que
-ordem, ou o que muda entre os perfis.
-
-A exibição progressiva pedida no item 3.2.2 foi feita: primeiro o número do
-processo; depois da consulta, o Solicitante; depois o tipo; em seguida o
-restante. Se 3.1.2.1 e 3.1.3.1 queriam outra coisa, falta o texto.
-
-### 3. Log de acesso privilegiado — quem lê e por quanto tempo
-
-A opção A foi adotada: quando um administrador abre uma anotação que não é
-dele, o sistema grava quem foi e quando. Ninguém grava nem apaga essa linha
-pela tela.
-
-A especificação de pendências ainda perguntava, e a resposta não fechou:
-
-- quem pode consultar esse log;
-- por quanto tempo ele é guardado;
-- se percorrer a lista de anotações também conta como acesso, ou só abrir
-  uma anotação.
-
-Enquanto isso, o registro existe e não tem tela. Abrir uma anotação específica
-é o que está sendo gravado.
+- **Quem consulta:** Gestor e Coordenador (menu *Log de acessos*).
+- **Retenção:** 12 meses (expurgo mensal via job `prioridades_log_acessos_retencao`).
+- **O que conta:** só abrir uma anotação específica (não listar).
+- **Registro:** continua apenas leitura do admin em anotação alheia; sem edição pela UI.
 
 ## Leituras adotadas, para corrigir se a área quiser outra
 
@@ -127,6 +105,13 @@ Não bloqueiam o uso. Estão aqui para a área conferir.
    listas da seção UPJs não entram nessa preferência.
 
 8. **Consulta sem comunicação no DJEN.** Os campos seguintes aparecem quando a
-   consulta termina, inclusive quando o DJEN não acha comunicação. Se só
-   “processo localizado” liberasse o restante, o caso sem publicação ficaria
-   sem como ser anotado.
+   consulta termina, inclusive quando o DJEN não acha comunicação. Processos
+   **fora da competência** (ex.: Câmaras/Gabinetes, CNJ fora de 8.26.0100,
+   Vara fora de 1–45 quando identificada) são **bloqueados** na UI e no
+   servidor (`prioridades_processo_competencia_atende`).
+
+## Ponto adicional (15/10/2026) — **corrigido**
+
+Coordenadores e Analistas passam a ver somente anotações da **própria UPJ**
+(correção em `prioridades_pode_ver`: designação de Gestor não amplia visão
+de quem tem perfil base de UPJ).

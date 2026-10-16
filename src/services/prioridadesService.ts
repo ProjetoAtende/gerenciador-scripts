@@ -11,6 +11,7 @@
  */
 
 import { supabase } from './supabaseClient';
+import { codigoUpjPorOrgaoDjen } from './prioridadesUpjFaixa';
 import type {
   AnotacaoAnterior,
   AnotacaoPrioridade,
@@ -168,9 +169,31 @@ function extrairUpj(valor: unknown): { codigo: string | null; nome: string | nul
   };
 }
 
+async function upjPorCodigoInterno(
+  codigo: string
+): Promise<{ upj_id: string | null; upj_codigo: string | null; upj_nome: string | null }> {
+  const { data, error } = await supabase
+    .from('prioridades_upjs')
+    .select('id, codigo, nome')
+    .eq('codigo', codigo)
+    .eq('ativa', true)
+    .maybeSingle();
+
+  if (error) {
+    console.error('[prioridadesService] upjPorCodigoInterno error:', error);
+    return { upj_id: null, upj_codigo: null, upj_nome: null };
+  }
+
+  if (!data) return { upj_id: null, upj_codigo: null, upj_nome: null };
+
+  const registro = data as { id: string; codigo: string; nome: string };
+  return { upj_id: registro.id, upj_codigo: registro.codigo, upj_nome: registro.nome };
+}
+
 export async function resolverUpjPorOrgao(
   idOrgao: number | null,
-  vara: number | null
+  vara: number | null,
+  nomeOrgao?: string | null
 ): Promise<{ upj_id: string | null; upj_codigo: string | null; upj_nome: string | null }> {
   if (idOrgao !== null) {
     const { data, error } = await supabase
@@ -189,22 +212,10 @@ export async function resolverUpjPorOrgao(
     }
   }
 
-  if (vara !== null) {
-    const { data, error } = await supabase
-      .from('prioridades_orgaos_upj')
-      .select('upj_id, prioridades_upjs(codigo, nome)')
-      .eq('vara', vara)
-      .eq('ativo', true)
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      console.error('[prioridadesService] resolverUpjPorOrgao (vara) error:', error);
-    } else if (data) {
-      const registro = data as { upj_id: string; prioridades_upjs?: unknown };
-      const upj = extrairUpj(registro.prioridades_upjs);
-      return { upj_id: registro.upj_id, upj_codigo: upj.codigo, upj_nome: upj.nome };
-    }
+  const codigo = codigoUpjPorOrgaoDjen(vara, nomeOrgao);
+  if (codigo) {
+    const porFaixa = await upjPorCodigoInterno(codigo);
+    if (porFaixa.upj_id) return porFaixa;
   }
 
   return { upj_id: null, upj_codigo: null, upj_nome: null };
@@ -718,6 +729,37 @@ export async function corrigirRetornada(anotacaoId: number, descricao: string): 
 
 export async function registrarAcessoPrivilegiado(anotacaoId: number): Promise<void> {
   await chamarRpc('prioridades_registrar_acesso_privilegiado', { p_anotacao_id: anotacaoId });
+}
+
+export interface LinhaLogAcesso {
+  id: number;
+  anotacao_id: number;
+  processo: string;
+  usuario_id: string;
+  usuario_nome: string | null;
+  usuario_email: string | null;
+  criado_em: string;
+}
+
+/** Log de leituras do admin — Gestor e Coordenador (PD-13). */
+export async function listarLogAcessosPrivilegiados(
+  anotacaoId?: number,
+  limite = 200
+): Promise<{ sucesso: boolean; linhas: LinhaLogAcesso[]; erro?: string }> {
+  const { data, error } = await supabase.rpc('prioridades_log_acessos_listar', {
+    p_anotacao_id: anotacaoId ?? null,
+    p_limite: limite,
+  });
+
+  if (error) {
+    if (error.code === 'PGRST202' || /could not find/i.test(error.message)) {
+      return { sucesso: false, linhas: [], erro: 'Log de acessos ainda não disponível no banco.' };
+    }
+    console.error('[prioridadesService] listarLogAcessosPrivilegiados error:', error);
+    return { sucesso: false, linhas: [], erro: error.message };
+  }
+
+  return { sucesso: true, linhas: (data ?? []) as LinhaLogAcesso[] };
 }
 
 export interface DiaSemExpediente {

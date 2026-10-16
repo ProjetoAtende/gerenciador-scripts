@@ -16,6 +16,8 @@ import {
   somenteDigitos,
   SUFIXO_CNJ_PADRAO_TJSP_CENTRAL,
 } from '../../services/prioridadesDjenService';
+import { avaliarCompetenciaAtende } from '../../services/prioridadesCompetencia';
+import { inferirSistemaPorCnj } from '../../services/prioridadesSistemaCnj';
 import {
   criarAnotacao,
   listarAnotacoesAnteriores,
@@ -79,6 +81,7 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
   const [incluirNomeSolicitante, setIncluirNomeSolicitante] = useState(false);
   const [regras, setRegras] = useState<RegraEspecial[]>([]);
   const [regraModal, setRegraModal] = useState<string | null>(null);
+  const [processoCompetente, setProcessoCompetente] = useState(true);
 
   const ultimaConsulta = useRef<string>('');
 
@@ -117,9 +120,15 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
   const podeVerificar = digitosAtuais === 20 || digitosAtuais === 13;
   const precisaComplementar = digitosAtuais === 13;
   const consultaConcluida = resultadoDjen !== null;
-  const mostrarSolicitante = consultaConcluida;
+  const djenIndisponivel = resultadoDjen?.status === 'erro';
+  const mostrarSolicitante = consultaConcluida && processoCompetente;
   const mostrarTipo = mostrarSolicitante && form.tipo_solicitante !== '';
   const mostrarRestante = mostrarTipo && form.tipo_prioridade !== '';
+  const upjDetectadaAutomaticamente = Boolean(form.upj_id && upjDetectada?.nome);
+  const inferenciaSistema = useMemo(
+    () => inferirSistemaPorCnj(form.processo),
+    [form.processo]
+  );
 
   const abrirRegra = useCallback(
     (upj: string | null, tipoPrioridade: string) => {
@@ -152,6 +161,19 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
       const resultado = await consultarProcesso(numero);
       setResultadoDjen(resultado);
 
+      const competencia = avaliarCompetenciaAtende(
+        numero,
+        resultado.status === 'localizado' ? resultado.vara : null,
+        resultado.status === 'localizado' ? resultado.nomeOrgao : null,
+        resultado.status === 'erro' ? 'sem_comunicacao' : resultado.status
+      );
+      setProcessoCompetente(competencia.competente);
+      if (!competencia.competente && competencia.motivo) {
+        setErroGeral(competencia.motivo);
+      } else if (resultado.status === 'erro') {
+        setErroGeral(null);
+      }
+
       // Busca anotações prévias do processo (RF-ATD-12), independente do DJEN.
       const antigas = await listarAnotacoesAnteriores(numero);
       setAnteriores(antigas);
@@ -161,15 +183,17 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
       // `prev.upj_id`, então a UPJ do processo anterior ficava "presa" e a
       // anotação ia para o cartório errado, exibindo o texto "Detectada
       // automaticamente pelo órgão publicado no DJEN".
+      const sistema = inferirSistemaPorCnj(numero);
+
       if (resultado.status === 'localizado') {
-        const upj = await resolverUpjPorOrgao(resultado.idOrgao, resultado.vara);
+        const upj = await resolverUpjPorOrgao(resultado.idOrgao, resultado.vara, resultado.nomeOrgao);
         setUpjDetectada(upj.upj_id ? { codigo: upj.upj_codigo, nome: upj.upj_nome } : null);
         setForm((prev) => ({
           ...prev,
           processo: numero,
           vara: resultado.vara,
           upj_id: upj.upj_id,
-          plataforma: resultado.plataforma,
+          plataforma: sistema.plataforma ?? resultado.plataforma,
           validacao_djen_status: resultado.status,
           validacao_djen_em: new Date().toISOString(),
           validacao_djen_detalhe: complementado
@@ -192,7 +216,7 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
           id_orgao_djen: null,
           nome_orgao_djen: null,
           vara: null,
-          plataforma: null,
+          plataforma: sistema.plataforma,
           upj_id: null,
         }));
       }
@@ -223,6 +247,7 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
     ultimaConsulta.current = '';
     setResultadoDjen(null);
     setUpjDetectada(null);
+    setProcessoCompetente(true);
     setAnteriores([]);
     setForm((prev) => ({
       ...prev,
@@ -231,7 +256,7 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
       vara: null,
       id_orgao_djen: null,
       nome_orgao_djen: null,
-      plataforma: prev.plataforma,
+      plataforma: null,
       validacao_djen_status: 'nao_consultado',
       validacao_djen_em: null,
       validacao_djen_detalhe: null,
@@ -259,6 +284,17 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
     }
     if (!form.evento_folha.trim()) faltando.push('Evento ou Folhas');
     if (!form.descricao_prioridade.trim()) faltando.push('Descrição da Prioridade/Urgência');
+
+    const competencia = avaliarCompetenciaAtende(
+      somenteDigitos(form.processo),
+      form.vara,
+      form.nome_orgao_djen,
+      form.validacao_djen_status
+    );
+    if (!competencia.competente) {
+      setErroGeral(competencia.motivo ?? 'Processo fora da competência do TJSP Atende.');
+      return;
+    }
 
     if (faltando.length > 0) {
       setPendentes(faltando);
@@ -391,7 +427,12 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
         >
           <p className="font-semibold text-gray-800 dark:text-gray-100">Indicador de Localização do Processo</p>
 
-          {resultadoDjen.status === 'localizado' ? (
+          {!processoCompetente ? (
+            <p className="mt-1 font-medium text-red-800 dark:text-red-300">
+              {erroGeral ??
+                'Este processo não está na competência do TJSP Atende (1ª a 45ª Varas Cíveis do Foro Central de São Paulo).'}
+            </p>
+          ) : resultadoDjen.status === 'localizado' ? (
             <div className="mt-1 space-y-1 text-gray-700 dark:text-gray-200">
               <p>
                 Localizado no DJEN · {resultadoDjen.totalComunicacoes} comunicação(ões)
@@ -417,16 +458,24 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
                 )}
               </p>
               <p>
-                <strong>Sistema:</strong> informe abaixo — o DJEN não informa se o processo tramita no Eproc
-                ou no SAJ.
+                <strong>Sistema:</strong> {inferenciaSistema.textoIndicador}
               </p>
             </div>
           ) : (
-            <p className="mt-1 text-gray-700 dark:text-gray-200">
-              {resultadoDjen.status === 'sem_comunicacao'
-                ? 'Nenhuma comunicação publicada no DJEN para este processo na janela consultada. Isso não confirma que o processo não existe — a anotação pode seguir normalmente.'
-                : resultadoDjen.detalhe}
-            </p>
+            <div className="mt-1 space-y-1 text-gray-700 dark:text-gray-200">
+              <p>
+                {resultadoDjen.status === 'sem_comunicacao'
+                  ? 'Nenhuma comunicação publicada no DJEN para este processo na janela consultada. Isso não confirma que o processo não existe — a anotação pode seguir normalmente.'
+                  : djenIndisponivel
+                    ? `Consulta ao DJEN indisponível (${resultadoDjen.detalhe ?? 'erro'}). Você pode seguir com a anotação se o número do processo estiver correto.`
+                    : resultadoDjen.detalhe}
+              </p>
+              {processoCompetente && (
+                <p>
+                  <strong>Sistema:</strong> {inferenciaSistema.textoIndicador}
+                </p>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -550,55 +599,60 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
           sistema o processo tramita, e o número CNJ não carrega essa
           informação — então o dado passa a ser fornecido pelo atendente.
           Opcional: não bloqueia o envio. */}
-      {mostrarRestante && <>
-      <div>
-        <label htmlFor="pu-plataforma" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-          Sistema
-        </label>
-        <select
-          id="pu-plataforma"
-          value={form.plataforma ?? ''}
-          onChange={(e) =>
-            atualizar('plataforma', (e.target.value || null) as NovaAnotacaoPayload['plataforma'])
-          }
-          className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-        >
-          <option value="">Não informado</option>
-          <option value="eproc">Eproc</option>
-          <option value="saj">SAJ</option>
-        </select>
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          O DJEN não é capaz de informar o sistema de distribuição. Preencha se souber.
-        </p>
-      </div>
+      {mostrarRestante && (
+        <>
+      {!inferenciaSistema.plataforma && (
+        <div>
+          <label htmlFor="pu-plataforma" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+            Sistema
+          </label>
+          <select
+            id="pu-plataforma"
+            value={form.plataforma ?? ''}
+            onChange={(e) =>
+              atualizar('plataforma', (e.target.value || null) as NovaAnotacaoPayload['plataforma'])
+            }
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+          >
+            <option value="">Não informado</option>
+            <option value="eproc">Eproc</option>
+            <option value="saj">SAJ</option>
+          </select>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            O número do processo não permite distinguir Eproc de SAJ — selecione se souber.
+          </p>
+        </div>
+      )}
 
-      {/* ── UPJ (RF-ATD-04) ──────────────────────────────────── */}
-      <div>
-        <label htmlFor="pu-upj" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-          UPJ de destino
-        </label>
-        <select
-          id="pu-upj"
-          value={form.upj_id ?? ''}
-          onChange={(e) => {
-            const valor = e.target.value || null;
-            atualizar('upj_id', valor);
-            abrirRegra(valor, form.tipo_prioridade);
-          }}
-          className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-        >
-          <option value="">Não definida</option>
-          {upjs.map((u) => (
-            <option key={u.id} value={u.id}>
-              {u.nome}
-            </option>
-          ))}
-        </select>
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Detectada automaticamente pelo órgão publicado no DJEN. Ajuste apenas se a detecção falhar.
-        </p>
-      </div>
+      {!upjDetectadaAutomaticamente && (
+        <div>
+          <label htmlFor="pu-upj" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+            UPJ de destino
+          </label>
+          <select
+            id="pu-upj"
+            value={form.upj_id ?? ''}
+            onChange={(e) => {
+              const valor = e.target.value || null;
+              atualizar('upj_id', valor);
+              abrirRegra(valor, form.tipo_prioridade);
+            }}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+          >
+            <option value="">Não definida</option>
+            {upjs.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.nome}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Exibido porque a consulta ao processo não identificou a UPJ automaticamente.
+          </p>
+        </div>
+      )}
 
+      <div className="space-y-5 rounded-lg border border-gray-200 p-4 dark:border-gray-600">
       {/* ── Evento/Folha (RF-ATD-08) ─────────────────────────── */}
       <div>
         <label htmlFor="pu-evento" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -645,7 +699,9 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
           Anotações internas do TJSP Atende (não serão repassadas às UPJs). Campo opcional.
         </p>
       </div>
-      </>}
+      </div>
+        </>
+      )}
 
       {regraModal && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 p-4" role="alertdialog">

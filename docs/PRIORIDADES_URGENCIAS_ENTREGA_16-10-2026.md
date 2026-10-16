@@ -15,7 +15,8 @@ dígito inicial; inferir Eproc apenas em 4/5/6).
 | Área | Resultado |
 |------|-----------|
 | Respostas da área (competência, UPJ, log, retenção) | Implementado (migration `103000`) |
-| Mapeamento DJEN `idOrgao` 98526 | Seed UPJ VI / FCC-01-05 |
+| Detecção de UPJ (DJEN) | **Fallback por Vara/nome do órgão** + tabela incremental `prioridades_orgaos_upj` |
+| Seed ilustrativo `idOrgao` 98526 | Opcional (acelera lookup e conferência para um id observado; **não** substitui o fallback) |
 | Reteste Grok PC-01, PC-02, PC-03 (órgão), PC-04, PC-05, PC-06 | Corrigido |
 | PC-03b (recusa indevida pelo 1º dígito do sequencial) | Corrigido (migration `113000` + espelho no cliente) |
 | Purge de dados de teste (reteste ids 88–89) | Executado em 16/10/2026 — 0 registros restantes |
@@ -37,8 +38,14 @@ Referência de reteste: `reports/prioridades-reteste-2026-10-16/RELATORIO_RETEST
 
 ### `20261016104500_prioridades_mapeamento_orgao_98526.sql`
 
+**Escopo:** uma linha a mais na tabela incremental — **não** a solução geral para “todos os órgãos não mapeados”.
+
 - Insere/atualiza `prioridades_orgaos_upj` para **`idOrgao` 98526** → UPJ da 1ª a 5ª Varas (`FCC-01-05`).
-- Corrige caso real `4193948-19.2026.8.26.0100` (antes aparecia como UPJ não mapeada).
+- O processo `4193948-19.2026.8.26.0100` aparece na documentação como **exemplo** do sintoma que a área reportou (UPJ “não mapeada” quando só existia lookup na tabela, quase vazia por desenho).
+- **Não altera** outros `idOrgao`: cada id continua com a mesma regra (tabela, se houver linha; senão, fallback no cliente).
+- **Efeito extra** quando a linha existe: lookup direto por `idOrgao` e, na conferência, validação de que a UPJ escolhida bate com o mapeamento gravado (comportamento já previsto desde `20261010270000`).
+
+Ver também a seção **3.1 — Como a UPJ é detectada**.
 
 ### `20261016110000_prioridades_fix_grokbot_pc01_pc06.sql`
 
@@ -69,6 +76,28 @@ Referência de reteste: `reports/prioridades-reteste-2026-10-16/RELATORIO_RETEST
 
 Documentação de dúvidas fechadas: `docs/PRIORIDADES_URGENCIAS_DUVIDAS.md`.
 
+### 3.1 Como a UPJ é detectada (RF-ATD-04)
+
+No piloto FCC, **não** se espera semear todos os `idOrgao` do DJEN por migration (espaço amplo e mutável; risco de mapeamento errado silencioso — ver comentários em `20261010170000_prioridades_urgencias_seed_upjs.sql`). A estratégia adotada é **duas camadas**:
+
+1. **Tabela `prioridades_orgaos_upj` (incremental)**  
+   - Chave: `id_orgao_djen` devolvido pelo DJEN.  
+   - Hoje no repositório há exemplos semeados: `98517` → FCC-26-30 (seed inicial) e `98526` → FCC-01-05 (migration desta entrega).  
+   - Novos pares entram pelo fluxo **`registrarMapeamentoOrgao`** / RPC equivalente quando o gestor confirma UPJ em um órgão ainda sem linha.
+
+2. **Fallback no cliente (`prioridadesUpjFaixa.ts` + `resolverUpjPorOrgao`)**  
+   - Se não houver linha para o `idOrgao`, deriva o código interno `FCC-XX-YY` a partir da **Vara (1–45)** e/ou do **nome do órgão** no padrão “UPJ da Xª a Yª Varas Cíveis” (faixas oficiais das 9 UPJs, resposta da área 15/10).  
+   - Resolve a UPJ em `prioridades_upjs` pelo código — cobre **as nove faixas** sem uma migration por `idOrgao`.  
+   - **Esta camada é o que corrige o cenário em que “todos” apareciam como não mapeados** quando a UI dependia só da tabela.
+
+**Ordem em `resolverUpjPorOrgao`:** (1) tabela por `idOrgao`; (2) fallback por Vara/nome; (3) se ainda falhar, UPJ manual na tela.
+
+**Servidor:** `prioridades_criar_anotacao` recebe `upj_id` já escolhido pelo cliente; só **cruza** com a tabela se existir mapeamento para aquele `idOrgao` (evita UPJ divergente quando o par já é conhecido). Não replica o fallback SQL — o cliente deve enviar UPJ coerente.
+
+**UI:** quando o fallback preenche a UPJ, o bloco verde mostra o nome da UPJ; o texto “órgão não mapeado na **tabela**…” aparece apenas se **nem** a tabela **nem** o fallback produziram UPJ (ex.: DJEN sem Vara e nome fora do padrão).
+
+**Próximo passo opcional (fora desta entrega):** importação em massa `idOrgao → UPJ` a partir de cadastro interno/STI, se a área quiser eliminar dependência do fallback e do preenchimento manual nos casos limítrofes.
+
 ---
 
 ## 4. Testes
@@ -98,6 +127,7 @@ supabase db query --linked -f reports/prioridades-reteste-2026-10-16/evid/purge_
 
 ## 6. Itens ainda em aberto (não desta entrega)
 
+- **Pré-carga completa `idOrgao → UPJ`** — não feita; permanecem mapeamento incremental + fallback (seção 3.1).
 - **DataJud / Vara automática** — adiado (só DJEN nesta fase).
 - **Anotações legadas fora de competência** (ex. ids 83/84) — decisão da área; não purgadas automaticamente.
 - **Caminho de log só por designação de gestor** — RPC atual não expõe cenário isolado; base gestor/coordenador/atendente validada no reteste.

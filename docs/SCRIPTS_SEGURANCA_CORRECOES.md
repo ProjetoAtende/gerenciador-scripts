@@ -8,6 +8,7 @@ Histórico das mudanças após testes Grok (baseline `reports/scripts-seguranca-
 |---------|----------|
 | `20261016120000_scripts_seguranca_sc_c1_d2_f3.sql` | RLS `script_versoes` / `script_propostas_revisao`; RPCs `publicar_script_customizado`, `marcar_curadoria_script`, `notificar_script_participante`; revoke `criar_notificacao_script` para client; CHECK nome ≤ 200 |
 | `20261017100000_scripts_seguranca_reteste_fixes.sql` | Trigger `trg_scripts_proteger_colunas_fluxo`; `REVOKE UPDATE` na tabela + `GRANT UPDATE` só colunas editáveis; hardening `notificar_script_participante` (sem NULL-trap, sem `metadata.curador_id`, valida UUID em `auth.users`); `REVOKE EXECUTE` das RPCs para `PUBLIC`/`anon`; purge de 2 notificações de incidente |
+| `20261017120000_script_foi_modificado.sql` | Cria `script_foi_modificado(uuid)` (SC-C1c-REG — curadoria quebrava com 42883) |
 
 ## Frontend
 

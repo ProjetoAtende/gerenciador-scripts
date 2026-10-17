@@ -1,5 +1,8 @@
 // src/types/Script.ts
 
+/** Limite alinhado ao CHECK `chk_scripts_nome_tamanho` no Postgres. */
+export const SCRIPT_NOME_MAX_LENGTH = 200;
+
 // ===== Tipos de Categorização de Scripts (Fase 3) =====
 
 /** Slugs das 12 categorias canônicas do sistema */

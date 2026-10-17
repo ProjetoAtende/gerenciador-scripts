@@ -1,4 +1,5 @@
 import React from 'react';
+import { isAllowedLinkUrl, sanitizeStackHtml } from './sanitizeStackHtml';
 
 /**
  * Regex para tokens interativos de scripts:
@@ -22,7 +23,7 @@ export function renderHtmlReadonly(html: string): React.ReactNode[] {
   if (!html || typeof window === 'undefined') return [];
 
   const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
+  const doc = parser.parseFromString(sanitizeStackHtml(html), 'text/html');
   let tokenIndex = 0;
   let nodeKeyCounter = 0;
 
@@ -115,10 +116,14 @@ export function renderHtmlReadonly(html: string): React.ReactNode[] {
       const children = Array.from(element.childNodes).map(mapNode);
 
       if (tag === 'a') {
+        const href = element.getAttribute('href') ?? '';
+        if (!isAllowedLinkUrl(href)) {
+          return <span key={key}>{children}</span>;
+        }
         return (
           <a
             key={key}
-            href={element.getAttribute('href') ?? undefined}
+            href={href}
             target="_blank"
             rel="noopener noreferrer"
           >

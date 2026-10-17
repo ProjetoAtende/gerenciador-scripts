@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Copy, CheckCircle, FileText, Check, Users, Wrench, Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { isAllowedLinkUrl, sanitizeStackHtml } from '../utils/sanitizeStackHtml';
 
 interface GeradorModalProps {
   isOpen: boolean;
@@ -366,7 +367,7 @@ export const GeradorModal: React.FC<GeradorModalProps> = ({ isOpen, onClose, scr
     ]);
 
     const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
+    const doc = parser.parseFromString(sanitizeStackHtml(html), 'text/html');
     let fieldIndex = 0;
     let nodeKeyCounter = 0;
 
@@ -443,10 +444,14 @@ export const GeradorModal: React.FC<GeradorModalProps> = ({ isOpen, onClose, scr
         const children = Array.from(element.childNodes).map(mapNode);
 
         if (tag === 'a') {
+          const href = element.getAttribute('href') ?? '';
+          if (!isAllowedLinkUrl(href)) {
+            return <span key={key}>{children}</span>;
+          }
           return (
             <a
               key={key}
-              href={element.getAttribute('href') ?? undefined}
+              href={href}
               target={element.getAttribute('target') ?? undefined}
               rel={element.getAttribute('rel') ?? 'noopener noreferrer'}
             >

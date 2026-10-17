@@ -612,10 +612,9 @@ export function useScriptsModal({ isOpen, onClose: _onClose, onOpenGerador, noti
         conteudoAtendente = dados?.conteudo_atendente || null;
       }
 
-      const { error: updateError } = await supabase
-        .from('scripts_customizados')
-        .update({ email_enviado: true })
-        .eq('id', scriptForPublicar.id);
+      const { error: updateError } = await supabase.rpc('publicar_script_customizado', {
+        p_script_id: scriptForPublicar.id,
+      });
 
       if (updateError) {
         toast.error('Erro ao publicar script');
@@ -752,6 +751,10 @@ export function useScriptsModal({ isOpen, onClose: _onClose, onOpenGerador, noti
           signal: controller.signal,
         });
         if (controller.signal.aborted) return;
+        if (matches.length === 0) {
+          setSemanticMatches(null);
+          return;
+        }
         const map = new Map<string, number>();
         for (const m of matches) map.set(m.script_id, m.similarity);
         setSemanticMatches(map);
@@ -1207,10 +1210,15 @@ export function useScriptsModal({ isOpen, onClose: _onClose, onOpenGerador, noti
 
   const saveEditScript = async () => {
     if (!editingTitle.trim() || !editingScriptId) return;
-    
+    const nomeTrim = editingTitle.trim();
+    if (nomeTrim.length > 200) {
+      toast.error('O título do script deve ter no máximo 200 caracteres.');
+      return;
+    }
+
     const { error } = await supabase
       .from('scripts_customizados')
-      .update({ nome: editingTitle.trim() })
+      .update({ nome: nomeTrim })
       .eq('id', editingScriptId);
 
     if (error) {
@@ -1800,10 +1808,10 @@ export function useScriptsModal({ isOpen, onClose: _onClose, onOpenGerador, noti
     }
     // Se está desmarcando (já revisado -> não revisado), faz direto
     if (currentValue) {
-      const { error } = await supabase
-        .from('scripts_customizados')
-        .update({ curadoria_atuada: false, curadoria_por: null, data_curadoria: null })
-        .eq('id', scriptId);
+      const { error } = await supabase.rpc('marcar_curadoria_script', {
+        p_script_id: scriptId,
+        p_curado: false,
+      });
 
       if (error) {
         toast.error('Erro ao atualizar status');
@@ -1821,10 +1829,11 @@ export function useScriptsModal({ isOpen, onClose: _onClose, onOpenGerador, noti
   };
 
   const marcarCuradoriaRevisada = async (script: ScriptItem) => {
-    const { error } = await supabase
-      .from('scripts_customizados')
-      .update({ curadoria_atuada: true, curadoria_por: user?.id || null, data_curadoria: new Date().toISOString() })
-      .eq('id', script.id);
+    const { error } = await supabase.rpc('marcar_curadoria_script', {
+      p_script_id: script.id,
+      p_curado: true,
+      p_curador_id: user?.id || null,
+    });
 
     if (error) {
       toast.error('Erro ao atualizar status');

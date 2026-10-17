@@ -14,12 +14,16 @@ const distAssets = path.join(root, 'dist', 'assets');
 const FORBIDDEN_IN_SRC = [
   'VITE_SUPABASE_SERVICE_ROLE_KEY',
   'import.meta.env.VITE_SUPABASE_SERVICE_ROLE',
+  'VITE_OPENAI_API_KEY',
+  'import.meta.env.VITE_OPENAI',
 ];
 
 /** Nomes de env / literais que só aparecem se alguém embutir a secret no client */
 const FORBIDDEN_IN_BUNDLE = [
   /VITE_SUPABASE_SERVICE_ROLE/i,
   /SUPABASE_SERVICE_ROLE_KEY/i,
+  /VITE_OPENAI_API_KEY/i,
+  /api\.openai\.com/i,
 ];
 
 function walkFiles(dir, ext, out = []) {

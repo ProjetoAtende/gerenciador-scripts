@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 
 import { CheckCircle2, Circle, Clock, HelpCircle, Ticket, Send, Calendar, User, History } from 'lucide-react';
-import { ScriptItem, ScriptFolder, scriptPublicado } from '../types/Script';
+import { ScriptItem, ScriptFolder, scriptPublicado, SCRIPT_NOME_MAX_LENGTH } from '../types/Script';
 import { CategoriaEditavelScript } from './CategoriaEditavelScript';
 import { useCategoriaInfo } from '../hooks/useCategoriaInfo';
 
@@ -323,6 +323,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo(({
               type="text"
               value={editingTitle}
               onChange={(e) => onTitleChange(e.target.value)}
+              maxLength={SCRIPT_NOME_MAX_LENGTH}
               className="w-full px-2 py-1 border border-blue-300 rounded text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               autoFocus
               onKeyDown={(e) => {

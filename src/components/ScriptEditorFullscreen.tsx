@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, Eye, Edit3, Pencil, HelpCircle, Ticket, MessageCircleQuestion, User, Clock, Shield, Search, Check, ChevronDown } from 'lucide-react';
-import { ScriptItem, SCRIPT_INSTANCIA_OPTIONS, ScriptInstancia, inferirInstanciaPorEquipe } from '../types/Script';
+import { ScriptItem, SCRIPT_INSTANCIA_OPTIONS, ScriptInstancia, inferirInstanciaPorEquipe, SCRIPT_NOME_MAX_LENGTH } from '../types/Script';
+import { sanitizeStackHtml } from '../utils/sanitizeStackHtml';
 import { RichTextEditor } from './RichTextEditor';
 import { usePermissoes } from '../contexts/PermissoesContext';
 import { CategoriaEditavelScript } from './CategoriaEditavelScript';
@@ -419,6 +420,11 @@ export const ScriptEditorFullscreen: React.FC<ScriptEditorFullscreenProps> = ({
       setIsEditingName(true);
       return;
     }
+    if (nome.trim().length > SCRIPT_NOME_MAX_LENGTH) {
+      toast.error(`O título deve ter no máximo ${SCRIPT_NOME_MAX_LENGTH} caracteres.`);
+      setIsEditingName(true);
+      return;
+    }
 
     // Validar número do chamado obrigatório (apenas no modo usuario_final)
     if (editMode === 'usuario_final' && !numeroChamadoEdit.trim()) {
@@ -498,16 +504,16 @@ export const ScriptEditorFullscreen: React.FC<ScriptEditorFullscreenProps> = ({
 
   // Processar conteúdo para preview (destacar variáveis do script)
   const processPreviewContent = (html: string) => {
-    // Destacar variáveis do tipo {[opção1][opção2]}
-    let processed = html.replace(
+    let processed = sanitizeStackHtml(html);
+
+    processed = processed.replace(
       /\{(\[[^\]]+\])+\}/g,
-      '<span style="background-color: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-family: monospace;">$&</span>'
+      '<span class="script-preview-var-brackets">$&</span>'
     );
 
-    // Destacar variáveis do tipo ()
     processed = processed.replace(
       /\(\)/g,
-      '<span style="background-color: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; fontFamily: monospace;">()</span>'
+      '<span class="script-preview-var-parens">()</span>'
     );
 
     return processed;
@@ -586,6 +592,7 @@ export const ScriptEditorFullscreen: React.FC<ScriptEditorFullscreenProps> = ({
                       }}
                       className="bg-white/20 text-white placeholder-blue-200 px-3 py-1 rounded-md text-sm border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 min-w-[250px] max-w-[500px] flex-1"
                       placeholder="Digite o título do Script"
+                      maxLength={SCRIPT_NOME_MAX_LENGTH}
                       autoFocus
                     />
                   ) : (

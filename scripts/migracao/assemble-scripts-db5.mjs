@@ -107,7 +107,8 @@ CREATE TRIGGER trigger_validar_script_cat_hierarquica
 
 const grants = `
 GRANT EXECUTE ON FUNCTION public.notificacoes_destinatarios(text, uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.criar_notificacao_script(uuid, uuid, text, text, uuid, jsonb) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.notificar_script_participante(uuid, uuid, text, text, uuid, jsonb) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.publicar_script_customizado(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.criar_proposta_script(uuid, text, text, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.aprovar_proposta_script(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rejeitar_proposta_script(uuid, text) TO authenticated;

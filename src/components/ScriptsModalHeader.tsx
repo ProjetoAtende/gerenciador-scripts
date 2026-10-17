@@ -158,7 +158,7 @@ export const ScriptsModalHeader = React.memo<ScriptsModalHeaderProps>(function S
                 }
               }}
               className="w-full pl-2.5 pr-20 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400"
-              title="Digite e pressione Enter para executar a busca semântica (embeddings) sobre todo o conteúdo dos scripts ativos."
+              title="Filtra scripts pelo título. Pressione Enter para aplicar o filtro."
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none">
               {semanticLoading && (

@@ -236,7 +236,7 @@ export async function marcarAcaoExecutada(notificacaoId: string): Promise<void> 
 }
 
 export async function criarNotificacao(destinatarioId: string, scriptId: string, tipo: ScriptNotificacao['tipo'], mensagem: string, propostaId?: string, metadata?: Record<string, unknown>): Promise<void> {
-  const { error } = await supabase.rpc('criar_notificacao_script', {
+  const { error } = await supabase.rpc('notificar_script_participante', {
     p_destinatario_id: destinatarioId,
     p_script_id: scriptId,
     p_tipo: tipo,

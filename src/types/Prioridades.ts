@@ -41,6 +41,17 @@ export type TipoSolicitante =
   | 'terceiro-interessado'
   | 'outros';
 
+/** Categoria operacional da anotação na UPJ (direcionamento entre analistas). */
+export type CategoriaAnotacao =
+  | 'mle'
+  | 'sisbajud'
+  | 'pesquisas'
+  | 'cadastro'
+  | 'expedicao'
+  | 'movimentacao'
+  | 'publicacao'
+  | 'audiencias';
+
 export type TipoPrioridade =
   | 'urgencia-determinada'
   | 'prazo-excedido'
@@ -131,6 +142,8 @@ export interface PerfilUsuarioPrioridades {
   perfil: PrioridadePerfil;
   upj_id: string | null;
   vinculacao_automatica: boolean;
+  /** Analista: categorias visíveis (null = todas, no servidor). */
+  categorias_habilitadas: CategoriaAnotacao[] | null;
   /** Preferência do Gestor nas listas Ag. Conferência e Retornadas. */
   ver_somente_vinculadas: boolean;
   designacoes_ativas: DesignacaoAtiva[];
@@ -202,6 +215,7 @@ export interface AnotacaoPrioridade {
   tipo_solicitante: TipoSolicitante;
   descricao_solicitante: string | null;
   nome_solicitante: string | null;
+  categoria: CategoriaAnotacao | null;
   tipo_prioridade: TipoPrioridade;
   descricao_tipo_outros: string | null;
   evento_folha: string;
@@ -274,6 +288,7 @@ export interface NovaAnotacaoPayload {
   tipo_solicitante: TipoSolicitante | '';
   descricao_solicitante: string;
   nome_solicitante: string;
+  categoria: CategoriaAnotacao | '';
   tipo_prioridade: TipoPrioridade | '';
   descricao_tipo_outros: string;
   evento_folha: string;

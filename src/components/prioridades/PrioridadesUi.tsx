@@ -2,6 +2,8 @@ import React from 'react';
 import type { AnotacaoPrioridade, PrioridadeStatus } from '../../types/Prioridades';
 import { STATUS_CLASSE, STATUS_LABEL } from '../../types/Prioridades';
 import { ehUrgentissima } from './prioridadesListas';
+import { rotuloCategoria } from './prioridadesCategorias';
+import type { CategoriaAnotacao } from '../../types/Prioridades';
 import { formatarProcessoCnj } from '../../services/prioridadesDjenService';
 import { formatarDataHora, prazoRestante } from './prioridadesUtils';
 
@@ -18,6 +20,15 @@ export const StatusBadge: React.FC<{ status: PrioridadeStatus; className?: strin
 );
 
 /** RF-GES-04: anotações marcadas aparecem em destaque para a UPJ. */
+export const CategoriaBadge: React.FC<{ categoria: CategoriaAnotacao | null }> = ({ categoria }) => {
+  if (!categoria) return null;
+  return (
+    <span className="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-semibold text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200">
+      {rotuloCategoria(categoria)}
+    </span>
+  );
+};
+
 export const UrgentissimoBadge: React.FC = () => (
   <span
     className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-bold text-white"
@@ -68,6 +79,7 @@ export const AnotacaoCard: React.FC<AnotacaoCardProps> = ({
           {formatarProcessoCnj(anotacao.processo)}
         </span>
         <StatusBadge status={anotacao.status} />
+        <CategoriaBadge categoria={anotacao.categoria} />
         {anotacao.reiterada && (
           <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-800 dark:bg-orange-900/40 dark:text-orange-200">
             🔁 Reiterada

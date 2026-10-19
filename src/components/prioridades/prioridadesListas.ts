@@ -4,7 +4,12 @@
  * O status da anotação é exclusivo (transição ou final). Reiterada e
  * Urgentíssima são marcas que convivem com esse status.
  */
-import type { AnotacaoPrioridade, PrioridadePerfil, PrioridadeStatus } from '../../types/Prioridades';
+import type {
+  AnotacaoPrioridade,
+  CategoriaAnotacao,
+  PrioridadePerfil,
+  PrioridadeStatus,
+} from '../../types/Prioridades';
 
 export type ChaveLista =
   | 'ag-conferencia'
@@ -24,6 +29,8 @@ export interface ContextoLista {
   usuarioId: string | null;
   /** Preferência do Gestor para Ag. Conferência e Retornadas. */
   somenteVinculadas: boolean;
+  /** Filtro opcional (Coordenador / Analista). */
+  filtroCategoria?: CategoriaAnotacao | null;
 }
 
 type AnotacaoLista = Pick<
@@ -34,6 +41,7 @@ type AnotacaoLista = Pick<
   | 'urgentissimo_auto'
   | 'conferente_vinculado_id'
   | 'conferido_por_id'
+  | 'categoria'
 >;
 
 const STATUS_EM_ANDAMENTO: PrioridadeStatus[] = [
@@ -89,6 +97,10 @@ export function anotacaoNaLista(
   }
 
   if (restringeVinculo(chave, ctx) && !vinculadaAoUsuario(anotacao, ctx.usuarioId)) {
+    return false;
+  }
+
+  if (ctx.filtroCategoria && anotacao.categoria !== ctx.filtroCategoria) {
     return false;
   }
 

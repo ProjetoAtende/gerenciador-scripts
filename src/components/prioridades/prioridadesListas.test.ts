@@ -22,6 +22,7 @@ function anotacao(parcial: Partial<AnotacaoPrioridade>): AnotacaoPrioridade {
     tipo_solicitante: 'autor-exequente',
     descricao_solicitante: null,
     nome_solicitante: null,
+    categoria: 'mle',
     tipo_prioridade: 'fora-localizador',
     descricao_tipo_outros: null,
     evento_folha: '1',
@@ -72,6 +73,17 @@ describe('anotacaoNaLista', () => {
     const item = anotacao({ status: 'upj-pendente', reiterada: true });
     expect(anotacaoNaLista(item, 'novas', gestor)).toBe(true);
     expect(anotacaoNaLista(item, 'reiteradas', gestor)).toBe(true);
+  });
+
+  it('filtra por categoria quando solicitado (UPJ)', () => {
+    const ctx: ContextoLista = {
+      perfilEfetivo: 'coordenador',
+      usuarioId: 'coord-1',
+      somenteVinculadas: false,
+      filtroCategoria: 'sisbajud',
+    };
+    expect(anotacaoNaLista(anotacao({ categoria: 'sisbajud' }), 'novas', ctx)).toBe(true);
+    expect(anotacaoNaLista(anotacao({ categoria: 'mle' }), 'novas', ctx)).toBe(false);
   });
 
   it('mostra Urgentíssima automática junto com Em Análise', () => {

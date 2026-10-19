@@ -3,7 +3,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { usePermissoes } from '../../contexts/PermissoesContext';
 import type { UsePrioridadesModal } from '../../hooks/usePrioridadesModal';
 import { listarAnotacoes, marcarEmAnalise, registrarAcessoPrivilegiado } from '../../services/prioridadesService';
-import type { AnotacaoPrioridade, PrioridadePerfil } from '../../types/Prioridades';
+import type { AnotacaoPrioridade, CategoriaAnotacao, PrioridadePerfil } from '../../types/Prioridades';
+import { FiltroCategoriaUpj } from './FiltroCategoriaUpj';
 import { AnotacaoCard } from './PrioridadesUi';
 import { NovaAnotacaoForm } from './NovaAnotacaoForm';
 import { ConferenciaAnotacao } from './ConferenciaAnotacao';
@@ -159,6 +160,7 @@ export const PrioridadesContent: React.FC<PrioridadesContentProps> = ({
   const [anotacoes, setAnotacoes] = useState<AnotacaoPrioridade[]>([]);
   const [carregandoLista, setCarregandoLista] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [filtroCategoria, setFiltroCategoria] = useState<CategoriaAnotacao | ''>('');
 
   const nomeUpj = useCallback((upjId: string | null): string | null => rotuloUpjPorId(upjs, upjId), [upjs]);
   const ocultarCorrecaoAtendente = perfilEfetivo === 'atendente';
@@ -177,13 +179,16 @@ export const PrioridadesContent: React.FC<PrioridadesContentProps> = ({
     void carregar();
   }, [carregar, tela]);
 
+  const mostrarFiltroCategoria = perfilEfetivo === 'coordenador' || perfilEfetivo === 'analista';
+
   const contextoLista = useMemo(
     () => ({
       perfilEfetivo,
       usuarioId: user?.id ?? null,
       somenteVinculadas: perfil?.ver_somente_vinculadas ?? false,
+      filtroCategoria: mostrarFiltroCategoria && filtroCategoria ? filtroCategoria : null,
     }),
-    [perfilEfetivo, perfil?.ver_somente_vinculadas, user?.id]
+    [perfilEfetivo, perfil?.ver_somente_vinculadas, user?.id, mostrarFiltroCategoria, filtroCategoria]
   );
 
   const abrirAnotacao = useCallback(
@@ -280,19 +285,29 @@ export const PrioridadesContent: React.FC<PrioridadesContentProps> = ({
       )}
 
       {tela.tipo === 'inicial' && (
-        <TelaInicial
-          perfilEfetivo={perfilEfetivo}
-          anotacoes={anotacoes}
-          contexto={contextoLista}
-          ocultarCorrecaoAutomatica={ocultarCorrecaoAtendente}
-          onAbrir={abrirAnotacao}
-          onVerLista={(grupo) => irPara({ tipo: 'lista', grupo })}
-          onNova={() => irPara({ tipo: 'nova' })}
-        />
+        <div className="space-y-0">
+          {mostrarFiltroCategoria && (
+            <div className="border-b border-gray-200 px-6 py-3 dark:border-gray-700">
+              <FiltroCategoriaUpj value={filtroCategoria} onChange={setFiltroCategoria} />
+            </div>
+          )}
+          <TelaInicial
+            perfilEfetivo={perfilEfetivo}
+            anotacoes={anotacoes}
+            contexto={contextoLista}
+            ocultarCorrecaoAutomatica={ocultarCorrecaoAtendente}
+            onAbrir={abrirAnotacao}
+            onVerLista={(grupo) => irPara({ tipo: 'lista', grupo })}
+            onNova={() => irPara({ tipo: 'nova' })}
+          />
+        </div>
       )}
 
       {tela.tipo === 'lista' && (
         <div className="space-y-3 p-6">
+          {mostrarFiltroCategoria && (
+            <FiltroCategoriaUpj value={filtroCategoria} onChange={setFiltroCategoria} />
+          )}
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">
               {ROTULO_LISTA[tela.grupo] ?? 'Lista'}

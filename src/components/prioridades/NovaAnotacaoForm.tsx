@@ -30,6 +30,7 @@ import {
 import type { CatalogoItem, RegraEspecial } from '../../services/prioridadesService';
 import { StatusBadge } from './PrioridadesUi';
 import { AnotacaoConsultaModal } from './AnotacaoConsultaModal';
+import { CategoriaAnotacaoField } from './CategoriaAnotacaoField';
 
 interface NovaAnotacaoProps {
   perfil: PerfilUsuarioPrioridades | null;
@@ -50,6 +51,7 @@ const ESTADO_INICIAL: NovaAnotacaoPayload = {
   tipo_solicitante: '',
   descricao_solicitante: '',
   nome_solicitante: '',
+  categoria: '',
   tipo_prioridade: '',
   descricao_tipo_outros: '',
   evento_folha: '',
@@ -124,7 +126,8 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
   const consultaConcluida = resultadoDjen !== null;
   const djenIndisponivel = resultadoDjen?.status === 'erro';
   const mostrarSolicitante = consultaConcluida && processoCompetente;
-  const mostrarTipo = mostrarSolicitante && form.tipo_solicitante !== '';
+  const mostrarCategoria = mostrarSolicitante && form.tipo_solicitante !== '';
+  const mostrarTipo = mostrarCategoria && form.categoria !== '';
   const mostrarRestante = mostrarTipo && form.tipo_prioridade !== '';
   const upjDetectadaAutomaticamente = Boolean(form.upj_id && upjDetectada?.nome);
   const inferenciaSistema = useMemo(
@@ -280,6 +283,7 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
     if (form.tipo_solicitante === 'outros' && !form.descricao_solicitante.trim()) {
       faltando.push('Descrição do(s) Solicitante');
     }
+    if (!form.categoria) faltando.push('Categoria da Anotação');
     if (!form.tipo_prioridade) faltando.push('Tipo de Prioridade/Urgência');
     if (form.tipo_prioridade === 'outros' && !form.descricao_tipo_outros.trim()) {
       faltando.push('Descrição do Tipo de Prioridade/Urgência');
@@ -544,6 +548,13 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
           />
         </div>
+      )}
+
+      {mostrarCategoria && (
+        <CategoriaAnotacaoField
+          value={form.categoria}
+          onChange={(valor) => atualizar('categoria', valor)}
+        />
       )}
 
       {/* ── Tipo de Prioridade (RF-ATD-06/07) ────────────────── */}

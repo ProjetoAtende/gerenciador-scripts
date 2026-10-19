@@ -8,6 +8,8 @@ import {
   listarDesignacoes,
   listarPerfisBase,
   listarPerfisComVinculacao,
+  listarCategoriasHabilitadas,
+  atualizarCategoriasHabilitadas,
   removerPerfil,
 } from '../../services/prioridadesService';
 import type {
@@ -20,6 +22,7 @@ import type {
 } from '../../types/Prioridades';
 import { PERFIL_LABEL } from '../../types/Prioridades';
 import { rotuloUpj } from './prioridadesUpjDisplay';
+import { CATEGORIAS_ANOTACAO, CODIGOS_CATEGORIA } from './prioridadesCategorias';
 
 interface Props {
   perfilEfetivo: PrioridadePerfil | null;
@@ -286,6 +289,17 @@ export const DesignacoesTela: React.FC<Props> = ({
     await onAtualizar();
   };
 
+  const alternarCategoriaUsuario = async (usuarioId: string, codigo: string, marcado: boolean) => {
+    const atual = categoriasPorUsuario[usuarioId] ?? [...CODIGOS_CATEGORIA];
+    const proximo = marcado ? [...new Set([...atual, codigo])] : atual.filter((c) => c !== codigo);
+    setCategoriasPorUsuario((prev) => ({ ...prev, [usuarioId]: proximo }));
+    const r = await atualizarCategoriasHabilitadas(usuarioId, proximo);
+    if (!r.sucesso) {
+      setErro(r.erro ?? 'Não foi possível salvar as categorias.');
+      setCategoriasPorUsuario((prev) => ({ ...prev, [usuarioId]: atual }));
+    }
+  };
+
   const alternarVinculacao = async (d: DesignacaoListada, valor: boolean) => {
     setErro(null);
     // Atualização otimista: o checkbox responde na hora e o estado real é
@@ -307,9 +321,17 @@ export const DesignacoesTela: React.FC<Props> = ({
    * de designações muda.
    */
   const [vinculacaoPorUsuario, setVinculacaoPorUsuario] = useState<Record<string, boolean>>({});
+  const [categoriasPorUsuario, setCategoriasPorUsuario] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     void listarPerfisComVinculacao().then(setVinculacaoPorUsuario);
+    void listarCategoriasHabilitadas().then((mapa) => {
+      const normalizado: Record<string, string[]> = {};
+      for (const [uid, cats] of Object.entries(mapa)) {
+        normalizado[uid] = cats.length > 0 ? cats : [...CODIGOS_CATEGORIA];
+      }
+      setCategoriasPorUsuario(normalizado);
+    });
   }, [designacoes.length]);
 
   const nomeUpj = useCallback(
@@ -334,7 +356,12 @@ export const DesignacoesTela: React.FC<Props> = ({
   }, [ativas, coordenadorRestrito, perfil?.upj_id]);
   const gestores = perfisBase.filter((p) => p.perfil === 'gestor');
 
-  const tabela = (titulo: string, linhas: DesignacaoListada[], colunaUpj: boolean) => (
+  const tabela = (
+    titulo: string,
+    linhas: DesignacaoListada[],
+    colunaUpj: boolean,
+    modo: 'conferente' | 'analista' = 'conferente'
+  ) => (
     <section>
       <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
         {titulo}
@@ -354,9 +381,16 @@ export const DesignacoesTela: React.FC<Props> = ({
                 )}
                 <th className="px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">Período</th>
                 <th className="px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">Na fila</th>
-                <th className="px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">
-                  Vinculação automática
-                </th>
+                {modo === 'conferente' && (
+                  <th className="px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">
+                    Vinculação automática
+                  </th>
+                )}
+                {modo === 'analista' && (
+                  <th className="px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">
+                    Categorias habilitadas
+                  </th>
+                )}
                 <th className="px-3 py-2" />
               </tr>
             </thead>
@@ -383,17 +417,46 @@ export const DesignacoesTela: React.FC<Props> = ({
                   <td className="px-3 py-2 text-gray-600 dark:text-gray-300">
                     {cargaPorUsuario[d.usuario_id] ?? 0}
                   </td>
-                  <td className="px-3 py-2">
-                    <label className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
-                      <input
-                        type="checkbox"
-                        checked={vinculacaoPorUsuario[d.usuario_id] ?? true}
-                        onChange={(e) => void alternarVinculacao(d, e.target.checked)}
-                        className="h-4 w-4"
-                      />
-                      {vinculacaoPorUsuario[d.usuario_id] ?? true ? 'Habilitada' : 'Desabilitada'}
-                    </label>
-                  </td>
+                  {modo === 'conferente' && (
+                    <td className="px-3 py-2">
+                      <label className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+                        <input
+                          type="checkbox"
+                          checked={vinculacaoPorUsuario[d.usuario_id] ?? true}
+                          onChange={(e) => void alternarVinculacao(d, e.target.checked)}
+                          className="h-4 w-4"
+                        />
+                        {vinculacaoPorUsuario[d.usuario_id] ?? true ? 'Habilitada' : 'Desabilitada'}
+                      </label>
+                    </td>
+                  )}
+                  {modo === 'analista' && (
+                    <td className="px-3 py-2">
+                      <div className="flex flex-wrap gap-x-3 gap-y-1">
+                        {CATEGORIAS_ANOTACAO.map((cat) => {
+                          const habilitadas = categoriasPorUsuario[d.usuario_id] ?? CODIGOS_CATEGORIA;
+                          const marcado = habilitadas.includes(cat.codigo);
+                          return (
+                            <label
+                              key={cat.codigo}
+                              className="flex items-center gap-1 text-xs text-gray-700 dark:text-gray-200"
+                              title={cat.dica}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={marcado}
+                                onChange={(e) =>
+                                  void alternarCategoriaUsuario(d.usuario_id, cat.codigo, e.target.checked)
+                                }
+                                className="h-3.5 w-3.5"
+                              />
+                              {cat.label}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </td>
+                  )}
                   <td className="px-3 py-2 text-right">
                     <button
                       type="button"
@@ -715,11 +778,11 @@ export const DesignacoesTela: React.FC<Props> = ({
                   </div>
                 </section>
               )}
-              {tabela(`Conferentes Designados (${conferentes.length})`, conferentes, false)}
+              {tabela(`Conferentes Designados (${conferentes.length})`, conferentes, false, 'conferente')}
             </>
           )}
           {(podeDesignarAnalista || coordenadorRestrito) &&
-            tabela(`Analistas Designados (${analistas.length})`, analistas, true)}
+            tabela(`Analistas Designados (${analistas.length})`, analistas, true, 'analista')}
 
           {!coordenadorRestrito && encerradas.length > 0 && (
             <details className="rounded-lg border border-gray-200 dark:border-gray-700">

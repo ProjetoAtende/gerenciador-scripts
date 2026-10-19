@@ -12,6 +12,16 @@ com o DJEN estão em [PRIORIDADES_URGENCIAS_DJEN.md](implementation-guides/PRIOR
 > card na Home ao provisionar perfil — ver
 > [PRIORIDADES_URGENCIAS_CORRECOES_FINAIS_03_ENTREGA.md](PRIORIDADES_URGENCIAS_CORRECOES_FINAIS_03_ENTREGA.md).
 
+> **Categoria da Anotação (19/10/2026).** Nova propriedade da anotação para
+> direcionar o trabalho na UPJ entre Coordenadores e Analistas por tipo de
+> assunto (MLE, Sisbajud, Pesquisas, Cadastro, Expedição, Movimentação,
+> Publicação, Audiências). Inclui filtro nas listas UPJ, badges nos cards,
+> **Categorias habilitadas** por analista em Designações e edição na conferência.
+> Entrega técnica:
+> [PRIORIDADES_URGENCIAS_CATEGORIAS_ENTREGA.md](PRIORIDADES_URGENCIAS_CATEGORIAS_ENTREGA.md).
+> Roteiro Grokbot (veredito **APROVADO** em DEV, 19/10/2026):
+> [PRIORIDADES_URGENCIAS_CATEGORIAS_TESTES.md](PRIORIDADES_URGENCIAS_CATEGORIAS_TESTES.md).
+
 > **Reclassificação (out/2026).** Status e marcas (Nova, Em Análise, Reiterada,
 > Urgentíssima automática, prazo 24 h, Configurações) estão descritos em
 > [PRIORIDADES_URGENCIAS_RECLASSIFICACAO_ENTREGA.md](PRIORIDADES_URGENCIAS_RECLASSIFICACAO_ENTREGA.md).
@@ -58,7 +68,7 @@ Gestor e Conferente designado compartilham o painel com seções Atendentes e UP
 |---|---|---|
 | **Atendentes** | Atendente | Registra anotações e responde devoluções |
 | **Gestores** | Gestor, Conferente Designado | Confere (aprovar / devolver / rejeitar), marca Urgentíssimo, designa Conferentes |
-| **UPJs** | Coordenador, Analista Designado | Analisa (resolver / devolver / rejeitar) as anotações da própria UPJ, designa Analistas |
+| **UPJs** | Coordenador, Analista Designado | Analisa (resolver / devolver / rejeitar) as anotações da própria UPJ, designa Analistas; **Coordenador** vê todas as categorias; **Analista** só vê categorias habilitadas em Designações |
 
 ### Acesso e perfis
 
@@ -201,16 +211,19 @@ certa receba, sem digitar errado o número do processo nem escolher a Vara na m�
    **Verificar**).
 5. Observe o bloco **Indicador de Localização do Processo**.
 6. Preencha **Solicitante** → `Autor/Exequente`.
-7. Preencha **Tipo de Prioridade/Urgência** → `Consta "URGENTE" na
+7. Em **Categoria da Anotação**, escolha uma das oito opções (rádios em duas
+   linhas). Passe o mouse no ℹ️ ao lado do rótulo para ler a dica (ex.: **MLE**
+   — levantamentos e transferências de valores).
+8. Preencha **Tipo de Prioridade/Urgência** → `Consta "URGENTE" na
    decisão/sentença`.
-8. Leia o **aviso contextual** que aparece abaixo do campo.
-9. Em **Sistema**, escolha `Eproc` (opcional).
-10. Confira **UPJ de destino** — deve estar preenchida automaticamente.
-11. Preencha **Evento(s) ou Folha(s)**: `Evento 45`.
-12. Preencha **Descrição da Prioridade/Urgência** com o relato do solicitante.
-13. Em **Observações Adicionais**, escreva algo que **não** deve chegar à UPJ:
+9. Leia o **aviso contextual** que aparece abaixo do campo.
+10. Em **Sistema**, escolha `Eproc` (opcional).
+11. Confira **UPJ de destino** — deve estar preenchida automaticamente.
+12. Preencha **Evento(s) ou Folha(s)**: `Evento 45`.
+13. Preencha **Descrição da Prioridade/Urgência** com o relato do solicitante.
+14. Em **Observações Adicionais**, escreva algo que **não** deve chegar à UPJ:
     `Solicitante relatou que tem audiência na semana que vem.`
-14. Clique em **Enviar Anotação**.
+15. Clique em **Enviar Anotação**.
 
 ### Resultado esperado
 
@@ -225,7 +238,8 @@ Sistema: informe abaixo — o DJEN não informa se o processo tramita no Eproc o
 ```
 
 Após enviar: faixa verde *"Anotação N registrada e enviada para conferência do
-Gestor."* A anotação aparece em **Ag. Conferência** com contador `1`.
+Gestor."* A anotação aparece em **Ag. Conferência** com contador `1` e um badge
+com o rótulo da categoria escolhida (ex.: **MLE**).
 
 ### O que observar
 
@@ -273,6 +287,7 @@ Bloco vermelho com a lista exata do que falta:
 ```
 Preencha os campos obrigatórios:
 • Tipo de Solicitante
+• Categoria da Anotação
 • Tipo de Prioridade/Urgência
 • Evento ou Folhas
 • Descrição da Prioridade/Urgência
@@ -313,20 +328,22 @@ marca como Urgentíssimo, porque há prazo curto.
 3. Clique na anotação. Abre a tela **Conferência de Anotação**.
 4. Confira os rótulos: **Data da Anotação**, **Nome do Atendente**,
    **Conferente vinculado**, **Conferido por**.
-5. Em **Descrição da Prioridade/Urgência**, reescreva o texto de forma mais clara.
-6. Observe o aviso amarelo que aparece: *"Texto original preservado em
+5. Em **Categoria da Anotação**, confira ou altere a categoria se o enquadramento
+   estiver errado (Gestor e Conferente podem corrigir antes de aprovar).
+6. Em **Descrição da Prioridade/Urgência**, reescreva o texto de forma mais clara.
+7. Observe o aviso amarelo que aparece: *"Texto original preservado em
    'Observação Adicional' (RF-GES-03)"*, com o texto antigo em itálico.
-7. Em **Observação Adicional (registro da correção)**, escreva o motivo:
+8. Em **Observação Adicional (registro da correção)**, escreva o motivo:
    `Texto reescrito para clareza; pedido mantido.`
-8. Role até o bloco **Observações internas do TJSP Atende**. Confirme que a
+9. Role até o bloco **Observações internas do TJSP Atende**. Confirme que a
    observação escrita pelo Atendente no Caso 2 está visível **aqui** — e observe
    a nota de que ela não é repassada à UPJ.
-9. **Confira o campo UPJ de destino.** Se a detecção automática tiver funcionado,
+10. **Confira o campo UPJ de destino.** Se a detecção automática tiver funcionado,
    ele já vem preenchido. Se estiver vazio, o campo aparece realçado em amarelo
    com a explicação — **escolha a UPJ**, porque a aprovação exige destino.
-10. Em **Decisão de conferência**, marque **Aprovar**.
-11. Marque a caixa **Marcar como Urgentíssimo**.
-12. Clique em **Enviar para UPJ**.
+11. Em **Decisão de conferência**, marque **Aprovar**.
+12. Marque a caixa **Marcar como Urgentíssimo**.
+13. Clique em **Enviar para UPJ**.
 
 ### Resultado esperado
 
@@ -454,21 +471,24 @@ outros cartórios: você só vê o que é da sua UPJ.
 ### Passo a passo
 
 1. Entre com o Coordenador. O módulo abre em **UPJs** (rótulo "Módulo UPJs").
-2. Observe o painel lateral: **Urgentíssimas**, Reiteradas, Pendentes,
+2. No topo do painel, use **Filtrar categoria** (select) para restringir a visão
+   a uma categoria (ex.: **Sisbajud**) ou deixe **Todas**. Atendente e Gestor
+   **não** veem este filtro.
+3. Observe o painel lateral: **Urgentíssimas**, Reiteradas, Pendentes,
    Analisadas, Resolvidas, Devolvidas, Aprovadas, Rejeitadas, Histórico,
    Designações.
-3. A tela inicial mostra três listas: **Anotações Urgentíssimas**, **Reiteradas**
-   e **Pendentes**.
-4. Clique na anotação que o Gestor marcou como Urgentíssimo (Caso 4). Ela aparece
+4. A tela inicial mostra três listas: **Anotações Urgentíssimas**, **Reiteradas**
+   e **Pendentes**. Cada card traz um badge da **categoria** (ex.: **MLE**).
+5. Clique na anotação que o Gestor marcou como Urgentíssimo (Caso 4). Ela aparece
    com o selo **⚡ Urgentíssimo**.
-5. Confira os rótulos do topo: Data, Atendente, **Gestor/Conferente**, Analista
+6. Confira os rótulos do topo: Data, Atendente, **Gestor/Conferente**, Analista
    vinculado.
-6. **Confirme que o bloco "Observações internas do TJSP Atende" NÃO aparece.**
+7. **Confirme que o bloco "Observações internas do TJSP Atende" NÃO aparece.**
    Ele é de uso interno do TJSP Atende e não é repassado às UPJs.
-7. Em **Decisão da UPJ**, marque **Resolver**.
-8. Em **Observações Adicionais (uso interno da UPJ)**, escreva:
+8. Em **Decisão da UPJ**, marque **Resolver**.
+9. Em **Observações Adicionais (uso interno da UPJ)**, escreva:
    `Expedido ofício de fls. 214; cumprido em 06/10.`
-9. Clique em **Arquivar**.
+10. Clique em **Arquivar**.
 
 ### Resultado esperado
 
@@ -482,6 +502,22 @@ outros cartórios: você só vê o que é da sua UPJ.
 Pergunte à UPJ vizinha: um usuário de **outra** UPJ não vê esta anotação em
 nenhuma lista. Se tentar abrir pela URL, recebe "não encontrada ou sem permissão".
 O isolamento é aplicado **no banco** (RLS), não só na tela.
+
+### Variante — Analista só vê categorias habilitadas
+
+1. Gestor ou Coordenador → **Designações** → tabela **Analistas Designados**.
+2. Na coluna **Categorias habilitadas**, marque só as categorias desejadas para
+   cada analista (oito checkboxes). A coluna **Vinculação automática** **não**
+   aparece para analistas (permanece só na tabela de Conferentes).
+3. Com **Analista A** habilitado para MLE e Sisbajud e **Analista B** só para
+   Cadastro, na mesma UPJ: A **não** enxerga anotações Cadastro; B enxerga.
+4. **Coordenador** continua vendo **todas** as categorias da UPJ; use o filtro do
+   passo 2 para restringir a visualização.
+
+> **Admin global:** quem tem papel `admin` no Gerenciador pode **ler** qualquer
+> anotação (`prioridades_pode_ver`), inclusive fora das categorias do analista —
+> isso é auditoria, não perfil operacional. Testes de visibilidade UPJ devem usar
+> usuário **não admin** (ex.: analista designado).
 
 ### Variante — devolver ao TJSP Atende
 
@@ -731,6 +767,15 @@ exercitados.
 | RF-GER-03 | Integridade dos registros | 1, 10 |
 | RF-GER-04 | Histórico e rastreabilidade | 10 |
 | RF-GER-06 | Temporizadores | 8 |
+| CAT-01 | Categoria da Anotação na criação (8 valores + ℹ️) | 2, 3 |
+| CAT-02 | Badge de categoria nas listas | 2, 6 |
+| CAT-03 | Filtro por categoria (Coordenador / Analista) | 6 |
+| CAT-04 | Categorias habilitadas por Analista (Designações) | 6, 7 |
+| CAT-05 | Edição de categoria na conferência | 4 |
+| CAT-06 | Visibilidade do Analista restrita por categoria (servidor) | 6 |
+
+Roteiro automatizado Grokbot (casos C1–C9, regressão R1–R3):
+[PRIORIDADES_URGENCIAS_CATEGORIAS_TESTES.md](PRIORIDADES_URGENCIAS_CATEGORIAS_TESTES.md).
 
 ---
 

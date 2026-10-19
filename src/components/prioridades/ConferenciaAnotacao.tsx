@@ -5,6 +5,9 @@ import { formatarProcessoCnj } from '../../services/prioridadesDjenService';
 import { CampoLeitura, StatusBadge } from './PrioridadesUi';
 import { formatarDataHora } from './prioridadesUtils';
 import { rotuloUpj } from './prioridadesUpjDisplay';
+import { CategoriaAnotacaoField } from './CategoriaAnotacaoField';
+import type { CategoriaAnotacao } from '../../types/Prioridades';
+import { rotuloCategoria } from './prioridadesCategorias';
 
 interface Props {
   anotacao: AnotacaoPrioridade;
@@ -35,6 +38,7 @@ export const ConferenciaAnotacao: React.FC<Props> = ({ anotacao, upjs, somenteLe
   const [eventoFolha, setEventoFolha] = useState(anotacao.evento_folha);
   const [obsGestor, setObsGestor] = useState('');
   const [upjDestino, setUpjDestino] = useState(anotacao.upj_id ?? '');
+  const [categoria, setCategoria] = useState<CategoriaAnotacao | ''>(anotacao.categoria ?? '');
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [historico, setHistorico] = useState<HistoricoAnotacao[]>([]);
@@ -62,6 +66,10 @@ export const ConferenciaAnotacao: React.FC<Props> = ({ anotacao, upjs, somenteLe
       );
       return;
     }
+    if (!categoria) {
+      setErro('Selecione a Categoria da Anotação.');
+      return;
+    }
 
     setEnviando(true);
     try {
@@ -72,18 +80,13 @@ export const ConferenciaAnotacao: React.FC<Props> = ({ anotacao, upjs, somenteLe
         urgentissimo,
         correcaoAutomatica,
         textoCorrecao,
-        alteracoes:
-          descricao !== anotacao.descricao_prioridade ||
-          eventoFolha !== anotacao.evento_folha ||
-          obsGestor.trim() !== '' ||
-          upjDestino !== (anotacao.upj_id ?? '')
-            ? {
-                descricao_prioridade: descricao,
-                evento_folha: eventoFolha,
-                observacao_adicional_gestor: obsGestor || undefined,
-                upj_id: upjDestino || undefined,
-              }
-            : undefined,
+        alteracoes: {
+          descricao_prioridade: descricao,
+          evento_folha: eventoFolha,
+          categoria: categoria || undefined,
+          observacao_adicional_gestor: obsGestor || undefined,
+          upj_id: upjDestino || undefined,
+        },
       });
 
       if (!resposta.sucesso) {
@@ -131,6 +134,9 @@ export const ConferenciaAnotacao: React.FC<Props> = ({ anotacao, upjs, somenteLe
         <CampoLeitura label="Conferido por" valor={anotacao.conferido_por_nome ?? '—'} />
         <CampoLeitura label="Solicitante" valor={anotacao.tipo_solicitante} />
         <CampoLeitura label="Tipo de Prioridade" valor={anotacao.tipo_prioridade} />
+        {somenteLeitura && (
+          <CampoLeitura label="Categoria" valor={rotuloCategoria(anotacao.categoria)} />
+        )}
       </dl>
 
       {anotacao.correcao_automatica && anotacao.status === 'gestor-devolvida' && (
@@ -161,6 +167,14 @@ export const ConferenciaAnotacao: React.FC<Props> = ({ anotacao, upjs, somenteLe
         <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
           Campos da anotação original
         </h3>
+
+        {!somenteLeitura ? (
+          <CategoriaAnotacaoField
+            idPrefix="conf-cat"
+            value={categoria}
+            onChange={setCategoria}
+          />
+        ) : null}
 
         <div>
           <label htmlFor="conf-evento" className="block text-sm font-medium text-gray-700 dark:text-gray-200">

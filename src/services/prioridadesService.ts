@@ -15,6 +15,7 @@ import { codigoUpjPorOrgaoDjen } from './prioridadesUpjFaixa';
 import type {
   AnotacaoAnterior,
   AnotacaoPrioridade,
+  CategoriaAnotacao,
   DesignacaoListada,
   HistoricoAnotacao,
   NovaAnotacaoPayload,
@@ -77,6 +78,7 @@ export async function obterMeuPerfil(): Promise<{
 
   const perfil = linhas[0];
   perfil.ver_somente_vinculadas = perfil.ver_somente_vinculadas ?? false;
+  perfil.categorias_habilitadas = perfil.categorias_habilitadas ?? null;
   const designacoes = perfil.designacoes_ativas ?? [];
 
   // A designação prevalece sobre o perfil base quando habilita um módulo
@@ -383,6 +385,35 @@ export async function alternarVinculacaoAutomatica(
   });
 }
 
+export async function atualizarCategoriasHabilitadas(
+  usuarioId: string,
+  categorias: string[]
+): Promise<RespostaRpc> {
+  return chamarRpc('prioridades_atualizar_categorias_habilitadas', {
+    p_usuario_id: usuarioId,
+    p_categorias: categorias,
+  });
+}
+
+/** Mapa usuario_id → categorias habilitadas (analistas). */
+export async function listarCategoriasHabilitadas(): Promise<Record<string, string[]>> {
+  const { data, error } = await supabase.rpc('prioridades_listar_categorias_analistas');
+
+  if (error) {
+    console.error('[prioridadesService] listarCategoriasHabilitadas error:', error);
+    return {};
+  }
+
+  const mapa: Record<string, string[]> = {};
+  for (const linha of (data ?? []) as Array<{
+    usuario_id: string;
+    categorias_habilitadas: string[] | null;
+  }>) {
+    mapa[linha.usuario_id] = linha.categorias_habilitadas ?? [];
+  }
+  return mapa;
+}
+
 /** Lista as designações com o nome do designado, para a tela Designações. */
 export async function listarDesignacoes(): Promise<{
   sucesso: boolean;
@@ -558,13 +589,16 @@ export interface LinhaPainel {
   conferente_vinculado_id: string | null;
   conferido_por_id: string | null;
   criador_id: string | null;
+  categoria: CategoriaAnotacao | null;
 }
 
 /** Linhas usadas nos contadores do painel. A RLS já recorta quem pode ver. */
 export async function listarLinhasPainel(): Promise<LinhaPainel[]> {
   const { data, error } = await supabase
     .from('prioridades_anotacoes')
-    .select('id, status, reiterada, urgentissimo, urgentissimo_auto, conferente_vinculado_id, conferido_por_id, criador_id');
+    .select(
+      'id, status, reiterada, urgentissimo, urgentissimo_auto, conferente_vinculado_id, conferido_por_id, criador_id, categoria'
+    );
 
   if (error) {
     console.error('[prioridadesService] listarLinhasPainel error:', error);
@@ -580,6 +614,7 @@ export async function listarLinhasPainel(): Promise<LinhaPainel[]> {
     conferente_vinculado_id: linha.conferente_vinculado_id ?? null,
     conferido_por_id: linha.conferido_por_id ?? null,
     criador_id: linha.criador_id ?? null,
+    categoria: linha.categoria ?? null,
   }));
 }
 
@@ -666,6 +701,7 @@ export interface DecisaoConferencia {
     observacao_adicional_gestor?: string;
     /** Permite ao Gestor definir o destino quando a detecção automática falha. */
     upj_id?: string;
+    categoria?: string;
   };
 }
 

@@ -69,7 +69,11 @@ function blocosDoPerfil(
       },
       {
         titulo: 'Em Andamento',
-        itens: [lista('novas', 'Novas', 'dourado', true), lista('em-analise', 'Em Análise', undefined, true)],
+        itens: [
+          lista('novas', 'Novas', 'dourado', true),
+          lista('em-analise', 'Em Análise', undefined, true),
+          lista('retornadas', 'Retornadas'),
+        ],
       },
       {
         titulo: 'Arquivadas',
@@ -77,7 +81,7 @@ function blocosDoPerfil(
       },
     ];
     const rodapeUpj: ItemMenu[] = [];
-    if (temDesignacoes && (perfilEfetivo === 'coordenador' || perfilEfetivo === 'analista')) {
+    if (temDesignacoes && perfilEfetivo === 'coordenador') {
       rodapeUpj.push({ chave: 'designacoes', label: 'Designações', tela: { tipo: 'designacoes' } });
     }
     if (temLogAcessos) rodapeUpj.push(logAcessos);
@@ -91,7 +95,7 @@ function blocosDoPerfil(
       {
         grupo: 'Atendentes',
         titulo: 'Em Andamento',
-        itens: [lista('ag-conferencia', 'Ag. Conferência'), lista('devolvidas', 'Devolvidas', 'vermelho')],
+        itens: [lista('ag-conferencia', 'Ag. Conferência', 'vermelho'), lista('devolvidas', 'Devolvidas')],
       },
       {
         grupo: 'Atendentes',
@@ -101,14 +105,14 @@ function blocosDoPerfil(
       {
         grupo: 'UPJs',
         titulo: 'Especiais',
-        itens: [lista('urgentissimas', 'Urgentíssimas', 'vermelho'), lista('reiteradas', 'Reiteradas', 'laranja', true)],
+        itens: [lista('urgentissimas', 'Urgentíssimas'), lista('reiteradas', 'Reiteradas', undefined, true)],
       },
       {
         grupo: 'UPJs',
         titulo: 'Em Andamento',
         itens: [
           lista('retornadas', 'Retornadas', 'vermelho'),
-          lista('novas', 'Novas', 'dourado', true),
+          lista('novas', 'Novas', undefined, true),
           lista('em-analise', 'Em Análise', undefined, true),
         ],
       },
@@ -141,11 +145,6 @@ function blocosDoPerfil(
       itens: [lista('aprovadas', 'Aprovadas'), lista('reprovadas', 'Reprovadas'), historico],
     },
   ];
-  if (temDesignacoes) {
-    blocos.push({
-      itens: [{ chave: 'designacoes', label: 'Designações', tela: { tipo: 'designacoes' } }],
-    });
-  }
   return blocos;
 }
 

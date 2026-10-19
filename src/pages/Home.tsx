@@ -10,6 +10,7 @@ import { ScriptNotificacao } from '../services/scriptVersioningService';
 import { VersionBadge } from '../components/VersionBadge';
 import { useSettings } from '../contexts/SettingsContext';
 import { HomeInstitutionalHeader } from '../components/HomeInstitutionalHeader';
+import { lerPrioridadesSessao } from '../components/prioridades/prioridadesSessao';
 // Barra de visualização simulada preservada em ../components/HomeVisualizacaoSimulada.tsx (desativada).
 
 const ScriptsModal = lazy(() => import('../components/ScriptsModal').then((m) => ({ default: m.ScriptsModal })));
@@ -151,6 +152,13 @@ export default function Home() {
   } | null>(null);
   const [showGeradorModal, setShowGeradorModal] = useState(false);
   const [scriptNotificacaoPendente, setScriptNotificacaoPendente] = useState<ScriptNotificacao | null>(null);
+
+  useEffect(() => {
+    const sessao = lerPrioridadesSessao();
+    if (sessao?.reabrir) {
+      setModals((prev) => ({ ...prev, prioridades: true }));
+    }
+  }, []);
 
   const handleOpenScriptNotificacao = useCallback((notificacao: ScriptNotificacao) => {
     setScriptNotificacaoPendente(notificacao);

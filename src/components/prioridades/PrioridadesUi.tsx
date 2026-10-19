@@ -40,9 +40,16 @@ interface AnotacaoCardProps {
   onAbrir: (a: AnotacaoPrioridade) => void;
   /** Nome da UPJ, quando conhecido pela lista carregada. */
   upjNome?: string | null;
+  /** Oculta indicação de correção automática (módulo Atendente). */
+  ocultarCorrecaoAutomatica?: boolean;
 }
 
-export const AnotacaoCard: React.FC<AnotacaoCardProps> = ({ anotacao, onAbrir, upjNome }) => {
+export const AnotacaoCard: React.FC<AnotacaoCardProps> = ({
+  anotacao,
+  onAbrir,
+  upjNome,
+  ocultarCorrecaoAutomatica = false,
+}) => {
   const devolvida = anotacao.status === 'gestor-devolvida' || anotacao.status === 'upj-devolvida';
   const prazo = devolvida ? prazoRestante(anotacao.prazo_resposta_em) : null;
 
@@ -67,7 +74,7 @@ export const AnotacaoCard: React.FC<AnotacaoCardProps> = ({ anotacao, onAbrir, u
           </span>
         )}
         {ehUrgentissima(anotacao) && <UrgentissimoBadge />}
-        {anotacao.correcao_automatica && (
+        {anotacao.correcao_automatica && !ocultarCorrecaoAutomatica && (
           <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900/40 dark:text-orange-200">
             Correção automática engatilhada
           </span>

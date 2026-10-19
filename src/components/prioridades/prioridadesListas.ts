@@ -71,7 +71,23 @@ function restringeVinculo(chave: ChaveLista, ctx: ContextoLista): boolean {
   return ctx.perfilEfetivo === 'gestor' && ctx.somenteVinculadas;
 }
 
-export function anotacaoNaLista(anotacao: AnotacaoLista, chave: ChaveLista, ctx: ContextoLista): boolean {
+function somenteCriadorAtendente(
+  anotacao: AnotacaoLista & { criador_id?: string | null },
+  ctx: ContextoLista
+): boolean {
+  if (ctx.perfilEfetivo !== 'atendente' || !ctx.usuarioId) return true;
+  return anotacao.criador_id === ctx.usuarioId;
+}
+
+export function anotacaoNaLista(
+  anotacao: AnotacaoLista & { criador_id?: string | null },
+  chave: ChaveLista,
+  ctx: ContextoLista
+): boolean {
+  if (!somenteCriadorAtendente(anotacao, ctx)) {
+    return false;
+  }
+
   if (restringeVinculo(chave, ctx) && !vinculadaAoUsuario(anotacao, ctx.usuarioId)) {
     return false;
   }
@@ -116,7 +132,11 @@ export function anotacaoNaLista(anotacao: AnotacaoLista, chave: ChaveLista, ctx:
   }
 }
 
-export function contagemDaLista(anotacoes: AnotacaoLista[], chave: ChaveLista, ctx: ContextoLista): {
+export function contagemDaLista(
+  anotacoes: (AnotacaoLista & { criador_id?: string | null })[],
+  chave: ChaveLista,
+  ctx: ContextoLista
+): {
   total: number;
   reiteradas: number;
   urgentissimas: number;

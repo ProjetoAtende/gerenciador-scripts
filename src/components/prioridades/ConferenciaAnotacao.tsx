@@ -4,6 +4,7 @@ import { conferirAnotacao, listarHistorico } from '../../services/prioridadesSer
 import { formatarProcessoCnj } from '../../services/prioridadesDjenService';
 import { CampoLeitura, StatusBadge } from './PrioridadesUi';
 import { formatarDataHora } from './prioridadesUtils';
+import { rotuloUpj } from './prioridadesUpjDisplay';
 
 interface Props {
   anotacao: AnotacaoPrioridade;
@@ -46,7 +47,7 @@ export const ConferenciaAnotacao: React.FC<Props> = ({ anotacao, upjs, somenteLe
 
   const nomeUpjSelecionada = (() => {
     const u = upjs.find((x) => x.id === upjDestino);
-    if (u) return `${u.codigo} — ${u.nome}`;
+    if (u) return rotuloUpj(u);
     // Fallback: o registro pode estar fora da lista carregada (UPJ inativada).
     return anotacao.nome_orgao_djen ?? 'UPJ selecionada';
   })();
@@ -131,6 +132,13 @@ export const ConferenciaAnotacao: React.FC<Props> = ({ anotacao, upjs, somenteLe
         <CampoLeitura label="Solicitante" valor={anotacao.tipo_solicitante} />
         <CampoLeitura label="Tipo de Prioridade" valor={anotacao.tipo_prioridade} />
       </dl>
+
+      {anotacao.correcao_automatica && anotacao.status === 'gestor-devolvida' && (
+        <div className="rounded-lg border border-orange-300 bg-orange-50 p-3 text-sm text-orange-900 dark:border-orange-700 dark:bg-orange-900/20 dark:text-orange-200">
+          Existe uma <strong>correção automática engatilhada</strong> pelo Gestor. Se o prazo expirar sem resposta, o
+          sistema aplica a correção e remete a anotação à UPJ em vez de rejeitar.
+        </div>
+      )}
 
       {erro && (
         <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">
@@ -238,7 +246,7 @@ export const ConferenciaAnotacao: React.FC<Props> = ({ anotacao, upjs, somenteLe
               <option value="">Selecione a UPJ…</option>
               {upjs.map((u) => (
                 <option key={u.id} value={u.id}>
-                  {u.codigo} — {u.nome}
+                  {rotuloUpj(u)}
                 </option>
               ))}
             </select>

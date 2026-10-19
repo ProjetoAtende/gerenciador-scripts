@@ -29,6 +29,7 @@ import {
 } from '../../services/prioridadesService';
 import type { CatalogoItem, RegraEspecial } from '../../services/prioridadesService';
 import { StatusBadge } from './PrioridadesUi';
+import { AnotacaoConsultaModal } from './AnotacaoConsultaModal';
 
 interface NovaAnotacaoProps {
   perfil: PerfilUsuarioPrioridades | null;
@@ -75,6 +76,7 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
   const [upjDetectada, setUpjDetectada] = useState<{ codigo: string | null; nome: string | null } | null>(null);
 
   const [anteriores, setAnteriores] = useState<AnotacaoAnterior[]>([]);
+  const [consultaAnteriorId, setConsultaAnteriorId] = useState<number | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erroGeral, setErroGeral] = useState<string | null>(null);
   const [pendentes, setPendentes] = useState<string[]>([]);
@@ -353,6 +355,13 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
                 <StatusBadge status={a.status} />
                 <span>{new Date(a.data_anotacao).toLocaleDateString('pt-BR')}</span>
                 <span className="truncate">· {a.descricao_prioridade}</span>
+                <button
+                  type="button"
+                  onClick={() => setConsultaAnteriorId(a.id)}
+                  className="font-medium text-blue-800 underline hover:text-blue-900 dark:text-blue-300"
+                >
+                  Ver anotação
+                </button>
               </li>
             ))}
           </ul>
@@ -744,6 +753,8 @@ export const NovaAnotacaoForm: React.FC<NovaAnotacaoProps> = ({ perfil, onCriada
           {salvando ? 'Enviando…' : 'Enviar Anotação'}
         </button>
       </div>
+
+      <AnotacaoConsultaModal anotacaoId={consultaAnteriorId} onFechar={() => setConsultaAnteriorId(null)} />
     </form>
   );
 };

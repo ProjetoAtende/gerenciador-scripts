@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import type { AnotacaoPrioridade } from '../../types/Prioridades';
-import { responderDevolucao } from '../../services/prioridadesService';
+import { aceitarReprovacao, responderDevolucao } from '../../services/prioridadesService';
 import { formatarProcessoCnj } from '../../services/prioridadesDjenService';
+import { AceitarConfirmacaoDialog } from './AceitarConfirmacaoDialog';
 import { CampoLeitura } from './PrioridadesUi';
-import { formatarDataHora, prazoRestante } from './prioridadesUtils';
+import { formatarDataHora, formatarTerminoPrazo, prazoRestante } from './prioridadesUtils';
 
 interface Props {
   anotacao: AnotacaoPrioridade;
@@ -11,26 +12,27 @@ interface Props {
   onVoltar: () => void;
 }
 
+const MSG_ACEITE =
+  'Os motivos da reprovação foram compreendidos e serão utilizados para melhor triagem na inclusão de anotações no futuro. Aceito a reprovação da anotação, por não se considerar possível sua regularização no caso em questão.';
+
 /**
  * Tela "Anotação Devolvida" (seção 7.2, slide 130).
- *
- * RF-ATD-14: justificativa somente leitura, campo de resposta, prazo restante
- * e campos originais em modo somente leitura.
- * RF-ATD-15: contagem regressiva hh:mm e bloqueio do aceite antes do prazo.
  */
 export const RespostaDevolucao: React.FC<Props> = ({ anotacao, onConcluir, onVoltar }) => {
   const [resposta, setResposta] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [, setTick] = useState(0);
+  const [dialogAceite, setDialogAceite] = useState(false);
+  const [aceitando, setAceitando] = useState(false);
 
-  // Reavalia o prazo a cada 30 s para a contagem regressiva andar.
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 30_000);
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(id);
   }, []);
 
   const prazo = prazoRestante(anotacao.prazo_resposta_em);
+  const termino = formatarTerminoPrazo(anotacao.prazo_resposta_em);
   const justificativa =
     anotacao.devolvida_por === 'upj'
       ? anotacao.justificativa_devolucao_upj
@@ -54,6 +56,22 @@ export const RespostaDevolucao: React.FC<Props> = ({ anotacao, onConcluir, onVol
     }
   };
 
+  const confirmarAceite = async () => {
+    setErro(null);
+    setAceitando(true);
+    try {
+      const r = await aceitarReprovacao(anotacao.id);
+      if (!r.sucesso) {
+        setErro(r.erro ?? 'Não foi possível registrar a aceitação.');
+        return;
+      }
+      setDialogAceite(false);
+      await onConcluir(`Reprovação aceita. A anotação ${anotacao.id} foi arquivada como Reprovada.`);
+    } finally {
+      setAceitando(false);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-3xl space-y-5 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -63,7 +81,6 @@ export const RespostaDevolucao: React.FC<Props> = ({ anotacao, onConcluir, onVol
         </button>
       </div>
 
-      {/* RF-ATD-15: contagem regressiva abaixo da justificativa. */}
       <div
         className={`rounded-lg border p-3 ${
           prazo.expirado
@@ -77,6 +94,9 @@ export const RespostaDevolucao: React.FC<Props> = ({ anotacao, onConcluir, onVol
         <p className={`mt-1 text-2xl font-bold tabular-nums ${prazo.expirado ? 'text-red-700 dark:text-red-300' : 'text-amber-800 dark:text-amber-200'}`}>
           {prazo.texto}
         </p>
+        {termino && !prazo.expirado && (
+          <p className="mt-1 text-sm text-amber-900/90 dark:text-amber-100/90">{termino}</p>
+        )}
       </div>
 
       <div>
@@ -117,14 +137,7 @@ export const RespostaDevolucao: React.FC<Props> = ({ anotacao, onConcluir, onVol
         </p>
       </div>
 
-      {anotacao.correcao_automatica && (
-        <div className="rounded-lg border border-orange-300 bg-orange-50 p-3 text-sm text-orange-900 dark:border-orange-700 dark:bg-orange-900/20 dark:text-orange-200">
-          Existe uma <strong>correção automática engatilhada</strong> pelo Gestor. Se o prazo expirar sem resposta, o
-          sistema aplica a correção e remete a anotação à UPJ em vez de rejeitar.
-        </div>
-      )}
-
-      <div className="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+      <div className="flex flex-wrap justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
         <button
           type="button"
           onClick={onVoltar}
@@ -140,9 +153,26 @@ export const RespostaDevolucao: React.FC<Props> = ({ anotacao, onConcluir, onVol
         >
           {enviando ? 'Enviando…' : 'Enviar Resposta'}
         </button>
+        <button
+          type="button"
+          onClick={() => setDialogAceite(true)}
+          disabled={prazo.expirado}
+          className="rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-800 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-700 dark:text-red-200 dark:hover:bg-red-900/20"
+        >
+          Aceitar Reprovação
+        </button>
       </div>
 
-      {/* Campos originais — inativos, para orientação do Atendente. */}
+      <AceitarConfirmacaoDialog
+        aberto={dialogAceite}
+        titulo="Aceitar reprovação"
+        mensagem={MSG_ACEITE}
+        rotuloConfirmar="Confirmar aceitação"
+        enviando={aceitando}
+        onCancelar={() => setDialogAceite(false)}
+        onConfirmar={confirmarAceite}
+      />
+
       <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
         <h3 className="mb-3 border-b border-gray-200 pb-2 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:border-gray-700 dark:text-gray-400">
           Campos da anotação original

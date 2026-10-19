@@ -24,6 +24,7 @@ import type {
   Upj,
 } from '../types/Prioridades';
 import { contagemDaLista, type ChaveLista } from '../components/prioridades/prioridadesListas';
+import { lerPrioridadesSessao, salvarPrioridadesSessao } from '../components/prioridades/prioridadesSessao';
 
 export type TelaPrioridades =
   | { tipo: 'inicial' }
@@ -62,7 +63,7 @@ export function usePrioridadesModal(isOpen: boolean): UsePrioridadesModal {
   const [modulo, setModulo] = useState<PrioridadeModulo>('atendente');
   const [upjs, setUpjs] = useState<Upj[]>([]);
   const [linhasPainel, setLinhasPainel] = useState<LinhaPainel[]>([]);
-  const [tela, setTela] = useState<TelaPrioridades>({ tipo: 'inicial' });
+  const [tela, setTela] = useState<TelaPrioridades>(() => lerPrioridadesSessao()?.tela ?? { tipo: 'inicial' });
   const [anotacaoAberta, setAnotacaoAberta] = useState<AnotacaoPrioridade | null>(null);
 
   const atualizar = useCallback(async () => {
@@ -131,7 +132,15 @@ export function usePrioridadesModal(isOpen: boolean): UsePrioridadesModal {
     return resultado;
   }, [linhasPainel, perfilEfetivo, perfil?.ver_somente_vinculadas, user?.id]);
 
-  const irPara = useCallback((nova: TelaPrioridades) => setTela(nova), []);
+  const irPara = useCallback((nova: TelaPrioridades) => {
+    setTela(nova);
+    if (isOpen) salvarPrioridadesSessao({ reabrir: true, tela: nova });
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    salvarPrioridadesSessao({ reabrir: true, tela });
+  }, [isOpen, tela]);
   const voltarInicial = useCallback(() => setTela({ tipo: 'inicial' }), []);
 
   const trocarModulo = useCallback((m: PrioridadeModulo) => {

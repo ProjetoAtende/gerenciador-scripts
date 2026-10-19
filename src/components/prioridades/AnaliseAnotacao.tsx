@@ -24,7 +24,7 @@ export const AnaliseAnotacao: React.FC<Props> = ({ anotacao, onConcluir, onVolta
   const [decisao, setDecisao] = useState<Decisao>('resolver');
   const [observacaoUpj, setObservacaoUpj] = useState(anotacao.observacao_adicional_upj ?? '');
   const [justificativa, setJustificativa] = useState('');
-  const [rejeicaoAutomatica, setRejeicaoAutomatica] = useState(false);
+  const [rejeicaoAutomatica, setRejeicaoAutomatica] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 

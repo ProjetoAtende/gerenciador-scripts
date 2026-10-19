@@ -7,6 +7,11 @@ tem pré-condições, passo a passo e o resultado esperado.
 Base: Especificação Técnica v1.0 (out/2026). Decisões de projeto e a integração
 com o DJEN estão em [PRIORIDADES_URGENCIAS_DJEN.md](implementation-guides/PRIORIDADES_URGENCIAS_DJEN.md).
 
+> **Correções Finais 03 (19/10/2026).** Aceitar reprovação/rejeição, timer com
+> segundos, visibilidade do Atendente, menus por perfil e grant automático do
+> card na Home ao provisionar perfil — ver
+> [PRIORIDADES_URGENCIAS_CORRECOES_FINAIS_03_ENTREGA.md](PRIORIDADES_URGENCIAS_CORRECOES_FINAIS_03_ENTREGA.md).
+
 > **Reclassificação (out/2026).** Status e marcas (Nova, Em Análise, Reiterada,
 > Urgentíssima automática, prazo 24 h, Configurações) estão descritos em
 > [PRIORIDADES_URGENCIAS_RECLASSIFICACAO_ENTREGA.md](PRIORIDADES_URGENCIAS_RECLASSIFICACAO_ENTREGA.md).

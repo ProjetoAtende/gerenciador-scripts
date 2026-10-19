@@ -1,5 +1,9 @@
 # Prioridades e Urgências — entrega 16/10/2026
 
+> **Atualização 19/10/2026:** rodada **Correções Finais 03** (spec + reteste Grok).
+> Ver [PRIORIDADES_URGENCIAS_CORRECOES_FINAIS_03_ENTREGA.md](PRIORIDADES_URGENCIAS_CORRECOES_FINAIS_03_ENTREGA.md)
+> e roteiro [PRIORIDADES_URGENCIAS_CORRECOES_FINAIS_03_TESTES.md](PRIORIDADES_URGENCIAS_CORRECOES_FINAIS_03_TESTES.md).
+
 Documento de fechamento das correções alinhadas às respostas da área (15/10/2026),
 ao reteste Grokbot PC-01–PC-06 e à confirmação sobre sequencial CNJ (aceitar qualquer
 dígito inicial; inferir Eproc apenas em 4/5/6).

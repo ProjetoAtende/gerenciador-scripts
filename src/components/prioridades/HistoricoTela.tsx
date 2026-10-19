@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import type { AnotacaoPrioridade } from '../../types/Prioridades';
+import type { AnotacaoPrioridade, PrioridadePerfil } from '../../types/Prioridades';
 import { formatarProcessoCnj } from '../../services/prioridadesDjenService';
 import { AnotacaoCard, StatusBadge } from './PrioridadesUi';
 import { formatarDataHora } from './prioridadesUtils';
@@ -8,9 +8,11 @@ import type { HistoricoAnotacao } from '../../types/Prioridades';
 
 interface Props {
   usuarioId: string | null;
+  perfilEfetivo: PrioridadePerfil | null;
   anotacoes: AnotacaoPrioridade[];
   onAbrir: (a: AnotacaoPrioridade) => void;
   onVoltar: () => void;
+  ocultarCorrecaoAutomatica?: boolean;
 }
 
 /**
@@ -20,9 +22,16 @@ interface Props {
  * anotações visíveis ao usuário e, ao expandir, a trilha completa de eventos
  * daquela anotação (transições, devoluções, respostas e correções).
  */
-export const HistoricoTela: React.FC<Props> = ({ usuarioId, anotacoes, onAbrir, onVoltar }) => {
+export const HistoricoTela: React.FC<Props> = ({
+  usuarioId,
+  perfilEfetivo,
+  anotacoes,
+  onAbrir,
+  onVoltar,
+  ocultarCorrecaoAutomatica = false,
+}) => {
   const [filtro, setFiltro] = useState('');
-  const [somenteMinhas, setSomenteMinhas] = useState(false);
+  const [somenteMinhas, setSomenteMinhas] = useState(perfilEfetivo === 'atendente');
   const [expandida, setExpandida] = useState<number | null>(null);
   const [eventos, setEventos] = useState<HistoricoAnotacao[]>([]);
   const [carregandoEventos, setCarregandoEventos] = useState(false);
@@ -30,11 +39,11 @@ export const HistoricoTela: React.FC<Props> = ({ usuarioId, anotacoes, onAbrir, 
   const filtradas = useMemo(() => {
     const termo = filtro.replace(/\D/g, '');
     return anotacoes.filter((a) => {
-      if (somenteMinhas && usuarioId && a.criador_id !== usuarioId) return false;
+      if ((somenteMinhas || perfilEfetivo === 'atendente') && usuarioId && a.criador_id !== usuarioId) return false;
       if (termo && !a.processo.includes(termo)) return false;
       return true;
     });
-  }, [anotacoes, filtro, somenteMinhas, usuarioId]);
+  }, [anotacoes, filtro, somenteMinhas, usuarioId, perfilEfetivo]);
 
   const alternar = async (id: number) => {
     if (expandida === id) {
@@ -68,15 +77,17 @@ export const HistoricoTela: React.FC<Props> = ({ usuarioId, anotacoes, onAbrir, 
           placeholder="Filtrar por número do processo"
           className="flex-1 rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
         />
-        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
-          <input
-            type="checkbox"
-            checked={somenteMinhas}
-            onChange={(e) => setSomenteMinhas(e.target.checked)}
-            className="h-4 w-4"
-          />
-          Somente as minhas
-        </label>
+        {perfilEfetivo !== 'atendente' && (
+          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+            <input
+              type="checkbox"
+              checked={somenteMinhas}
+              onChange={(e) => setSomenteMinhas(e.target.checked)}
+              className="h-4 w-4"
+            />
+            Somente as minhas
+          </label>
+        )}
       </div>
 
       <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -95,7 +106,11 @@ export const HistoricoTela: React.FC<Props> = ({ usuarioId, anotacoes, onAbrir, 
           <div key={a.id} className="space-y-1">
             <div className="flex items-start gap-2">
               <div className="flex-1">
-                <AnotacaoCard anotacao={a} onAbrir={onAbrir} />
+                <AnotacaoCard
+                  anotacao={a}
+                  onAbrir={onAbrir}
+                  ocultarCorrecaoAutomatica={ocultarCorrecaoAutomatica}
+                />
               </div>
               <button
                 type="button"

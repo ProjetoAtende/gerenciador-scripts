@@ -4,6 +4,7 @@ import { usePermissoes } from '../../contexts/PermissoesContext';
 import { usePrioridadesModal } from '../../hooks/usePrioridadesModal';
 import { PrioridadesContent } from './PrioridadesContent';
 import { PrioridadesSidebar } from './PrioridadesSidebar';
+import { limparPrioridadesSessao, recarregarPrioridades } from './prioridadesSessao';
 
 interface PrioridadesModalProps {
   isOpen: boolean;
@@ -35,11 +36,12 @@ const PrioridadesModal: React.FC<PrioridadesModalProps> = ({ isOpen, onClose }) 
 
   if (!isOpen) return null;
 
-  const ehGestor = estado.perfil?.perfil === 'gestor' || estado.perfilEfetivo === 'gestor';
-  const ehCoordenador = estado.perfil?.perfil === 'coordenador' || estado.perfilEfetivo === 'coordenador';
-  const temDesignacoes = ehGestor || ehCoordenador || isAdmin;
+  const ehGestor =
+    estado.perfil?.perfil === 'gestor' || estado.perfilEfetivo === 'gestor';
+  const temDesignacoes =
+    isAdmin || estado.perfilEfetivo === 'gestor' || estado.perfilEfetivo === 'coordenador';
   const temConfiguracoes = estado.perfil?.perfil === 'gestor';
-  const temLogAcessos = ehGestor || ehCoordenador;
+  const temLogAcessos = ehGestor;
 
   const nomeUsuario = user?.email ?? '';
 
@@ -52,14 +54,28 @@ const PrioridadesModal: React.FC<PrioridadesModalProps> = ({ isOpen, onClose }) 
             TJSP Atende · Fórum Central Cível
           </span>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-md px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-red-600 dark:text-gray-300 dark:hover:bg-gray-700"
-          title="Fechar (Esc)"
-        >
-          Fechar
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => recarregarPrioridades(estado.tela)}
+            className="rounded-md px-2 py-1.5 text-sm text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+            title="Atualizar o aplicativo (equivalente a F5, mantendo esta tela)"
+            aria-label="Atualizar aplicativo"
+          >
+            ↻
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              limparPrioridadesSessao();
+              onClose();
+            }}
+            className="rounded-md px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-red-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            title="Fechar (Esc)"
+          >
+            Fechar
+          </button>
+        </div>
       </header>
 
       <div className="flex min-h-0 flex-1">

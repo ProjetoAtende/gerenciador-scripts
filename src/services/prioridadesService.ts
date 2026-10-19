@@ -557,13 +557,14 @@ export interface LinhaPainel {
   urgentissimo_auto: boolean;
   conferente_vinculado_id: string | null;
   conferido_por_id: string | null;
+  criador_id: string | null;
 }
 
 /** Linhas usadas nos contadores do painel. A RLS já recorta quem pode ver. */
 export async function listarLinhasPainel(): Promise<LinhaPainel[]> {
   const { data, error } = await supabase
     .from('prioridades_anotacoes')
-    .select('id, status, reiterada, urgentissimo, urgentissimo_auto, conferente_vinculado_id, conferido_por_id');
+    .select('id, status, reiterada, urgentissimo, urgentissimo_auto, conferente_vinculado_id, conferido_por_id, criador_id');
 
   if (error) {
     console.error('[prioridadesService] listarLinhasPainel error:', error);
@@ -578,6 +579,7 @@ export async function listarLinhasPainel(): Promise<LinhaPainel[]> {
     urgentissimo_auto: linha.urgentissimo_auto ?? false,
     conferente_vinculado_id: linha.conferente_vinculado_id ?? null,
     conferido_por_id: linha.conferido_por_id ?? null,
+    criador_id: linha.criador_id ?? null,
   }));
 }
 
@@ -686,6 +688,14 @@ export async function responderDevolucao(anotacaoId: number, resposta: string): 
     p_anotacao_id: anotacaoId,
     p_resposta: resposta,
   });
+}
+
+export async function aceitarReprovacao(anotacaoId: number): Promise<RespostaRpc> {
+  return chamarRpc('prioridades_aceitar_reprovacao', { p_anotacao_id: anotacaoId });
+}
+
+export async function aceitarRejeicaoRetorno(anotacaoId: number): Promise<RespostaRpc> {
+  return chamarRpc('prioridades_aceitar_rejeicao_retorno', { p_anotacao_id: anotacaoId });
 }
 
 export interface DecisaoUpj {

@@ -15,6 +15,7 @@ import { ConfiguracoesTela } from './ConfiguracoesTela';
 import { HistoricoTela } from './HistoricoTela';
 import { LogAcessosTela } from './LogAcessosTela';
 import { anotacaoNaLista, type ChaveLista } from './prioridadesListas';
+import { rotuloUpjPorId } from './prioridadesUpjDisplay';
 
 interface PrioridadesContentProps extends UsePrioridadesModal {
   /** Mantido para o cabeçalho de contexto; o nome já aparece no painel lateral. */
@@ -40,10 +41,11 @@ const TelaInicial: React.FC<{
   perfilEfetivo: PrioridadePerfil | null;
   anotacoes: AnotacaoPrioridade[];
   contexto: { perfilEfetivo: PrioridadePerfil | null; usuarioId: string | null; somenteVinculadas: boolean };
+  ocultarCorrecaoAutomatica: boolean;
   onAbrir: (a: AnotacaoPrioridade) => void;
   onVerLista: (grupo: string) => void;
   onNova: () => void;
-}> = ({ perfilEfetivo, anotacoes, contexto, onAbrir, onVerLista, onNova }) => {
+}> = ({ perfilEfetivo, anotacoes, contexto, ocultarCorrecaoAutomatica, onAbrir, onVerLista, onNova }) => {
   const secoes = useMemo(() => {
     if (perfilEfetivo === 'coordenador' || perfilEfetivo === 'analista') {
       return [
@@ -127,7 +129,12 @@ const TelaInicial: React.FC<{
             ) : (
               <div className="space-y-2">
                 {itens.slice(0, 5).map((a) => (
-                  <AnotacaoCard key={a.id} anotacao={a} onAbrir={onAbrir} />
+                  <AnotacaoCard
+                    key={a.id}
+                    anotacao={a}
+                    onAbrir={onAbrir}
+                    ocultarCorrecaoAutomatica={ocultarCorrecaoAutomatica}
+                  />
                 ))}
               </div>
             )}
@@ -153,14 +160,8 @@ export const PrioridadesContent: React.FC<PrioridadesContentProps> = ({
   const [carregandoLista, setCarregandoLista] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
 
-  const nomeUpj = useCallback(
-    (upjId: string | null): string | null => {
-      if (!upjId) return null;
-      const u = upjs.find((x) => x.id === upjId);
-      return u ? u.nome : null;
-    },
-    [upjs]
-  );
+  const nomeUpj = useCallback((upjId: string | null): string | null => rotuloUpjPorId(upjs, upjId), [upjs]);
+  const ocultarCorrecaoAtendente = perfilEfetivo === 'atendente';
 
   const carregar = useCallback(async () => {
     setCarregandoLista(true);
@@ -206,7 +207,7 @@ export const PrioridadesContent: React.FC<PrioridadesContentProps> = ({
           ? 'conferencia'
           : (a.status === 'upj-pendente' || a.status === 'upj-analisada') && podeAnalisar
             ? 'analise'
-            : a.status === 'gestor-devolvida'
+            : a.status === 'gestor-devolvida' && perfilEfetivo === 'atendente'
               ? 'resposta'
               : a.status === 'upj-devolvida' && podeConferir
                 ? 'correcao'
@@ -283,6 +284,7 @@ export const PrioridadesContent: React.FC<PrioridadesContentProps> = ({
           perfilEfetivo={perfilEfetivo}
           anotacoes={anotacoes}
           contexto={contextoLista}
+          ocultarCorrecaoAutomatica={ocultarCorrecaoAtendente}
           onAbrir={abrirAnotacao}
           onVerLista={(grupo) => irPara({ tipo: 'lista', grupo })}
           onNova={() => irPara({ tipo: 'nova' })}
@@ -312,7 +314,13 @@ export const PrioridadesContent: React.FC<PrioridadesContentProps> = ({
           ) : (
             <div className="space-y-2">
               {itensDaLista.map((a) => (
-                <AnotacaoCard key={a.id} anotacao={a} onAbrir={abrirAnotacao} upjNome={nomeUpj(a.upj_id)} />
+                <AnotacaoCard
+                  key={a.id}
+                  anotacao={a}
+                  onAbrir={abrirAnotacao}
+                  upjNome={nomeUpj(a.upj_id)}
+                  ocultarCorrecaoAutomatica={ocultarCorrecaoAtendente}
+                />
               ))}
             </div>
           )}
@@ -392,7 +400,14 @@ export const PrioridadesContent: React.FC<PrioridadesContentProps> = ({
       )}
 
       {tela.tipo === 'historico' && (
-        <HistoricoTela usuarioId={user?.id ?? null} anotacoes={anotacoes} onAbrir={abrirAnotacao} onVoltar={voltarInicial} />
+        <HistoricoTela
+          usuarioId={user?.id ?? null}
+          perfilEfetivo={perfilEfetivo}
+          anotacoes={anotacoes}
+          onAbrir={abrirAnotacao}
+          onVoltar={voltarInicial}
+          ocultarCorrecaoAutomatica={ocultarCorrecaoAtendente}
+        />
       )}
 
       {tela.tipo === 'log-acessos' && <LogAcessosTela onVoltar={voltarInicial} />}

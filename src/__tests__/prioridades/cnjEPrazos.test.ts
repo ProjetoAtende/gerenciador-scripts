@@ -140,12 +140,12 @@ describe('RF-ATD-15 — prazo de resposta de 24 h', () => {
     expect(resultado.texto).toBe('Prazo encerrado');
   });
 
-  it('formata a contagem restante em hh:mm com dois dígitos', () => {
-    const futuro = new Date(Date.now() + 2 * 60 * 60 * 1000 + 5 * 60 * 1000).toISOString();
+  it('formata a contagem restante em hh:mm:ss com dois dígitos', () => {
+    const futuro = new Date(Date.now() + 2 * 60 * 60 * 1000 + 5 * 60 * 1000 + 30 * 1000).toISOString();
     const resultado = prazoRestante(futuro);
     expect(resultado.expirado).toBe(false);
     // Tolera a passagem de alguns segundos entre a criação e a asserção.
-    expect(resultado.texto).toMatch(/^0[12]:0[0-5]$/);
+    expect(resultado.texto).toMatch(/^0[12]:0[0-5]:[0-5][0-9]$/);
   });
 
   it('trata valor inválido sem lançar', () => {

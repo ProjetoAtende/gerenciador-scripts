@@ -19,6 +19,7 @@ import type {
   UsuarioElegivel,
 } from '../../types/Prioridades';
 import { PERFIL_LABEL } from '../../types/Prioridades';
+import { rotuloUpj } from './prioridadesUpjDisplay';
 
 interface Props {
   perfilEfetivo: PrioridadePerfil | null;
@@ -59,12 +60,15 @@ export const DesignacoesTela: React.FC<Props> = ({
   onAtualizar,
 }) => {
   const souCoordenador = perfilEfetivo === 'coordenador';
+  const coordenadorRestrito = souCoordenador && !ehAdmin;
   const souGestor = perfilEfetivo === 'gestor' || perfilEfetivo === 'conferente' || ehAdmin;
 
   // Alçada: espelha a regra do servidor (RF-GES-06 / RF-UPJ-05).
   const podeDesignarConferente = souGestor;
   const podeDesignarAnalista = souCoordenador || ehAdmin;
   const podeDesignarAlgo = podeDesignarConferente || podeDesignarAnalista;
+  const podeProverPerfilBase = ehAdmin;
+  const podeIncluirRegistro = (podeDesignarAlgo || podeProverPerfilBase) && !coordenadorRestrito;
 
   /**
    * Perfil base é provisão do admin (bootstrap do sistema).
@@ -74,7 +78,6 @@ export const DesignacoesTela: React.FC<Props> = ({
    * única figura fora do fluxo operacional, é ele que provisiona esses perfis —
    * e sem isso a tela fica inutilizável, porque ninguém tem perfil para designar.
    */
-  const podeProverPerfilBase = ehAdmin;
 
   const perfisDesignaveis = useMemo<PrioridadePerfil[]>(() => {
     const lista: PrioridadePerfil[] = [];
@@ -271,6 +274,18 @@ export const DesignacoesTela: React.FC<Props> = ({
     await Promise.all([carregar(), onAtualizar()]);
   };
 
+  const alternarVinculacaoUsuario = async (usuarioId: string, valor: boolean) => {
+    setErro(null);
+    setVinculacaoPorUsuario((prev) => ({ ...prev, [usuarioId]: valor }));
+    const r = await alternarVinculacaoAutomatica(usuarioId, valor);
+    if (!r.sucesso) {
+      setErro(r.erro ?? 'Não foi possível alterar a vinculação automática.');
+      setVinculacaoPorUsuario((prev) => ({ ...prev, [usuarioId]: !valor }));
+      return;
+    }
+    await onAtualizar();
+  };
+
   const alternarVinculacao = async (d: DesignacaoListada, valor: boolean) => {
     setErro(null);
     // Atualização otimista: o checkbox responde na hora e o estado real é
@@ -301,7 +316,7 @@ export const DesignacoesTela: React.FC<Props> = ({
     (id: string | null) => {
       if (!id) return '—';
       const u = upjs.find((x) => x.id === id);
-      return u ? `${u.codigo} — ${u.nome}` : '—';
+      return u ? rotuloUpj(u) : '—';
     },
     [upjs]
   );
@@ -310,7 +325,14 @@ export const DesignacoesTela: React.FC<Props> = ({
   const encerradas = designacoes.filter((d) => !ativas.includes(d));
 
   const conferentes = ativas.filter((d) => d.perfil === 'conferente');
-  const analistas = ativas.filter((d) => d.perfil === 'analista');
+  const analistas = useMemo(() => {
+    const lista = ativas.filter((d) => d.perfil === 'analista');
+    if (coordenadorRestrito && perfil?.upj_id) {
+      return lista.filter((d) => d.upj_id === perfil.upj_id);
+    }
+    return lista;
+  }, [ativas, coordenadorRestrito, perfil?.upj_id]);
+  const gestores = perfisBase.filter((p) => p.perfil === 'gestor');
 
   const tabela = (titulo: string, linhas: DesignacaoListada[], colunaUpj: boolean) => (
     <section>
@@ -414,7 +436,7 @@ export const DesignacoesTela: React.FC<Props> = ({
       )}
 
       {/* ── Inclusão ─────────────────────────────────────────── */}
-      {podeDesignarAlgo || podeProverPerfilBase ? (
+      {podeIncluirRegistro ? (
         <section className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
@@ -570,7 +592,7 @@ export const DesignacoesTela: React.FC<Props> = ({
                   <option value="">Selecione…</option>
                   {upjs.map((u) => (
                     <option key={u.id} value={u.id}>
-                      {u.codigo} — {u.nome}
+                      {rotuloUpj(u)}
                     </option>
                   ))}
                 </select>
@@ -647,14 +669,59 @@ export const DesignacoesTela: React.FC<Props> = ({
         <p className="text-sm text-gray-500 dark:text-gray-400">Carregando designações…</p>
       ) : (
         <>
-          {tabela(
-            `Conferentes Designados (${conferentes.length})`,
-            conferentes,
-            false
+          {!coordenadorRestrito && (perfilEfetivo === 'gestor' || ehAdmin) && (
+            <>
+              {gestores.length > 0 && (
+                <section>
+                  <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    Gestores ({gestores.length})
+                  </h3>
+                  <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                    <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-700">
+                      <thead className="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                          <th className="px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">Nome</th>
+                          <th className="px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-300">
+                            Vinculação automática
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
+                        {gestores.map((g) => (
+                          <tr key={g.usuario_id}>
+                            <td className="px-3 py-2 text-gray-800 dark:text-gray-100">
+                              {g.usuario_nome ?? g.usuario_id}
+                              {g.usuario_email && (
+                                <span className="block text-xs text-gray-500 dark:text-gray-400">{g.usuario_email}</span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2">
+                              <label className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+                                <input
+                                  type="checkbox"
+                                  checked={vinculacaoPorUsuario[g.usuario_id] ?? g.vinculacao_automatica}
+                                  onChange={(e) => void alternarVinculacaoUsuario(g.usuario_id, e.target.checked)}
+                                  className="h-4 w-4"
+                                />
+                                {(vinculacaoPorUsuario[g.usuario_id] ?? g.vinculacao_automatica)
+                                  ? 'Habilitada'
+                                  : 'Desabilitada'}
+                              </label>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+              {tabela(`Conferentes Designados (${conferentes.length})`, conferentes, false)}
+            </>
           )}
-          {tabela(`Analistas Designados (${analistas.length})`, analistas, true)}
+          {(podeDesignarAnalista || coordenadorRestrito) &&
+            tabela(`Analistas Designados (${analistas.length})`, analistas, true)}
 
-          {encerradas.length > 0 && (
+          {!coordenadorRestrito && encerradas.length > 0 && (
             <details className="rounded-lg border border-gray-200 dark:border-gray-700">
               <summary className="cursor-pointer px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300">
                 Designações encerradas ({encerradas.length})
@@ -683,7 +750,7 @@ export const DesignacoesTela: React.FC<Props> = ({
             aqui, a fila de conferência não tem para quem distribuir e ninguém
             tem alçada para designar.
           */}
-          {podeProverPerfilBase && (
+          {!coordenadorRestrito && podeProverPerfilBase && (
             <section className="mt-2">
               <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 Perfis base no app ({perfisBase.length})

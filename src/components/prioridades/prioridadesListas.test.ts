@@ -123,6 +123,15 @@ describe('anotacaoNaLista', () => {
     ).toBe(true);
   });
 
+  it('restringe todas as listas do Atendente às anotações criadas por ele', () => {
+    const atendente: ContextoLista = { perfilEfetivo: 'atendente', usuarioId: 'atd-1', somenteVinculadas: false };
+    const dele = anotacao({ status: 'gestor-conferencia', criador_id: 'atd-1' });
+    const deOutro = anotacao({ status: 'gestor-conferencia', criador_id: 'atd-2' });
+    expect(anotacaoNaLista(dele, 'ag-conferencia', atendente)).toBe(true);
+    expect(anotacaoNaLista(deOutro, 'ag-conferencia', atendente)).toBe(false);
+    expect(anotacaoNaLista(deOutro, 'aprovadas', atendente)).toBe(false);
+  });
+
   it('separa Aprovadas do Gestor de Reprovadas e de Rejeitadas da UPJ', () => {
     expect(anotacaoNaLista(anotacao({ status: 'upj-pendente' }), 'aprovadas', gestor)).toBe(true);
     expect(anotacaoNaLista(anotacao({ status: 'gestor-rejeitada' }), 'reprovadas', gestor)).toBe(true);

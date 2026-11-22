@@ -24,6 +24,8 @@ interface Item {
   selos?: boolean;
   /** Item sem contador (telas que não são listas). */
   semContador?: boolean;
+  /** Abre algo que não é uma tela (ex.: o diálogo de Créditos). */
+  acao?: 'creditos';
 }
 
 /** Faixa branca ("ATENDENTES", "UPJs", "PAINEL DE CONTROLE") com divisórias e itens. */
@@ -46,6 +48,8 @@ interface Props {
   temLogAcessos: boolean;
   recolhido: boolean;
   alternarRecolhido: () => void;
+  abrirCreditos: () => void;
+  creditosAtivo: boolean;
 }
 
 const lista = (chave: ChaveLista, rotulo: string, icone: NomeIcone, extra: Partial<Item> = {}): Item => ({
@@ -117,11 +121,13 @@ function secoesDoPerfil(p: PrioridadePerfil | null, props: Pick<Props, 'temDesig
   } else {
     secoes.push({ ...atendentes, grupos: [...atendentes.grupos, { divisor: 'Histórico', itens: [historico] }] });
   }
-  if (controle.length > 0) secoes.push({ faixa: 'Painel de Controle', grupos: [{ itens: controle }] });
+  controle.push({ chave: 'creditos', rotulo: 'Créditos', icone: 'creditos', tela: { tipo: 'inicial' }, semContador: true, acao: 'creditos' });
+  secoes.push({ faixa: 'Painel de Controle', grupos: [{ itens: controle }] });
   return secoes;
 }
 
-function estaAtivo(tela: TelaPrioridades, item: Item): boolean {
+function estaAtivo(tela: TelaPrioridades, item: Item, creditosAtivo: boolean): boolean {
+  if (item.acao === 'creditos' || creditosAtivo) return item.acao === 'creditos' && creditosAtivo;
   if (item.tela.tipo === 'lista') return tela.tipo === 'lista' && tela.grupo === item.tela.grupo;
   return tela.tipo === item.tela.tipo;
 }
@@ -150,7 +156,15 @@ export const PainelLateralV2: React.FC<Props> = (props) => {
 
       <div className="pu2-lateral-rolagem">
         <div className="pu2-perfil">
-          <img src={logo} alt="" />
+          <button
+            type="button"
+            className="pu2-perfil-logo"
+            onClick={() => irPara({ tipo: 'inicial' })}
+            title="Voltar à tela inicial"
+            aria-label="Voltar à tela inicial"
+          >
+            <img src={logo} alt="" />
+          </button>
           <div className="pu2-perfil-nome">{nomeCompleto}</div>
           <div className="pu2-perfil-papel">{papel}</div>
           {porDesignacao && <div className="pu2-perfil-papel">(por designação)</div>}
@@ -174,13 +188,13 @@ export const PainelLateralV2: React.FC<Props> = (props) => {
                     {grupo.itens.map((item) => {
                       const c = contadores[item.chave] ?? { total: 0, reiteradas: 0, urgentissimas: 0 };
                       const temAlerta = Boolean(item.alerta && c.total > 0);
-                      const ativo = estaAtivo(tela, item);
+                      const ativo = estaAtivo(tela, item, props.creditosAtivo);
                       return (
                         <li key={item.chave}>
                           <button
                             type="button"
                             className={`pu2-item${ativo ? ' ativo' : ''}${temAlerta ? ' realce' : ''}`}
-                            onClick={() => irPara(item.tela)}
+                            onClick={() => (item.acao === 'creditos' ? props.abrirCreditos() : irPara(item.tela))}
                             aria-current={ativo ? 'page' : undefined}
                           >
                             <Icone nome={item.icone} tamanho={18} />

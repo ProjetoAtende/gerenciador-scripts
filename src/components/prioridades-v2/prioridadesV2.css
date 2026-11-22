@@ -134,6 +134,13 @@
   padding: 18px 20px 28px;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+  /* Barra de rolagem do painel lateral à ESQUERDA: à direita ela ficava sob o
+     botão de recolher. O truque é inverter a direção só do contêiner que rola
+     e devolver a direção normal ao conteúdo. */
+  direction: rtl;
+}
+.pu2-lateral-rolagem > * {
+  direction: ltr;
 }
 .pu2-lateral.recolhido .pu2-lateral-rolagem {
   visibility: hidden;
@@ -553,6 +560,17 @@
   width: auto;
   display: block;
 }
+/* "Processo localizado!" centralizado, como as caixas do detalhe da anotação. */
+.pu2-caixa-centro {
+  text-align: center;
+}
+.pu2-caixa-centro .pu2-caixa-titulo,
+.pu2-caixa-centro .pu2-processo-local {
+  justify-content: center;
+}
+.pu2-caixa-centro .pu2-processo-plataforma {
+  margin: 6px auto 0;
+}
 
 /* ── Etiquetas ──────────────────────────────────────────────────── */
 .pu2-etiqueta {
@@ -841,6 +859,8 @@
   gap: 4px 10px;
   font-size: 15px;
   margin-top: 2px;
+  /* Espaço para o "n.º" no canto inferior direito do cartão. */
+  padding-right: 48px;
 }
 .pu2-cartao-meta .sep {
   color: var(--pu2-cinza-borda);
@@ -854,7 +874,7 @@
 }
 .pu2-cartao-numero-anotacao {
   position: absolute;
-  top: 10px;
+  bottom: 10px;
   right: 16px;
   font-size: 12px;
   font-weight: 700;
@@ -1070,4 +1090,134 @@
   margin: 3px 0 0;
   color: #444;
   white-space: pre-wrap;
+}
+
+/* ── Telas de apoio (Log, Configurações, Créditos) ──────────────── */
+.pu2-subtitulo {
+  margin: -12px 0 18px;
+  color: var(--pu2-cinza);
+  font-weight: 600;
+}
+.pu2-bloco-esquerda {
+  text-align: left;
+}
+.pu2-filtro .pu2-marcacao {
+  margin: 0;
+  white-space: nowrap;
+}
+.pu2-tabela-moldura {
+  background: #fff;
+  border: 2px solid var(--pu2-cinza-borda);
+  border-radius: 12px;
+  overflow-x: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+.pu2-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+.pu2-tabela th {
+  text-align: left;
+  background: #f4f4f4;
+  font-weight: 800;
+  padding: 10px 14px;
+  border-bottom: 2px solid var(--pu2-cinza-card);
+}
+.pu2-tabela td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--pu2-cinza-card);
+  vertical-align: top;
+}
+.pu2-tabela tr:last-child td {
+  border-bottom: 0;
+}
+.pu2 .vermelho {
+  color: var(--pu2-vermelho);
+  font-weight: 700;
+}
+.pu2-lista-simples {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pu2-lista-simples li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--pu2-cinza-card);
+}
+.pu2-lista-simples li:last-child {
+  border-bottom: 0;
+}
+.pu2-creditos li {
+  font-size: 14px;
+}
+.pu2-creditos li span {
+  color: var(--pu2-cinza);
+  text-align: right;
+}
+.pu2-dialogo-largo {
+  max-width: 680px;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+.pu2-creditos-grupo {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.pu2-creditos-grupo .pu2-dado-rotulo {
+  margin-bottom: 3px;
+  font-size: 16px;
+}
+
+/* ── Ajustes de 22/11 (logotipo do menu, logos vetoriais, Processo) ─ */
+.pu2-perfil-logo {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 14px;
+  display: block;
+  margin: 0 auto;
+  transition: transform 0.15s ease;
+}
+.pu2-perfil-logo:hover {
+  transform: scale(1.06);
+}
+.pu2-perfil-logo:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 3px;
+}
+/* Logotipos Eproc/SAJ em vetor: altura fixa, largura proporcional, centralizados. */
+.pu2-logo-svg {
+  display: block;
+  width: fit-content;
+  margin: 0 auto;
+  line-height: 0;
+}
+.pu2-logo-svg svg {
+  display: block;
+  height: 100%;
+  width: auto;
+}
+.pu2-logo-plataforma {
+  height: 20px;
+  margin-top: 5px;
+}
+.pu2-processo-plataforma {
+  height: 18px;
+}
+/* Processo: UPJ, Vara e Plataforma sempre numa linha só. */
+.pu2-grade.linha-fixa {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 1100px) {
+  .pu2-grade.linha-fixa {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }

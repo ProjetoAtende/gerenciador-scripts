@@ -29,8 +29,7 @@ import { EtiquetaReiterada, EtiquetaStatus, EtiquetaUrgentissima } from './Etiqu
 import { Icone } from './Icone';
 import type { NomeIcone } from './icones';
 import { ICONE_CATEGORIA, ehPerfilUpj, faixaVaras, upjCurta, varaOrdinal } from './prioridadesV2Rotulos';
-import logoEproc from './assets/logo-eproc.png';
-import logoSaj from './assets/logo-saj.png';
+import { LogoPlataforma } from './LogoPlataforma';
 
 export type ModoDetalhe = 'conferencia' | 'analise' | 'resposta' | 'correcao' | 'consulta';
 
@@ -708,7 +707,8 @@ export const DetalheAnotacaoV2: React.FC<Props> = ({
       )}
 
       <Bloco titulo="Processo">
-        <div className="pu2-grade">
+        {/* UPJ, Vara e Plataforma sempre na mesma linha (cabem em qualquer tela usada no TJSP). */}
+        <div className="pu2-grade linha-fixa">
           <Dado rotulo="Número" largo>
             <span className="pu2-numero-processo">
               {numero}
@@ -722,7 +722,7 @@ export const DetalheAnotacaoV2: React.FC<Props> = ({
           <Dado rotulo="Vara">{a.vara ? `${varaOrdinal(a.vara)} Vara Cível` : 'Não identificada'}</Dado>
           <Dado rotulo="Plataforma">
             {a.plataforma ? (
-              <img className="pu2-logo-plataforma" src={a.plataforma === 'eproc' ? logoEproc : logoSaj} alt={a.plataforma === 'eproc' ? 'Eproc' : 'SAJ'} />
+              <LogoPlataforma className="pu2-logo-plataforma" plataforma={a.plataforma} />
             ) : (
               'Não informada'
             )}
@@ -746,8 +746,9 @@ export const DetalheAnotacaoV2: React.FC<Props> = ({
       </Bloco>
 
       <Bloco titulo="Prioridade ou Urgência">
+        {/* Um item por linha, centralizados (maquete 005). */}
         <div className="pu2-grade">
-          <Dado rotulo="Categoria">
+          <Dado rotulo="Categoria" largo>
             {cat ? (
               <span className="pu2-com-icone">
                 <Icone nome={ICONE_CATEGORIA[cat]} tamanho={22} />
@@ -761,8 +762,12 @@ export const DetalheAnotacaoV2: React.FC<Props> = ({
             {rotuloTipo(a.tipo_prioridade)}
             {a.descricao_tipo_outros ? `: ${a.descricao_tipo_outros}` : ''}
           </Dado>
-          <Dado rotulo="Evento(s) ou Folha(s)">{a.evento_folha}</Dado>
-          <Dado rotulo="Solicitante">{solicitante}</Dado>
+          <Dado rotulo="Evento(s) ou Folha(s)" largo>
+            {a.evento_folha}
+          </Dado>
+          <Dado rotulo="Solicitante" largo>
+            {solicitante}
+          </Dado>
         </div>
       </Bloco>
 

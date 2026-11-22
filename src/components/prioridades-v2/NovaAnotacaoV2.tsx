@@ -40,8 +40,7 @@ import { AnotacaoConsultaModal } from '../prioridades/AnotacaoConsultaModal';
 import { CATEGORIAS_ANOTACAO } from '../prioridades/prioridadesCategorias';
 import { Icone } from './Icone';
 import { ICONE_CATEGORIA, faixaVaras, upjCurta, varaOrdinal } from './prioridadesV2Rotulos';
-import logoEproc from './assets/logo-eproc.png';
-import logoSaj from './assets/logo-saj.png';
+import { LogoPlataforma } from './LogoPlataforma';
 
 interface Props {
   perfil: PerfilUsuarioPrioridades | null;
@@ -397,7 +396,7 @@ export const NovaAnotacaoV2: React.FC<Props> = ({ perfil, onCriada, onVoltar }) 
       )}
 
       {resultadoDjen && processoCompetente && resultadoDjen.status === 'localizado' && (
-        <div className="pu2-caixa pu2-caixa-sucesso" role="status">
+        <div className="pu2-caixa pu2-caixa-sucesso pu2-caixa-centro" role="status">
           <div className="pu2-caixa-titulo">
             <Icone nome="check" tamanho={22} />
             Processo localizado!
@@ -419,11 +418,7 @@ export const NovaAnotacaoV2: React.FC<Props> = ({ perfil, onCriada, onVoltar }) 
             )}
           </div>
           {plataforma && (
-            <img
-              className="pu2-processo-plataforma"
-              src={plataforma === 'eproc' ? logoEproc : logoSaj}
-              alt={plataforma === 'eproc' ? 'Eproc' : 'SAJ'}
-            />
+            <LogoPlataforma className="pu2-processo-plataforma" plataforma={plataforma} />
           )}
         </div>
       )}

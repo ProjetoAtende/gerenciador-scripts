@@ -29,6 +29,9 @@ import { DetalheAnotacaoV2, type ModoDetalhe } from './DetalheAnotacaoV2';
 import { Icone } from './Icone';
 import type { NomeIcone } from './icones';
 import { ListaAnotacoesV2 } from './ListaAnotacoesV2';
+import { ConfiguracoesV2 } from './ConfiguracoesV2';
+import { CreditosV2 } from './CreditosV2';
+import { LogAcessosV2 } from './LogAcessosV2';
 import { ehPerfilGestao, ehPerfilUpj } from './prioridadesV2Rotulos';
 import { NovaAnotacaoV2 } from './NovaAnotacaoV2';
 import { PainelLateralV2 } from './PainelLateralV2';
@@ -63,6 +66,10 @@ const PrioridadesV2Modal: React.FC<Props> = ({ isOpen, onClose }) => {
   const estado = usePrioridadesV2(isOpen);
   const [recolhido, setRecolhido] = useState(false);
   const [retorno, setRetorno] = useState<string | null>(null);
+  // Créditos é uma página só da v2 (o tipo de tela da v1 não a conhece): fecha ao navegar.
+  const [creditosAbertos, setCreditosAbertos] = useState(false);
+  // Histórico Geral: o Atendente vê só as próprias; os demais podem restringir.
+  const [somenteMinhas, setSomenteMinhas] = useState(false);
   const [anotacoes, setAnotacoes] = useState<AnotacaoPrioridade[]>([]);
   const [carregandoLista, setCarregandoLista] = useState(false);
   const [rotulos, setRotulos] = useState<{ tipos: Map<string, string>; solicitantes: Map<string, string> }>({
@@ -93,6 +100,10 @@ const PrioridadesV2Modal: React.FC<Props> = ({ isOpen, onClose }) => {
     );
   }, [isOpen]);
 
+  useEffect(() => {
+    setCreditosAbertos(false);
+  }, [tela]);
+
   // "Voltar" no detalhe leva à lista de onde a anotação foi aberta.
   const [ultimaLista, setUltimaLista] = useState<string | null>(null);
   useEffect(() => {
@@ -103,7 +114,7 @@ const PrioridadesV2Modal: React.FC<Props> = ({ isOpen, onClose }) => {
   // Recarrega as anotações ao entrar numa lista ou num detalhe (mesmo critério da v1).
   useEffect(() => {
     if (!isOpen) return;
-    if (tela.tipo === 'lista' || tela.tipo === 'detalhe') void carregarAnotacoes();
+    if (tela.tipo === 'lista' || tela.tipo === 'detalhe' || tela.tipo === 'historico') void carregarAnotacoes();
   }, [isOpen, tela, carregarAnotacoes]);
 
   const rotuloTipo = useCallback((c: string) => rotulos.tipos.get(c) ?? c, [rotulos]);
@@ -180,6 +191,8 @@ const PrioridadesV2Modal: React.FC<Props> = ({ isOpen, onClose }) => {
 
   const conteudo = (() => {
     if (estado.carregando) return <p className="pu2-carregando">Carregando…</p>;
+
+    if (creditosAbertos) return <CreditosV2 onVoltar={() => setCreditosAbertos(false)} />;
 
     if (estado.tela.tipo === 'inicial') {
       return (
@@ -272,7 +285,46 @@ const PrioridadesV2Modal: React.FC<Props> = ({ isOpen, onClose }) => {
       );
     }
 
-    // Demais telas: visual da v1 por enquanto (serão redesenhadas nas próximas entregas).
+    if (estado.tela.tipo === 'historico') {
+      const ehAtendente = pe === 'atendente';
+      const itens = anotacoes.filter((a) => !((ehAtendente || somenteMinhas) && user?.id && a.criador_id !== user.id));
+      return (
+        <ListaAnotacoesV2
+          key="historico"
+          titulo="Histórico Geral"
+          icone="historico"
+          itens={itens}
+          upjs={estado.upjs}
+          rotuloTipo={rotuloTipo}
+          onAbrir={abrirAnotacao}
+          carregando={carregandoLista}
+          ordemCronologica
+          extraFiltro={
+            ehPerfilGestao(pe) && (
+              <label className="pu2-marcacao">
+                <input type="checkbox" checked={somenteMinhas} onChange={(e) => setSomenteMinhas(e.target.checked)} />
+                Só as que eu anotei
+              </label>
+            )
+          }
+        />
+      );
+    }
+
+    if (estado.tela.tipo === 'configuracoes') {
+      return (
+        <ConfiguracoesV2
+          upjs={estado.upjs}
+          somenteVinculadas={estado.perfil?.ver_somente_vinculadas ?? false}
+          onVoltar={estado.voltarInicial}
+          onAtualizar={estado.atualizar}
+        />
+      );
+    }
+
+    if (estado.tela.tipo === 'log-acessos') return <LogAcessosV2 onVoltar={estado.voltarInicial} />;
+
+    // Demais telas (Designações): visual da v1 por enquanto.
     return (
       <>
         <p className="pu2-legado-aviso">Esta tela ainda está com o visual anterior. Ela será redesenhada nas próximas entregas.</p>
@@ -321,11 +373,12 @@ const PrioridadesV2Modal: React.FC<Props> = ({ isOpen, onClose }) => {
           temLogAcessos={ehGestor}
           recolhido={recolhido}
           alternarRecolhido={() => setRecolhido((r) => !r)}
+          abrirCreditos={() => setCreditosAbertos(true)}
+          creditosAtivo={creditosAbertos}
         />
         <main className="pu2-principal" style={{ backgroundImage: `url(${fundo})` }}>
           <div className="pu2-principal-conteudo">{conteudo}</div>
-        </main>
-      </div>
+        </main>      </div>
     </div>
   );
 };

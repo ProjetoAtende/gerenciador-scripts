@@ -22,6 +22,10 @@ interface Props {
   rotuloTipo: (codigo: string) => string;
   onAbrir: (a: AnotacaoPrioridade) => void;
   carregando: boolean;
+  /** Controle extra na barra de filtro (ex.: "Somente as minhas" no Histórico). */
+  extraFiltro?: React.ReactNode;
+  /** Mantém a ordem do servidor (mais recentes primeiro), sem subir urgentíssimas. */
+  ordemCronologica?: boolean;
 }
 
 /** Texto em que a busca procura: número (com e sem máscara), descrição, tipo, UPJ, Vara, autor etc. */
@@ -120,7 +124,17 @@ const CartaoAnotacao: React.FC<{
   );
 };
 
-export const ListaAnotacoesV2: React.FC<Props> = ({ titulo, icone, itens, upjs, rotuloTipo, onAbrir, carregando }) => {
+export const ListaAnotacoesV2: React.FC<Props> = ({
+  titulo,
+  icone,
+  itens,
+  upjs,
+  rotuloTipo,
+  onAbrir,
+  carregando,
+  extraFiltro,
+  ordemCronologica = false,
+}) => {
   const [busca, setBusca] = useState('');
   const [categoria, setCategoria] = useState<CategoriaAnotacao | ''>('');
 
@@ -131,7 +145,7 @@ export const ListaAnotacoesV2: React.FC<Props> = ({ titulo, icone, itens, upjs, 
     const termoDigitos = somenteDigitos(busca);
     // Urgentíssimas primeiro, depois reiteradas; dentro de cada grupo, a ordem do servidor.
     const peso = (a: AnotacaoPrioridade) => (ehUrgentissima(a) ? 0 : a.reiterada ? 1 : 2);
-    const ordenados = [...itens].sort((x, y) => peso(x) - peso(y));
+    const ordenados = ordemCronologica ? itens : [...itens].sort((x, y) => peso(x) - peso(y));
     return ordenados.filter((a) => {
       if (categoria && a.categoria !== categoria) return false;
       if (!termo) return true;
@@ -140,7 +154,7 @@ export const ListaAnotacoesV2: React.FC<Props> = ({ titulo, icone, itens, upjs, 
       if (termoDigitos.length >= 4 && a.processo.includes(termoDigitos)) return true;
       return termo.split(/\s+/).every((p) => texto.includes(p));
     });
-  }, [itens, busca, categoria, upjPorId, rotuloTipo]);
+  }, [itens, busca, categoria, upjPorId, rotuloTipo, ordemCronologica]);
 
   return (
     <div>
@@ -166,6 +180,7 @@ export const ListaAnotacoesV2: React.FC<Props> = ({ titulo, icone, itens, upjs, 
             </option>
           ))}
         </select>
+        {extraFiltro}
       </div>
 
       <div className="pu2-titulo-tela">

@@ -37,10 +37,9 @@ import {
 import type { CatalogoItem, RegraEspecial } from '../../services/prioridadesService';
 import { StatusBadge } from '../prioridades/PrioridadesUi';
 import { AnotacaoConsultaModal } from '../prioridades/AnotacaoConsultaModal';
-import { CATEGORIAS_ANOTACAO, type CategoriaAnotacao } from '../prioridades/prioridadesCategorias';
+import { CATEGORIAS_ANOTACAO } from '../prioridades/prioridadesCategorias';
 import { Icone } from './Icone';
-import type { NomeIcone } from './icones';
-import { faixaVaras, upjCurta, varaOrdinal } from './prioridadesV2Rotulos';
+import { ICONE_CATEGORIA, faixaVaras, upjCurta, varaOrdinal } from './prioridadesV2Rotulos';
 import logoEproc from './assets/logo-eproc.png';
 import logoSaj from './assets/logo-saj.png';
 
@@ -69,17 +68,6 @@ const ESTADO_INICIAL: NovaAnotacaoPayload = {
   evento_folha: '',
   descricao_prioridade: '',
   observacao_adicional_atende: '',
-};
-
-const ICONE_CATEGORIA: Record<CategoriaAnotacao, NomeIcone> = {
-  mle: 'cat-mle',
-  sisbajud: 'cat-sisbajud',
-  pesquisas: 'cat-pesquisas',
-  cadastro: 'cat-cadastro',
-  expedicao: 'cat-expedicao',
-  movimentacao: 'cat-movimentacao',
-  publicacao: 'cat-publicacao',
-  audiencias: 'cat-audiencias',
 };
 
 const Obrigatorio = () => (

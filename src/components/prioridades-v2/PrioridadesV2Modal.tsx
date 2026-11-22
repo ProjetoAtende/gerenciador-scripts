@@ -6,16 +6,30 @@
  * apresentação. Telas ainda não redesenhadas são exibidas com o visual da v1
  * dentro desta moldura, para o app continuar completo durante os testes.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import '@fontsource/montserrat/400.css';
 import '@fontsource/montserrat/500.css';
 import '@fontsource/montserrat/600.css';
 import '@fontsource/montserrat/700.css';
 import '@fontsource/montserrat/800.css';
 import './prioridadesV2.css';
+import { useAuth } from '../../contexts/AuthContext';
 import { usePermissoes } from '../../contexts/PermissoesContext';
+import {
+  listarAnotacoes,
+  listarTiposPrioridade,
+  listarTiposSolicitante,
+  marcarEmAnalise,
+  registrarAcessoPrivilegiado,
+} from '../../services/prioridadesService';
+import type { AnotacaoPrioridade } from '../../types/Prioridades';
 import { PrioridadesContent } from '../prioridades/PrioridadesContent';
+import { anotacaoNaLista, type ChaveLista } from '../prioridades/prioridadesListas';
+import { DetalheAnotacaoV2, type ModoDetalhe } from './DetalheAnotacaoV2';
 import { Icone } from './Icone';
+import type { NomeIcone } from './icones';
+import { ListaAnotacoesV2 } from './ListaAnotacoesV2';
+import { ehPerfilGestao, ehPerfilUpj } from './prioridadesV2Rotulos';
 import { NovaAnotacaoV2 } from './NovaAnotacaoV2';
 import { PainelLateralV2 } from './PainelLateralV2';
 import { TelaInicialV2 } from './TelaInicialV2';
@@ -29,11 +43,112 @@ interface Props {
   onClose: () => void;
 }
 
+const LISTAS: Record<ChaveLista, { titulo: string; icone: NomeIcone }> = {
+  'ag-conferencia': { titulo: 'Ag. Conferência', icone: 'ag-conferencia' },
+  devolvidas: { titulo: 'Devolvidas', icone: 'devolvidas' },
+  aprovadas: { titulo: 'Aprovadas', icone: 'aprovadas' },
+  reprovadas: { titulo: 'Reprovadas', icone: 'reprovadas' },
+  urgentissimas: { titulo: 'Urgentíssimas', icone: 'urgentissimas' },
+  reiteradas: { titulo: 'Reiteradas', icone: 'reiteradas' },
+  retornadas: { titulo: 'Retornadas', icone: 'retornadas' },
+  novas: { titulo: 'Novas', icone: 'novas' },
+  'em-analise': { titulo: 'Em Análise', icone: 'em-analise' },
+  resolvidas: { titulo: 'Resolvidas', icone: 'resolvidas' },
+  rejeitadas: { titulo: 'Rejeitadas', icone: 'rejeitadas' },
+};
+
 const PrioridadesV2Modal: React.FC<Props> = ({ isOpen, onClose }) => {
   const { isAdmin } = usePermissoes();
+  const { user } = useAuth();
   const estado = usePrioridadesV2(isOpen);
   const [recolhido, setRecolhido] = useState(false);
   const [retorno, setRetorno] = useState<string | null>(null);
+  const [anotacoes, setAnotacoes] = useState<AnotacaoPrioridade[]>([]);
+  const [carregandoLista, setCarregandoLista] = useState(false);
+  const [rotulos, setRotulos] = useState<{ tipos: Map<string, string>; solicitantes: Map<string, string> }>({
+    tipos: new Map(),
+    solicitantes: new Map(),
+  });
+
+  const { tela, irPara, atualizar, perfilEfetivo, perfil } = estado;
+
+  const carregarAnotacoes = useCallback(async () => {
+    setCarregandoLista(true);
+    try {
+      const { anotacoes: lista } = await listarAnotacoes({ limite: 200 });
+      setAnotacoes(lista);
+    } finally {
+      setCarregandoLista(false);
+    }
+  }, []);
+
+  // Catálogos (rótulos de tipo e de solicitante), uma vez por abertura.
+  useEffect(() => {
+    if (!isOpen) return;
+    void Promise.all([listarTiposPrioridade(), listarTiposSolicitante()]).then(([tp, ts]) =>
+      setRotulos({
+        tipos: new Map(tp.map((t) => [t.codigo, t.label])),
+        solicitantes: new Map(ts.map((t) => [t.codigo, t.label])),
+      })
+    );
+  }, [isOpen]);
+
+  // "Voltar" no detalhe leva à lista de onde a anotação foi aberta.
+  const [ultimaLista, setUltimaLista] = useState<string | null>(null);
+  useEffect(() => {
+    if (tela.tipo === 'lista') setUltimaLista(tela.grupo);
+    else if (tela.tipo !== 'detalhe') setUltimaLista(null);
+  }, [tela]);
+
+  // Recarrega as anotações ao entrar numa lista ou num detalhe (mesmo critério da v1).
+  useEffect(() => {
+    if (!isOpen) return;
+    if (tela.tipo === 'lista' || tela.tipo === 'detalhe') void carregarAnotacoes();
+  }, [isOpen, tela, carregarAnotacoes]);
+
+  const rotuloTipo = useCallback((c: string) => rotulos.tipos.get(c) ?? c, [rotulos]);
+  const rotuloSolicitante = useCallback((c: string) => rotulos.solicitantes.get(c) ?? c, [rotulos]);
+
+  const contextoLista = useMemo(
+    () => ({ perfilEfetivo, usuarioId: user?.id ?? null, somenteVinculadas: perfil?.ver_somente_vinculadas ?? false }),
+    [perfilEfetivo, user?.id, perfil?.ver_somente_vinculadas]
+  );
+
+  /** Mesma regra da v1 para decidir o que a pessoa pode fazer com a anotação. */
+  const abrirAnotacao = useCallback(
+    (a: AnotacaoPrioridade) => {
+      const podeAnalisar = ehPerfilUpj(perfilEfetivo);
+      const podeConferir = ehPerfilGestao(perfilEfetivo);
+      if (isAdmin && !podeAnalisar) void registrarAcessoPrivilegiado(a.id);
+      if (podeAnalisar && a.status === 'upj-pendente') {
+        void marcarEmAnalise(a.id).then(() => {
+          void carregarAnotacoes();
+          void atualizar();
+        });
+      }
+      const modo: ModoDetalhe =
+        a.status === 'gestor-conferencia' && podeConferir
+          ? 'conferencia'
+          : (a.status === 'upj-pendente' || a.status === 'upj-analisada') && podeAnalisar
+            ? 'analise'
+            : a.status === 'gestor-devolvida' && perfilEfetivo === 'atendente'
+              ? 'resposta'
+              : a.status === 'upj-devolvida' && podeConferir
+                ? 'correcao'
+                : 'consulta';
+      irPara({ tipo: 'detalhe', anotacaoId: a.id, modo });
+    },
+    [perfilEfetivo, isAdmin, irPara, carregarAnotacoes, atualizar]
+  );
+
+  const aposAcao = useCallback(
+    async (mensagem: string) => {
+      setRetorno(mensagem);
+      await Promise.all([carregarAnotacoes(), atualizar()]);
+      irPara({ tipo: 'inicial' });
+    },
+    [carregarAnotacoes, atualizar, irPara]
+  );
 
   useEffect(() => {
     if (!isOpen) return;
@@ -107,6 +222,52 @@ const PrioridadesV2Modal: React.FC<Props> = ({ isOpen, onClose }) => {
             void estado.atualizar();
             estado.irPara({ tipo: 'inicial' });
           }}
+        />
+      );
+    }
+
+    if (estado.tela.tipo === 'lista' && estado.tela.grupo in LISTAS) {
+      const chave = estado.tela.grupo as ChaveLista;
+      return (
+        <ListaAnotacoesV2
+          key={chave}
+          titulo={LISTAS[chave].titulo}
+          icone={LISTAS[chave].icone}
+          itens={anotacoes.filter((a) => anotacaoNaLista(a, chave, contextoLista))}
+          upjs={estado.upjs}
+          rotuloTipo={rotuloTipo}
+          onAbrir={abrirAnotacao}
+          carregando={carregandoLista}
+        />
+      );
+    }
+
+    if (estado.tela.tipo === 'detalhe') {
+      const { anotacaoId, modo } = estado.tela;
+      const emFoco = anotacoes.find((a) => a.id === anotacaoId);
+      if (!emFoco) {
+        return carregandoLista ? (
+          <p className="pu2-carregando">Carregando anotação…</p>
+        ) : (
+          <div className="pu2-vazio">
+            Anotação não encontrada ou sem permissão de visualização.{' '}
+            <button type="button" className="pu2-botao pu2-botao-link" onClick={estado.voltarInicial}>
+              Voltar ao início
+            </button>
+          </div>
+        );
+      }
+      return (
+        <DetalheAnotacaoV2
+          key={`${emFoco.id}-${modo}`}
+          anotacao={emFoco}
+          modo={modo}
+          upjs={estado.upjs}
+          perfilEfetivo={pe}
+          rotuloTipo={rotuloTipo}
+          rotuloSolicitante={rotuloSolicitante}
+          onConcluir={aposAcao}
+          onVoltar={() => (ultimaLista ? irPara({ tipo: 'lista', grupo: ultimaLista }) : estado.voltarInicial())}
         />
       );
     }

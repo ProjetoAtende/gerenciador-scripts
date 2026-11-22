@@ -1,0 +1,730 @@
+/*
+ * Visual da v2 de Prioridades e Urgências.
+ * Tudo fica sob `.pu2`, para não vazar para o resto do Gerenciador.
+ * Paleta acordada em 22/11/2026 (contraste conferido com texto branco).
+ */
+.pu2 {
+  --pu2-vermelho: #a11116;
+  --pu2-vermelho-escuro: #7e0d11;
+  --pu2-texto: #1e1e1e;
+  --pu2-cinza: #5b5a5a;
+  --pu2-cinza-borda: #c6c6c6;
+  --pu2-cinza-card: #e2e5e9;
+  --pu2-placeholder: #767676;
+  --pu2-fundo: #f1f1f1;
+  --pu2-nova: #b8620f;
+  --pu2-conferencia: #2b7a8c;
+  --pu2-sucesso: #10a137;
+  --pu2-aviso: #eca93d;
+  --pu2-raio: 10px;
+  --pu2-sombra: 0 4px 14px rgba(0, 0, 0, 0.08);
+
+  font-family: 'Montserrat', system-ui, sans-serif;
+  color: var(--pu2-texto);
+  background: var(--pu2-fundo);
+  -webkit-font-smoothing: antialiased;
+}
+.pu2 *,
+.pu2 *::before,
+.pu2 *::after {
+  box-sizing: border-box;
+}
+.pu2 button,
+.pu2 input,
+.pu2 select,
+.pu2 textarea {
+  font-family: inherit;
+}
+.pu2 :focus-visible {
+  outline: 3px solid rgba(161, 17, 22, 0.45);
+  outline-offset: 2px;
+}
+
+/* ── Barra superior ─────────────────────────────────────────────── */
+.pu2-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 0 16px 0 10px;
+  background: #000;
+  color: #fff;
+  flex-shrink: 0;
+}
+.pu2-topo-titulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+}
+.pu2-topo-titulo img {
+  width: 26px;
+  height: 26px;
+}
+.pu2-topo-acoes {
+  display: flex;
+  gap: 4px;
+}
+.pu2-topo-botao {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.pu2-topo-botao:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* ── Corpo ──────────────────────────────────────────────────────── */
+.pu2-corpo {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+.pu2-principal {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  position: relative;
+  background-color: var(--pu2-fundo);
+  background-repeat: no-repeat;
+  background-position: right bottom;
+  background-size: cover;
+  background-attachment: local;
+}
+.pu2-principal-conteudo {
+  position: relative;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 28px 40px 56px;
+}
+
+/* ── Painel lateral (gradiente D: malha radial + reflexo vinho) ─── */
+.pu2-lateral {
+  position: relative;
+  width: 280px;
+  flex-shrink: 0;
+  color: #fff;
+  background:
+    radial-gradient(70% 35% at 50% 8%, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 70%),
+    radial-gradient(60% 40% at 0% 100%, rgba(0, 0, 0, 0.28) 0%, rgba(0, 0, 0, 0) 70%),
+    radial-gradient(85% 45% at 100% 100%, rgba(161, 17, 22, 0.32) 0%, rgba(161, 17, 22, 0) 70%),
+    radial-gradient(60% 40% at 100% 55%, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0) 70%),
+    #565555;
+  box-shadow: 6px 0 18px rgba(0, 0, 0, 0.18);
+  z-index: 2;
+  transition: width 0.18s ease;
+}
+.pu2-lateral.recolhido {
+  width: 18px;
+}
+.pu2-lateral-rolagem {
+  height: 100%;
+  overflow-y: auto;
+  padding: 18px 20px 28px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+}
+.pu2-lateral.recolhido .pu2-lateral-rolagem {
+  visibility: hidden;
+}
+.pu2-recolher {
+  position: absolute;
+  top: 50%;
+  right: -17px;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 0;
+  background: #fff;
+  color: var(--pu2-cinza);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 3;
+}
+.pu2-perfil {
+  text-align: center;
+  margin-bottom: 14px;
+}
+.pu2-perfil img {
+  width: 72px;
+  height: 72px;
+  display: block;
+  margin: 0 auto 6px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+}
+.pu2-perfil-nome {
+  font-weight: 800;
+  font-size: 19px;
+  line-height: 1.2;
+  word-break: break-word;
+}
+.pu2-perfil-papel {
+  font-size: 13.5px;
+  opacity: 0.95;
+  margin-top: 2px;
+}
+.pu2-lateral-nova {
+  width: 100%;
+  margin: 6px 0 14px;
+  font-size: 17px;
+  padding: 9px 12px;
+  border: 2px solid #fff;
+}
+.pu2-faixa {
+  background: #fff;
+  color: var(--pu2-cinza);
+  border-radius: 5px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 1px 0;
+  margin: 14px 0 6px;
+}
+.pu2-divisor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 12px 0 4px;
+}
+.pu2-divisor::before,
+.pu2-divisor::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.75);
+}
+.pu2-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14.5px;
+  padding: 5px 7px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+.pu2-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.pu2-item.ativo {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+.pu2-item-rotulo {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Item que pede atenção (ex.: Devolvidas para o Atendente): rótulo realçado. */
+.pu2-item.realce .pu2-item-rotulo span {
+  background: var(--pu2-vermelho);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+.pu2-contadores {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.pu2-contador {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 30px;
+  justify-content: center;
+  background: #fff;
+  color: var(--pu2-cinza);
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 1px 8px;
+  line-height: 1.4;
+}
+.pu2-contador.alerta {
+  background: var(--pu2-vermelho);
+  color: #fff;
+}
+
+/* ── Botões ─────────────────────────────────────────────────────── */
+.pu2-botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 0;
+  border-radius: var(--pu2-raio);
+  font-weight: 800;
+  font-size: 16px;
+  padding: 11px 22px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
+  text-decoration: none;
+}
+.pu2-botao:active {
+  transform: translateY(1px);
+}
+.pu2-botao:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.pu2-botao-primario {
+  background: var(--pu2-vermelho);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(161, 17, 22, 0.25);
+}
+.pu2-botao-primario:hover:not(:disabled) {
+  background: var(--pu2-vermelho-escuro);
+}
+.pu2-botao-secundario {
+  background: var(--pu2-cinza);
+  color: #fff;
+}
+.pu2-botao-secundario:hover:not(:disabled) {
+  background: #474646;
+}
+.pu2-botao-link {
+  background: transparent;
+  color: var(--pu2-cinza);
+  font-weight: 700;
+  padding: 6px 4px;
+}
+.pu2-botao-link:hover {
+  color: var(--pu2-texto);
+}
+.pu2-botao-gigante {
+  font-size: clamp(22px, 2.6vw, 36px);
+  padding: 16px 44px;
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(161, 17, 22, 0.28);
+}
+
+/* ── Títulos ────────────────────────────────────────────────────── */
+.pu2-titulo-tela {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.pu2-titulo-tela h2 {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+  font-size: clamp(30px, 3.2vw, 46px);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+/* ── Formulário ─────────────────────────────────────────────────── */
+.pu2-campo {
+  margin-bottom: 20px;
+}
+.pu2-rotulo {
+  display: block;
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 7px;
+}
+.pu2-rotulo .obrigatorio {
+  color: var(--pu2-vermelho);
+  margin-left: 2px;
+}
+.pu2-rotulo .nota {
+  color: var(--pu2-vermelho);
+  font-weight: 700;
+  margin-left: 6px;
+}
+.pu2-entrada,
+.pu2-selecao,
+.pu2-area {
+  width: 100%;
+  border: 2px solid var(--pu2-cinza-borda);
+  border-radius: var(--pu2-raio);
+  background: #fff;
+  color: var(--pu2-texto);
+  font-size: 17px;
+  font-weight: 600;
+  padding: 10px 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.pu2-entrada::placeholder,
+.pu2-area::placeholder {
+  color: var(--pu2-placeholder);
+  font-weight: 500;
+}
+.pu2-entrada:focus,
+.pu2-selecao:focus,
+.pu2-area:focus {
+  outline: none;
+  border-color: var(--pu2-vermelho);
+  box-shadow: 0 0 0 3px rgba(161, 17, 22, 0.15);
+}
+.pu2-area {
+  resize: vertical;
+  min-height: 110px;
+  line-height: 1.45;
+}
+.pu2-selecao {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--pu2-cinza) 50%),
+    linear-gradient(135deg, var(--pu2-cinza) 50%, transparent 50%);
+  background-position: calc(100% - 22px) 52%, calc(100% - 15px) 52%;
+  background-size: 7px 7px, 7px 7px;
+  background-repeat: no-repeat;
+  padding-right: 44px;
+  cursor: pointer;
+}
+.pu2-linha-processo {
+  display: flex;
+  gap: 14px;
+}
+.pu2-linha-processo .pu2-entrada {
+  flex: 1;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.pu2-ajuda {
+  font-size: 13px;
+  color: var(--pu2-cinza);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+.pu2-marcacao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  margin: 10px 0 8px;
+  cursor: pointer;
+}
+.pu2-marcacao input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--pu2-cinza);
+}
+
+/* Categoria: 8 cartões de rádio (4 x 2) */
+.pu2-categorias {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px 22px;
+}
+@media (max-width: 1100px) {
+  .pu2-categorias {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.pu2-categoria {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 2px solid var(--pu2-cinza);
+  border-radius: var(--pu2-raio);
+  background: #fff;
+  padding: 9px 30px 9px 12px;
+  font-weight: 800;
+  font-size: 17px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.pu2-categoria input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.pu2-categoria .radio {
+  color: var(--pu2-texto);
+  flex-shrink: 0;
+}
+.pu2-categoria .icone-cat {
+  color: var(--pu2-vermelho);
+  flex-shrink: 0;
+}
+.pu2-categoria .dica {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  color: var(--pu2-vermelho);
+}
+.pu2-categoria:hover {
+  border-color: var(--pu2-vermelho);
+}
+.pu2-categoria.marcada {
+  background: var(--pu2-vermelho);
+  border-color: var(--pu2-vermelho);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(161, 17, 22, 0.3);
+}
+.pu2-categoria.marcada .radio,
+.pu2-categoria.marcada .icone-cat,
+.pu2-categoria.marcada .dica {
+  color: #fff;
+}
+.pu2-categoria:focus-within {
+  outline: 3px solid rgba(161, 17, 22, 0.45);
+  outline-offset: 2px;
+}
+
+/* ── Caixas de aviso ────────────────────────────────────────────── */
+.pu2-caixa {
+  border: 2px solid;
+  border-radius: 12px;
+  padding: 12px 18px;
+  margin-bottom: 20px;
+  font-size: 15.5px;
+  line-height: 1.45;
+}
+.pu2-caixa-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 17px;
+  margin-bottom: 2px;
+}
+.pu2-caixa-sucesso {
+  border-color: var(--pu2-sucesso);
+  background: rgba(16, 161, 55, 0.2);
+}
+.pu2-caixa-sucesso .pu2-caixa-titulo svg {
+  color: var(--pu2-sucesso);
+}
+.pu2-caixa-aviso {
+  border-color: var(--pu2-aviso);
+  background: rgba(236, 169, 61, 0.2);
+}
+.pu2-caixa-aviso .pu2-caixa-titulo svg {
+  color: var(--pu2-aviso);
+}
+.pu2-caixa-erro {
+  border-color: var(--pu2-vermelho);
+  background: rgba(161, 17, 22, 0.08);
+}
+.pu2-caixa-erro .pu2-caixa-titulo svg {
+  color: var(--pu2-vermelho);
+}
+.pu2-caixa ul {
+  margin: 4px 0 0;
+  padding-left: 22px;
+}
+.pu2-processo-local {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+.pu2-processo-plataforma {
+  margin-top: 4px;
+  height: 22px;
+  width: auto;
+  display: block;
+}
+
+/* ── Etiquetas ──────────────────────────────────────────────────── */
+.pu2-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1;
+  padding: 6px 11px;
+  border-radius: 9px;
+  white-space: nowrap;
+}
+.pu2-etiqueta-urgentissima {
+  background: linear-gradient(100deg, #e90000 0%, #c4001f 50%, #8e0a2e 100%);
+  box-shadow: 0 2px 10px rgba(196, 0, 31, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.pu2-etiqueta-reiterada {
+  background: linear-gradient(135deg, #c2185b 0%, #a3154f 50%, #7a0f3d 100%);
+  box-shadow: 0 2px 8px rgba(163, 21, 79, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.pu2-etiqueta-nova {
+  background: var(--pu2-nova);
+}
+.pu2-etiqueta-conferencia {
+  background: var(--pu2-conferencia);
+}
+.pu2-etiqueta-neutra {
+  background: var(--pu2-cinza);
+}
+
+/* ── Tela inicial ───────────────────────────────────────────────── */
+.pu2-inicial {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-top: 8px;
+}
+.pu2-marca {
+  line-height: 1.05;
+  margin-bottom: 18px;
+}
+.pu2-marca-sup {
+  font-weight: 800;
+  font-size: 22px;
+}
+.pu2-marca-sup span {
+  color: var(--pu2-vermelho);
+}
+.pu2-marca-inf {
+  font-weight: 800;
+  font-size: clamp(22px, 2.1vw, 30px);
+  color: #484848;
+}
+.pu2-inicial-logo {
+  width: clamp(150px, 16vw, 240px);
+  height: auto;
+  margin: 18px 0 10px;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.18));
+}
+.pu2-saudacao {
+  font-size: clamp(36px, 4vw, 58px);
+  font-weight: 800;
+  margin: 8px 0 34px;
+}
+.pu2-resumo {
+  margin-top: 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: clamp(18px, 1.9vw, 28px);
+  font-weight: 800;
+}
+.pu2-resumo button {
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--pu2-vermelho);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
+  transition: text-decoration-color 0.15s ease;
+}
+.pu2-resumo button:hover {
+  text-decoration-color: currentColor;
+}
+.pu2-resumo-ok {
+  color: var(--pu2-cinza);
+  font-weight: 700;
+}
+
+/* ── Mensagem de retorno após ação ──────────────────────────────── */
+.pu2-retorno {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.pu2-retorno button {
+  border: 0;
+  background: none;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: inherit;
+}
+
+/* ── Rodapé de ações do formulário ──────────────────────────────── */
+.pu2-acoes {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+.pu2-acoes .pu2-botao {
+  min-width: 190px;
+}
+.pu2-acoes-nota {
+  margin-right: auto;
+  font-size: 13.5px;
+  color: var(--pu2-cinza);
+  font-weight: 600;
+}
+
+/* ── Diálogo simples ────────────────────────────────────────────── */
+.pu2-dialogo-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.pu2-dialogo {
+  background: #fff;
+  border-radius: 14px;
+  padding: 22px 24px;
+  max-width: 560px;
+  width: 100%;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+}
+.pu2-dialogo h3 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* Telas ainda no visual antigo, dentro da moldura nova. */
+.pu2-legado {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 14px;
+  box-shadow: var(--pu2-sombra);
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+}
+.pu2-legado-aviso {
+  font-size: 13px;
+  color: var(--pu2-cinza);
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+
+.pu2-carregando {
+  font-weight: 700;
+  color: var(--pu2-cinza);
+  padding: 40px 0;
+  text-align: center;
+}

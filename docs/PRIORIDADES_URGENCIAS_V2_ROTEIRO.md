@@ -49,8 +49,10 @@ Aprimorado por" sempre em ordem alfabética). Entram também os ajustes pedidos 
 - logotipos Eproc/SAJ em vetor (`assets/logo-*.svg`, cor = `currentColor`). O Eproc foi
   extraído da palavra do SVG do seeklogo, e o SAJ é a versão nova enviada pelo Celso.
 
-Tela **ainda com o visual da v1** (exibida dentro da moldura nova, via `PrioridadesContent`):
-Designações.
+Quarto commit: **Designações** no visual novo (`DesignacoesV2.tsx`). Tem interruptor de
+vinculação automática, pílulas de categorias por Analista, busca de pessoas e o alternador
+designação/perfil permanente, com as regras da v1. Com isso, **todas as telas estão no visual
+novo**. O `PrioridadesContent` da v1 só é usado como reserva, para uma tela desconhecida.
 
 ### Arquivos da v2
 
@@ -97,8 +99,8 @@ Designações.
 
 ### Etapa 1 (restante)
 
-1. Redesenhar Designações (a maior tela da v1: 879 linhas).
-2. O Celso testa os perfis Atendente e UPJ (e Configurações/Log com o Gestor).
+Concluída, faltando só os testes:
+1. O Celso testa os perfis Atendente e UPJ (e Configurações/Log com o Gestor).
 
 ### Etapa 2 (a discutir com o Celso; ele tem uma lista própria)
 
@@ -107,6 +109,9 @@ Designações.
   `.0100`, mas hoje está na UPJ do Foro Regional de Santo Amaro, e a v1 aceita.
 - Campo "Descrição Resumida" (coluna nova).
 - `prioridades_conferir` grava `conferido_por_id` mas não `conferido_por_nome`.
+- Designações: na v1 (e na v2, por paridade), o Coordenador que não é admin NÃO vê o
+  formulário de inclusão. Isso parece contrariar o RF-UPJ-05 ("Coordenador designa Analistas").
+  Hoje, só o admin consegue designar Analistas pela tela. Confirmar.
 - Observação da UPJ: a maquete a chama de "Informação a ser repassada ao Solicitante";
   na v1 era "uso interno da UPJ". Confirmar quem pode ver.
 

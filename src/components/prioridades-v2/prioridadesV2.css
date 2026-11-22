@@ -1221,3 +1221,201 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* ── Designações ────────────────────────────────────────────────── */
+.pu2-secao-cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.pu2-secao-cabecalho .pu2-secao-rotulo {
+  margin: 0;
+}
+.pu2-com-icone-rotulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pu2-alternador {
+  display: inline-flex;
+  background: #e4e4e4;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+}
+.pu2-alternador button {
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--pu2-cinza);
+  cursor: pointer;
+}
+.pu2-alternador button.ativo {
+  background: var(--pu2-vermelho);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(161, 17, 22, 0.3);
+}
+.pu2-escolhido {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 2px solid var(--pu2-sucesso);
+  background: rgba(16, 161, 55, 0.12);
+  border-radius: var(--pu2-raio);
+  padding: 8px 14px;
+}
+.pu2-resultados {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 2px solid var(--pu2-cinza-card);
+  border-radius: var(--pu2-raio);
+  background: #fff;
+}
+.pu2-resultados button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid var(--pu2-cinza-card);
+  background: transparent;
+  padding: 8px 14px;
+  font: inherit;
+  cursor: pointer;
+}
+.pu2-resultados li:last-child button {
+  border-bottom: 0;
+}
+.pu2-resultados button:hover {
+  background: #f6f6f6;
+}
+.pu2-linha-campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0 16px;
+  align-items: start;
+}
+.pu2-linha-campos .pu2-campo {
+  margin-bottom: 0;
+}
+.pu2-entrada-fixa {
+  color: var(--pu2-cinza);
+  background: #f4f4f4;
+}
+.pu2-pilula {
+  display: inline-block;
+  background: rgba(43, 122, 140, 0.14);
+  color: var(--pu2-conferencia);
+  font-weight: 700;
+  font-size: 12.5px;
+  border-radius: 999px;
+  padding: 1px 9px;
+}
+.pu2-numero-centro {
+  text-align: center;
+  font-weight: 800;
+}
+.pu2-botao-pequeno {
+  font-size: 13.5px;
+  padding: 6px 12px;
+  border: 2px solid var(--pu2-cinza-borda);
+  background: #fff;
+  color: var(--pu2-texto);
+}
+.pu2-botao-pequeno:hover {
+  border-color: var(--pu2-vermelho);
+  color: var(--pu2-vermelho);
+}
+/* Interruptor de vinculação automática */
+.pu2-interruptor {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.pu2-interruptor input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.pu2-interruptor .trilho {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--pu2-cinza-borda);
+  transition: background-color 0.15s ease;
+  flex-shrink: 0;
+}
+.pu2-interruptor .trilho::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease;
+}
+.pu2-interruptor input:checked + .trilho {
+  background: var(--pu2-sucesso);
+}
+.pu2-interruptor input:checked + .trilho::after {
+  transform: translateX(18px);
+}
+.pu2-interruptor input:focus-visible + .trilho {
+  outline: 3px solid rgba(161, 17, 22, 0.45);
+  outline-offset: 2px;
+}
+/* Categorias que o Analista atende (pílulas marcáveis) */
+.pu2-categorias-mini {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.pu2-categorias-mini label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 2px solid var(--pu2-cinza-borda);
+  border-radius: 999px;
+  padding: 1px 9px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--pu2-cinza);
+}
+.pu2-categorias-mini label.marcada {
+  border-color: var(--pu2-vermelho);
+  background: var(--pu2-vermelho);
+  color: #fff;
+}
+.pu2-categorias-mini input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.pu2-categorias-mini label:focus-within {
+  outline: 3px solid rgba(161, 17, 22, 0.45);
+  outline-offset: 1px;
+}

@@ -31,6 +31,7 @@ import type { NomeIcone } from './icones';
 import { ListaAnotacoesV2 } from './ListaAnotacoesV2';
 import { ConfiguracoesV2 } from './ConfiguracoesV2';
 import { CreditosV2 } from './CreditosV2';
+import { DesignacoesV2 } from './DesignacoesV2';
 import { LogAcessosV2 } from './LogAcessosV2';
 import { ehPerfilGestao, ehPerfilUpj } from './prioridadesV2Rotulos';
 import { NovaAnotacaoV2 } from './NovaAnotacaoV2';
@@ -324,7 +325,20 @@ const PrioridadesV2Modal: React.FC<Props> = ({ isOpen, onClose }) => {
 
     if (estado.tela.tipo === 'log-acessos') return <LogAcessosV2 onVoltar={estado.voltarInicial} />;
 
-    // Demais telas (Designações): visual da v1 por enquanto.
+    if (estado.tela.tipo === 'designacoes') {
+      return (
+        <DesignacoesV2
+          perfilEfetivo={pe}
+          perfil={estado.perfil}
+          ehAdmin={isAdmin}
+          upjs={estado.upjs}
+          onVoltar={estado.voltarInicial}
+          onAtualizar={estado.atualizar}
+        />
+      );
+    }
+
+    // Segurança: tela que a v2 não conheça cai no visual da v1.
     return (
       <>
         <p className="pu2-legado-aviso">Esta tela ainda está com o visual anterior. Ela será redesenhada nas próximas entregas.</p>

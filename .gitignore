@@ -39,3 +39,6 @@ robo_tickets_antigos/artifacts/
 robo_oraculo_smax_sync/.profile/
 robo_oraculo_smax_sync/.profile-fallback-debug/
 robo_oraculo_smax_sync/artifacts/
+
+# Build de demonstração em arquivo único (npm run build:demo)
+dist-demo

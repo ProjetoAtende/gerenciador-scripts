@@ -96,6 +96,23 @@ novo**. O `PrioridadesContent` da v1 só é usado como reserva, para uma tela de
 - Backup da produção: script `Tribunal Atende/backups-supabase/backup-producao.ps1`,
   fora do repositório (os arquivos têm dados pessoais e de login).
 
+### Demonstração em arquivo único (sem servidor)
+
+Para mostrar v1 e v2 num computador sem permissão de administrador (ex.: do TJSP):
+`npm run build:demo` gera `dist-demo/demonstracao-gerenciador.html` (~6 MB), com o app inteiro
+(JavaScript, CSS, imagens e fontes) dentro do HTML. Basta copiar o arquivo e abri-lo com dois
+cliques no Edge ou Chrome; o login é o dos usuários de teste.
+
+- Configuração separada (`vite.demo.config.ts` + `vite-plugins/arquivoUnicoDemo.ts`); o build
+  de produção e o deploy não mudam.
+- Só gera se o `.env` apontar para o projeto de **testes**; leva apenas a chave pública (anon).
+- Mostra a faixa "DEMONSTRAÇÃO · banco de testes · dados fictícios" no canto da tela.
+- Funciona porque o app usa HashRouter e o banco de testes não restringe origens
+  (sem `ALLOWED_ORIGINS`). Páginas abertas do disco enviam `Origin: null`: se um dia
+  `ALLOWED_ORIGINS` for definido nos testes, a localização deixa de funcionar no arquivo.
+- Testado em 23/11/2026, com o arquivo aberto do disco no Edge: tela de login, imagens e acesso
+  ao Supabase e às Edge Functions OK. O Celso entrou com um usuário de teste e usou o app.
+
 ## Próximos passos
 
 ### Etapa 1 (restante)

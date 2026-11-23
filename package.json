@@ -9,6 +9,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build && node scripts/check-client-bundle-secrets.mjs",
     "check:client-secrets": "node scripts/check-client-bundle-secrets.mjs",
+    "build:demo": "vite build --config vite.demo.config.ts",
     "build:android": "cross-env CAPACITOR=true tsc -b && cross-env CAPACITOR=true vite build",
     "lint": "eslint .",
     "preview": "vite preview",

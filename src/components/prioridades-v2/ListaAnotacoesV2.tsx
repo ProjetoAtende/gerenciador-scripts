@@ -89,6 +89,8 @@ const CartaoAnotacao: React.FC<{
           <EtiquetaStatus status={a.status} />
         </span>
         <span className="pu2-cartao-titulo">{rotuloTipo(a.tipo_prioridade)}</span>
+        {/* G: Descrição Resumida, na linha abaixo do tipo. */}
+        {a.descricao_resumida && <span className="pu2-cartao-resumida">{a.descricao_resumida}</span>}
         <span className="pu2-cartao-descricao">{a.descricao_prioridade}</span>
         <span className="pu2-cartao-meta">
           <span>

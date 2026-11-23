@@ -38,11 +38,12 @@ export const TelaInicialV2: React.FC<Props> = ({ primeiroNome, perfilEfetivo, co
     if (n('urgentissimas') > 0) {
       pendencias.push({ grupo: 'urgentissimas', destaque: plural(n('urgentissimas'), 'anotação urgentíssima', 'anotações urgentíssimas'), complemento: 'para analisar.' });
     }
-    if (n('novas') > 0) {
-      pendencias.push({ grupo: 'novas', destaque: plural(n('novas'), 'anotação nova', 'anotações novas'), complemento: 'aguardando a UPJ.' });
-    }
+    // M: mesma ordem do painel lateral (Urgentíssimas, Reiteradas, Novas).
     if (n('reiteradas') > 0) {
       pendencias.push({ grupo: 'reiteradas', destaque: plural(n('reiteradas'), 'anotação reiterada', 'anotações reiteradas'), complemento: 'em andamento.' });
+    }
+    if (n('novas') > 0) {
+      pendencias.push({ grupo: 'novas', destaque: plural(n('novas'), 'anotação nova', 'anotações novas'), complemento: 'aguardando a UPJ.' });
     }
   } else if (ehPerfilGestao(perfilEfetivo)) {
     if (n('ag-conferencia') > 0) {

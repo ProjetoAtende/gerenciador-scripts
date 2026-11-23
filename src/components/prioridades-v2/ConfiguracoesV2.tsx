@@ -1,6 +1,7 @@
 /**
  * Configurações do Gestor no visual da v2: visão da fila, dias sem expediente
- * e regras especiais por UPJ. Mesmas chamadas ao servidor da v1.
+ * e regras especiais por UPJ. Item F (etapa 2): a regra passa a considerar também a
+ * Categoria da Anotação ("Todas" ou uma específica), na tabela nova da v2.
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import type { CatalogoItem } from '../../services/prioridadesService';
@@ -8,13 +9,13 @@ import {
   definirVisaoFila,
   incluirDiaSemExpediente,
   listarDiasSemExpediente,
-  listarRegrasEspeciais,
   listarTiposPrioridade,
   removerDiaSemExpediente,
-  salvarRegraEspecial,
   type DiaSemExpediente,
-  type RegraEspecial,
 } from '../../services/prioridadesService';
+import { listarRegrasV2, salvarRegraV2, type RegraEspecialV2 } from '../../services/prioridadesV2Service';
+import { CATEGORIAS_ANOTACAO, rotuloCategoria } from '../prioridades/prioridadesCategorias';
+import type { CategoriaAnotacao } from '../../types/Prioridades';
 import type { Upj } from '../../types/Prioridades';
 import { Icone } from './Icone';
 import { faixaVaras, upjCurta } from './prioridadesV2Rotulos';
@@ -28,19 +29,21 @@ interface Props {
 
 export const ConfiguracoesV2: React.FC<Props> = ({ upjs, somenteVinculadas, onVoltar, onAtualizar }) => {
   const [dias, setDias] = useState<DiaSemExpediente[]>([]);
-  const [regras, setRegras] = useState<RegraEspecial[]>([]);
+  const [regras, setRegras] = useState<RegraEspecialV2[]>([]);
   const [tipos, setTipos] = useState<CatalogoItem[]>([]);
   const [data, setData] = useState('');
   const [descricao, setDescricao] = useState('');
   const [upjId, setUpjId] = useState('');
   const [tipo, setTipo] = useState('');
+  /** '' = todas as categorias */
+  const [categoria, setCategoria] = useState('');
   const [textoRegra, setTextoRegra] = useState('');
   const [filaRestrita, setFilaRestrita] = useState(somenteVinculadas);
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
-    const [d, r, t] = await Promise.all([listarDiasSemExpediente(), listarRegrasEspeciais(), listarTiposPrioridade()]);
+    const [d, r, t] = await Promise.all([listarDiasSemExpediente(), listarRegrasV2(), listarTiposPrioridade()]);
     setDias(d);
     setRegras(r);
     setTipos(t);
@@ -51,8 +54,16 @@ export const ConfiguracoesV2: React.FC<Props> = ({ upjs, somenteVinculadas, onVo
   }, [carregar]);
 
   useEffect(() => {
-    setTextoRegra(regras.find((r) => r.upj_id === upjId && r.tipo_prioridade === tipo)?.texto ?? '');
-  }, [regras, upjId, tipo]);
+    setTextoRegra(
+      regras.find((r) => r.upj_id === upjId && r.tipo_prioridade === tipo && (r.categoria ?? '') === categoria)?.texto ?? ''
+    );
+  }, [regras, upjId, tipo, categoria]);
+
+  const rotuloTipo = (codigo: string) => tipos.find((t) => t.codigo === codigo)?.label ?? codigo;
+  const nomeUpj = (id: string) => {
+    const u = upjs.find((x) => x.id === id);
+    return u ? upjCurta(u) : 'UPJ';
+  };
 
   const mostrar = (ok: string | null, falha: string | null) => {
     setAviso(ok);
@@ -86,7 +97,7 @@ export const ConfiguracoesV2: React.FC<Props> = ({ upjs, somenteVinculadas, onVo
   };
 
   const salvarRegra = async () => {
-    const r = await salvarRegraEspecial(upjId, tipo, textoRegra);
+    const r = await salvarRegraV2(upjId, tipo, categoria || null, textoRegra);
     if (!r.sucesso) {
       mostrar(null, r.erro ?? 'Não foi possível salvar a regra.');
       return;
@@ -195,7 +206,8 @@ export const ConfiguracoesV2: React.FC<Props> = ({ upjs, somenteVinculadas, onVo
         <h3 className="pu2-secao-rotulo">Regras especiais das UPJs</h3>
         <div className="pu2-bloco pu2-bloco-esquerda">
           <p className="pu2-ajuda" style={{ margin: 0 }}>
-            Uma regra por UPJ e por tipo de prioridade. O Atendente vê o texto num aviso ao escolher o tipo.
+            Uma regra por UPJ, Categoria e Tipo. Com "Todas as categorias", o aviso aparece em qualquer categoria; com uma
+            categoria escolhida, só nela. O Atendente vê o texto ao escolher o tipo.
           </p>
           <div className="pu2-linha-processo">
             <select className="pu2-selecao" value={upjId} onChange={(e) => setUpjId(e.target.value)} aria-label="UPJ">
@@ -214,6 +226,14 @@ export const ConfiguracoesV2: React.FC<Props> = ({ upjs, somenteVinculadas, onVo
                 </option>
               ))}
             </select>
+            <select className="pu2-selecao" value={categoria} onChange={(e) => setCategoria(e.target.value)} aria-label="Categoria da Anotação">
+              <option value="">Todas as categorias</option>
+              {CATEGORIAS_ANOTACAO.map((c) => (
+                <option key={c.codigo} value={c.codigo}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
           </div>
           <textarea
             className="pu2-area"
@@ -229,6 +249,32 @@ export const ConfiguracoesV2: React.FC<Props> = ({ upjs, somenteVinculadas, onVo
               Salvar regra
             </button>
           </div>
+          {regras.length > 0 && (
+            <>
+              <p className="pu2-ajuda" style={{ margin: 0 }}>
+                Regras cadastradas (clique para editar):
+              </p>
+              <ul className="pu2-lista-simples">
+                {regras.map((r) => (
+                  <li key={r.id}>
+                    <button
+                      type="button"
+                      className="pu2-botao pu2-botao-link"
+                      style={{ padding: 0, textAlign: 'left' }}
+                      onClick={() => {
+                        setUpjId(r.upj_id);
+                        setTipo(r.tipo_prioridade);
+                        setCategoria(r.categoria ?? '');
+                      }}
+                    >
+                      <strong>{nomeUpj(r.upj_id)}</strong> · {r.categoria ? rotuloCategoria(r.categoria as CategoriaAnotacao) : 'Todas as categorias'} ·{' '}
+                      {rotuloTipo(r.tipo_prioridade)}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
       </section>
     </div>

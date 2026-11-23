@@ -1,7 +1,7 @@
 /**
  * Designações no visual da v2.
  *
- * Regras e chamadas iguais às da v1 (`prioridades/DesignacoesTela.tsx`):
+ * Regras e chamadas da v1 (`prioridades/DesignacoesTela.tsx`), mais o item B da etapa 2:
  *  - Gestor designa Conferentes; Coordenador da UPJ designa Analistas (só da sua UPJ);
  *  - o admin provisiona o PERFIL BASE (permanente) de Gestor, Coordenador e Atendente;
  *  - vinculação automática (round-robin) por pessoa; categorias habilitadas por Analista.
@@ -13,7 +13,6 @@ import {
   alternarVinculacaoAutomatica,
   atualizarCategoriasHabilitadas,
   buscarUsuariosElegiveis,
-  designarUsuario,
   encerrarDesignacao,
   listarAnotacoes,
   listarCategoriasHabilitadas,
@@ -22,6 +21,7 @@ import {
   listarPerfisComVinculacao,
   removerPerfil,
 } from '../../services/prioridadesService';
+import { designarUsuarioV2 } from '../../services/prioridadesV2Service';
 import type { DesignacaoListada, PerfilBase, PerfilUsuarioPrioridades, PrioridadePerfil, Upj, UsuarioElegivel } from '../../types/Prioridades';
 import { CATEGORIAS_ANOTACAO, CODIGOS_CATEGORIA } from '../prioridades/prioridadesCategorias';
 import { Icone } from './Icone';
@@ -71,10 +71,9 @@ export const DesignacoesV2: React.FC<Props> = ({ perfilEfetivo, perfil, ehAdmin,
   const podeDesignarAnalista = souCoordenador || ehAdmin;
   const podeDesignarAlgo = podeDesignarConferente || podeDesignarAnalista;
   const podeProverPerfilBase = ehAdmin;
-  // Igual à v1: o Coordenador que não é admin NÃO vê o formulário de inclusão.
-  // Isso parece contrariar o RF-UPJ-05 ("Coordenador designa Analistas"); pendência a
-  // confirmar com o Celso na etapa 2 — não alterado aqui para manter as regras da v1.
-  const podeIncluir = (podeDesignarAlgo || podeProverPerfilBase) && !coordenadorRestrito;
+  // Etapa 2 (item B, confirmado pelo Celso): o Coordenador designa Analistas da própria UPJ.
+  // A trava da UPJ está no servidor (prioridades_v2_designar), não só na tela.
+  const podeIncluir = podeDesignarAlgo || podeProverPerfilBase;
 
   const perfisDesignaveis = useMemo<PrioridadePerfil[]>(() => {
     const lista: PrioridadePerfil[] = [];
@@ -204,7 +203,7 @@ export const DesignacoesV2: React.FC<Props> = ({ perfilEfetivo, perfil, ehAdmin,
     setErro(null);
     setSalvando(true);
     try {
-      const r = await designarUsuario({
+      const r = await designarUsuarioV2({
         usuarioId: selecionado.usuario_id,
         perfil: perfilNovo,
         inicio: ehPerfilBase ? null : inicio,

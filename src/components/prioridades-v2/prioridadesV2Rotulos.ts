@@ -80,6 +80,15 @@ export function faixaVaras(upj: Pick<Upj, 'codigo'> | null | undefined): string 
   return `${Number(m[1])}.ª a ${Number(m[2])}.ª Varas Cíveis`;
 }
 
+/** Varas de uma UPJ (código FCC-11-15 → [11, 12, 13, 14, 15]); vazia se não for do Foro Central. */
+export function varasDaUpjV2(upj: Pick<Upj, 'codigo'> | null | undefined): number[] {
+  const m = upj?.codigo.match(/^FCC-(\d{2})-(\d{2})$/);
+  if (!m) return [];
+  const inicio = Number(m[1]);
+  const fim = Number(m[2]);
+  return Array.from({ length: fim - inicio + 1 }, (_, i) => inicio + i);
+}
+
 export function varaOrdinal(vara: number | null | undefined): string | null {
   return vara ? `${vara}.ª` : null;
 }

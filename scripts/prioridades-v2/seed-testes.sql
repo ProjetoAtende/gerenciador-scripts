@@ -42,12 +42,14 @@ BEGIN
     'processo', p_processo, 'vara', p_vara, 'upj_id', pg_temp.upj(p_upj), 'plataforma', p_plataforma,
     'categoria', p_categoria, 'tipo_prioridade', p_tipo, 'tipo_solicitante', p_solicitante,
     'evento_folha', p_evento, 'descricao_prioridade', p_descricao,
-    -- "Descrição Resumida" ainda não existe no app atual (campo novo da v2): por ora
-    -- o resumo só preenche a descrição exigida quando o tipo é "Outros".
+    -- O resumo também preenche a descrição exigida quando o tipo é "Outros".
     'descricao_tipo_outros', CASE WHEN p_tipo = 'outros' THEN p_resumo END,
     'descricao_solicitante', CASE WHEN p_solicitante = 'outros' THEN 'Parente da parte, sem procuração' END,
     'observacao_adicional_atende', p_obs,
     'validacao_djen_status', 'nao_consultado')), 'criar ' || p_processo);
+  -- Etapa 2 (item G): "Descrição Resumida" (coluna nova; a função da v1 não a recebe).
+  UPDATE public.prioridades_anotacoes SET descricao_resumida = left(p_resumo, 100)
+  WHERE id = (r->>'anotacao_id')::bigint;
   RETURN (r->>'anotacao_id')::bigint;
 END $$;
 

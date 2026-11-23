@@ -1419,3 +1419,96 @@
   outline: 3px solid rgba(161, 17, 22, 0.45);
   outline-offset: 1px;
 }
+
+/* ── Etapa 2 ─────────────────────────────────────────────────────── */
+
+/* A: avisos da localização (redistribuição, divergências, sigilo) */
+.pu2-avisos-localizacao {
+  list-style: none;
+  margin: -8px 0 18px;
+  padding: 0;
+  font-size: 14px;
+  color: var(--pu2-cinza);
+}
+.pu2-avisos-localizacao li {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin-top: 4px;
+}
+.pu2-avisos-localizacao li svg {
+  flex: none;
+  margin-top: 3px;
+}
+.pu2-avisos-localizacao li.atencao {
+  color: var(--pu2-vermelho-escuro);
+  font-weight: 600;
+}
+
+/* E: anotações anteriores com a resposta da UPJ */
+.pu2-anteriores {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+.pu2-anterior {
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 8px;
+}
+.pu2-anterior-cabeca {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.pu2-anterior-desc {
+  margin-top: 4px;
+  color: var(--pu2-cinza);
+  font-size: 14.5px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.pu2-resposta-anterior {
+  margin-top: 8px;
+  border-left: 4px solid var(--pu2-sucesso);
+  background: rgba(16, 161, 55, 0.08);
+  border-radius: 0 8px 8px 0;
+  padding: 6px 10px;
+}
+.pu2-resposta-anterior.vazia {
+  border-left-color: var(--pu2-cinza-borda);
+  background: var(--pu2-fundo);
+  color: var(--pu2-cinza);
+  font-style: italic;
+}
+.pu2-resposta-anterior-rotulo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 800;
+  font-size: 14px;
+}
+.pu2-resposta-anterior p {
+  margin: 2px 0 0;
+}
+
+/* G: Descrição Resumida no cartão da lista */
+.pu2-cartao-resumida {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--pu2-texto);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* N: campos editáveis da conferência em duas colunas, quando cabem */
+.pu2-conf-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0 18px;
+}

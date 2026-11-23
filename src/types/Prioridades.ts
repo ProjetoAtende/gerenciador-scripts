@@ -61,6 +61,7 @@ export type TipoPrioridade =
   | 'prioridade-doenca'
   | 'prioridade-pcd'
   | 'prioridade-idoso'
+  | 'prioridade-perito'
   | 'outros';
 
 /**
@@ -247,6 +248,10 @@ export interface AnotacaoPrioridade {
   justificativa_devolucao_upj: string | null;
   justificativa_rejeicao_upj: string | null;
   observacao_adicional_upj: string | null;
+  /** v2 (etapa 2): colunas novas, ausentes nas anotações antigas. */
+  descricao_resumida?: string | null;
+  vara_fonte?: 'datajud' | 'djen' | 'atendente' | 'gestor' | null;
+  competencia_excecao?: string | null;
   arquivamento_automatico: boolean;
   /** PD-07. Engatilhada quando a UPJ retorna a anotação. */
   rejeicao_automatica: boolean;

@@ -1,6 +1,7 @@
 # Prioridades e Urgências — versão nova (v2): roteiro de trabalho
 
-Documento vivo para quem continuar o trabalho (pessoa ou sessão de IA). Atualizado em 22/11/2026.
+Documento vivo para quem continuar o trabalho (pessoa ou sessão de IA). Atualizado em 22/11/2026
+(etapa 2 implementada).
 
 ## Objetivo
 
@@ -102,21 +103,44 @@ novo**. O `PrioridadesContent` da v1 só é usado como reserva, para uma tela de
 Concluída, faltando só os testes:
 1. O Celso testa os perfis Atendente e UPJ (e Configurações/Log com o Gestor).
 
-### Etapa 2 (a discutir com o Celso; ele tem uma lista própria)
+### Etapa 2 — implementada e testada no banco de TESTES (aguarda o teste do Celso e o commit)
 
-- Localização de processos com Datajud + DJEN (resolvedor do protótipo, numa Edge Function,
-  com a chave do Datajud como secret). Caso real: `4189868-12.2026.8.26.0100` tem final
-  `.0100`, mas hoje está na UPJ do Foro Regional de Santo Amaro, e a v1 aceita.
-- Campo "Descrição Resumida" (coluna nova).
-- `prioridades_conferir` grava `conferido_por_id` mas não `conferido_por_nome`.
-- Designações: na v1 (e na v2, por paridade), o Coordenador que não é admin NÃO vê o
-  formulário de inclusão. Isso parece contrariar o RF-UPJ-05 ("Coordenador designa Analistas").
-  Hoje, só o admin consegue designar Analistas pela tela. Confirmar.
-- Observação da UPJ: a maquete a chama de "Informação a ser repassada ao Solicitante";
-  na v1 era "uso interno da UPJ". Confirmar quem pode ver.
+Lista do Celso (22/11/2026), por ordem de importância, com as decisões tomadas:
+
+| Item | O que mudou | Decisão |
+|---|---|---|
+| **A** Localização | Edge Function `prioridades-localizar` (Datajud + DJEN, chave do Datajud no secret `DATAJUD_API_KEY`). DJEN na hora; Datajud em segundo plano só quando a Vara é desconhecida; a Vara e o Sistema se completam sozinhos. Enviada antes do Datajud, o servidor completa depois (`modo: 'completar'` + `prioridades_v2_completar_vara`, só Vara vazia, só quem criou). Fim do "fallback" para a 1.ª Vara da faixa. | Vara desconhecida: **opcional** para o Atendente (5 Varas da UPJ + "Não sei"); a UPJ vê "Vara a confirmar". |
+| **A/C** Competência | Decidida pelo órgão onde o processo está **hoje** (publicação de 1.º grau mais recente da DJEN; sem ela, o Datajud). O final 0100 só decide quando nenhuma fonte sabe. `4189868-…0100` (Santo Amaro) → fora; `4000525-…0373` e `4023574-…0011` (UPJ IX) → dentro. | Aprovado. |
+| **C** Exceção | Fora da competência, só o **Gestor** envia, com **justificativa obrigatória** (coluna `competencia_excecao` + histórico `excecao_competencia`) e UPJ escolhida à mão. | Justificativa obrigatória. |
+| **D** Urgentíssima | Gestor marca ao criar. | — |
+| **E** Anteriores | Aviso dos 120 dias mostra, por anotação, a resposta da UPJ (ou o motivo da reprovação do Gestor) em destaque, com botão **Copiar** (`prioridades_v2_anteriores`). | Inclui o motivo do Gestor (não vai para a UPJ). |
+| **F** Regras especiais | Por UPJ + **Categoria** (uma ou "Todas") + Tipo, na tabela nova `prioridades_regras_especiais_v2` (as atuais copiadas como "Todas"). | A v1 continua com a tabela antiga até ser aposentada (as duas não se sincronizam). |
+| **G** Descrição Resumida | Coluna `descricao_resumida` (até 100), **opcional**; aparece abaixo do tipo nos cartões e no detalhe; Gestor/Conferente preenchem na conferência. | Não obrigatória (o Atendente foca na detalhada). |
+| **H** Conferido por | Gatilho grava `conferido_por_nome` (vale para v1 e v2) + nomes antigos preenchidos. | — |
+| **I** Observação da UPJ | Visível a todos, como "Informação a ser repassada ao Solicitante". | — |
+| **J/K/L** Tipos | "Possível erro material em peça processual"; "Consta "URGENTE" OU "IMEDIATO" na determinação" (avisos acompanham); novo "Tramitação prioritária – Perito" (sem aviso por ora). Valem também para a v1. | — |
+| **M** Tela inicial | UPJ: Urgentíssimas, Reiteradas, Novas (ordem do painel). | — |
+| **N** Conferência | Gestor/Conferente alteram todos os campos do Atendente (Solicitante, Tipo, Categoria, Sistema, Vara, Evento, Descrições, Observação), menos o número do processo; alterações em texto legível no histórico (`prioridades_v2_conferir`). | Número do processo errado: devolver ou reprovar. |
+| **B** Designações | Coordenador vê o formulário e designa Analistas; `prioridades_v2_designar` trava a UPJ dele no servidor (a função da v1 aceitava qualquer UPJ vinda do navegador). | Aprovado. |
+
+Arquivos novos: `supabase/functions/_shared/localizador.ts` (regras, testadas no Vitest),
+`_shared/fontes.ts` (consultas), `functions/prioridades-localizar/`,
+`src/services/prioridadesV2Service.ts`, migration `20261123100000_prioridades_v2_etapa2.sql`,
+`scripts/prioridades-v2/teste-etapa2.sql` (13 grupos de teste no banco, com rollback) e
+`scripts/prioridades-v2/localizar-ao-vivo.mjs` (localizador contra DJEN/Datajud reais).
+
+Observações da etapa 2:
+- **Datajud instável**: em 22/11/2026 respondeu HTTP 504 após 60 s em todos os testes (o
+  problema é do servidor do CNJ; a chave funciona). O app segue só com a DJEN e deixa a
+  Vara "a confirmar". Desde ago/2026 o Datajud também não tem os processos novos do Eproc do
+  Foro Central (lacuna de remessa do TJSP).
+- O `djen-proxy` pedia só 5 publicações; a função nova pede 100 (a mais recente podia ficar de fora).
+- Etapa 3, produção: além das migrations, **publicar a Edge Function** `prioridades-localizar`
+  e criar o secret `DATAJUD_API_KEY` (e `ALLOWED_ORIGINS`, como no `djen-proxy`).
 
 ### Etapa 3
 
-Backup novo da produção → aplicar as migrations da branch na produção → push da branch →
+Backup novo da produção → aplicar as migrations da branch na produção → publicar a Edge
+Function `prioridades-localizar` com os secrets → push da branch →
 Pull Request → aprovação → merge (publica) → dar a permissão do card v2 aos testadores
 pelo Boss Only → período de teste → trocar os cards → aposentar a v1.

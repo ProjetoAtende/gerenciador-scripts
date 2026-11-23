@@ -16,11 +16,14 @@ import {
   aceitarRejeicaoRetorno,
   aceitarReprovacao,
   analisarAnotacao,
-  conferirAnotacao,
   corrigirRetornada,
   listarHistorico,
+  listarTiposPrioridade,
+  listarTiposSolicitante,
   responderDevolucao,
+  type CatalogoItem,
 } from '../../services/prioridadesService';
+import { conferirAnotacaoV2 } from '../../services/prioridadesV2Service';
 import { formatarProcessoCnj } from '../../services/prioridadesDjenService';
 import { CATEGORIAS_ANOTACAO, rotuloCategoria } from '../prioridades/prioridadesCategorias';
 import { ehUrgentissima } from '../prioridades/prioridadesListas';
@@ -28,7 +31,7 @@ import { formatarDataHora, formatarTerminoPrazo, prazoRestante } from '../priori
 import { EtiquetaReiterada, EtiquetaStatus, EtiquetaUrgentissima } from './EtiquetasV2';
 import { Icone } from './Icone';
 import type { NomeIcone } from './icones';
-import { ICONE_CATEGORIA, ehPerfilUpj, faixaVaras, upjCurta, varaOrdinal } from './prioridadesV2Rotulos';
+import { ICONE_CATEGORIA, ehPerfilUpj, faixaVaras, upjCurta, varaOrdinal, varasDaUpjV2 } from './prioridadesV2Rotulos';
 import { LogoPlataforma } from './LogoPlataforma';
 
 export type ModoDetalhe = 'conferencia' | 'analise' | 'resposta' | 'correcao' | 'consulta';
@@ -234,6 +237,11 @@ const PainelUpj: React.FC<{ a: AnotacaoPrioridade; onConcluir: Props['onConcluir
   );
 };
 
+/**
+ * Conferência (Gestor/Conferente). Item N: todos os campos preenchidos pelo Atendente
+ * podem ser corrigidos aqui, menos o número do processo (mudá-lo exigiria refazer a
+ * localização: nesse caso, devolver ou reprovar). Cada alteração vai para o histórico.
+ */
 const PainelConferencia: React.FC<{
   a: AnotacaoPrioridade;
   upjs: Upj[];
@@ -248,11 +256,39 @@ const PainelConferencia: React.FC<{
   const [textoCorrecao, setTextoCorrecao] = useState('');
   const [upjDestino, setUpjDestino] = useState(a.upj_id ?? '');
   const [categoria, setCategoria] = useState<CategoriaAnotacao | ''>(a.categoria ?? '');
+  const [tipoSolicitante, setTipoSolicitante] = useState<string>(a.tipo_solicitante);
+  const [descSolicitante, setDescSolicitante] = useState(a.descricao_solicitante ?? '');
+  const [nomeSolicitante, setNomeSolicitante] = useState(a.nome_solicitante ?? '');
+  const [tipoPrioridade, setTipoPrioridade] = useState<string>(a.tipo_prioridade);
+  const [descOutros, setDescOutros] = useState(a.descricao_tipo_outros ?? '');
+  const [plataforma, setPlataforma] = useState<string>(a.plataforma ?? '');
+  const [vara, setVara] = useState<string>(a.vara ? String(a.vara) : '');
   const [eventoFolha, setEventoFolha] = useState(a.evento_folha);
   const [descricao, setDescricao] = useState(a.descricao_prioridade);
+  const [resumida, setResumida] = useState(a.descricao_resumida ?? '');
+  const [obsAtende, setObsAtende] = useState(a.observacao_adicional_atende ?? '');
   const [obsGestor, setObsGestor] = useState('');
+  const [tiposSolicitante, setTiposSolicitante] = useState<CatalogoItem[]>([]);
+  const [tiposPrioridade, setTiposPrioridade] = useState<CatalogoItem[]>([]);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    let ativo = true;
+    void Promise.all([listarTiposSolicitante(), listarTiposPrioridade()]).then(([ts, tp]) => {
+      if (!ativo) return;
+      setTiposSolicitante(ts);
+      setTiposPrioridade(tp);
+    });
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  const upjEscolhida = upjDestino ? upjs.find((u) => u.id === upjDestino) ?? null : null;
+  const varasPossiveis = varasDaUpjV2(upjEscolhida);
+  // Vara fora da UPJ escolhida (ex.: o Gestor trocou a UPJ) não é oferecida.
+  const varaValida = !vara || varasPossiveis.length === 0 || varasPossiveis.includes(Number(vara));
 
   const enviar = async () => {
     setErro(null);
@@ -262,6 +298,18 @@ const PainelConferencia: React.FC<{
     }
     if (!categoria) {
       setErro('Escolha a Categoria da Anotação.');
+      return;
+    }
+    if (tipoSolicitante === 'outros' && !descSolicitante.trim()) {
+      setErro('Descreva quem é o Solicitante (tipo "Outros").');
+      return;
+    }
+    if (tipoPrioridade === 'outros' && !descOutros.trim()) {
+      setErro('Descreva o Tipo da Prioridade ou Urgência (tipo "Outros").');
+      return;
+    }
+    if (!eventoFolha.trim() || !descricao.trim()) {
+      setErro('Evento(s) ou Folha(s) e Descrição Detalhada não podem ficar em branco.');
       return;
     }
     if (decisao !== 'aprovar' && !justificativa.trim()) {
@@ -274,7 +322,7 @@ const PainelConferencia: React.FC<{
     }
     setEnviando(true);
     try {
-      const r = await conferirAnotacao({
+      const r = await conferirAnotacaoV2({
         anotacaoId: a.id,
         decisao,
         justificativa,
@@ -282,9 +330,18 @@ const PainelConferencia: React.FC<{
         correcaoAutomatica,
         textoCorrecao,
         alteracoes: {
-          descricao_prioridade: descricao,
-          evento_folha: eventoFolha,
           categoria: categoria || undefined,
+          tipo_solicitante: tipoSolicitante,
+          descricao_solicitante: tipoSolicitante === 'outros' ? descSolicitante : '',
+          nome_solicitante: nomeSolicitante,
+          tipo_prioridade: tipoPrioridade,
+          descricao_tipo_outros: tipoPrioridade === 'outros' ? descOutros : '',
+          plataforma,
+          vara: varaValida ? vara : '',
+          evento_folha: eventoFolha,
+          descricao_prioridade: descricao,
+          descricao_resumida: resumida,
+          observacao_adicional_atende: obsAtende,
           observacao_adicional_gestor: obsGestor || undefined,
           upj_id: upjDestino || undefined,
         },
@@ -309,6 +366,9 @@ const PainelConferencia: React.FC<{
     <section className="pu2-secao">
       <h3 className="pu2-secao-rotulo">Conferir antes de enviar</h3>
       <div className="pu2-bloco pu2-bloco-formulario">
+        <p className="pu2-ajuda" style={{ marginTop: 0 }}>
+          Corrija o que for preciso. Só o número do processo não muda aqui: se ele estiver errado, devolva ou reprove a anotação.
+        </p>
         <fieldset className="pu2-campo" style={{ border: 0, padding: 0, margin: '0 0 18px' }}>
           <legend className="pu2-rotulo">
             Categoria da Anotação <span className="obrigatorio">*</span>
@@ -327,34 +387,131 @@ const PainelConferencia: React.FC<{
             })}
           </div>
         </fieldset>
-        <div className="pu2-campo">
-          <label htmlFor="pu2-conf-upj" className="pu2-rotulo">
-            UPJ de destino <span className="obrigatorio">*</span>
-          </label>
-          <select id="pu2-conf-upj" className="pu2-selecao" value={upjDestino} onChange={(e) => setUpjDestino(e.target.value)}>
-            <option value="">Selecione…</option>
-            {upjs.map((u) => (
-              <option key={u.id} value={u.id}>
-                {upjCurta(u)} {faixaVaras(u) ? `(${faixaVaras(u)})` : ''}
-              </option>
-            ))}
-          </select>
-          {a.nome_orgao_djen && <p className="pu2-ajuda">Órgão publicado no Diário Eletrônico: {a.nome_orgao_djen}</p>}
+
+        <div className="pu2-conf-grade">
+          <div className="pu2-campo">
+            <label htmlFor="pu2-conf-sol" className="pu2-rotulo">
+              Solicitante <span className="obrigatorio">*</span>
+            </label>
+            <select id="pu2-conf-sol" className="pu2-selecao" value={tipoSolicitante} onChange={(e) => setTipoSolicitante(e.target.value)}>
+              {tiposSolicitante.length === 0 && <option value={tipoSolicitante}>{tipoSolicitante}</option>}
+              {tiposSolicitante.map((t) => (
+                <option key={t.codigo} value={t.codigo}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="pu2-campo">
+            <label htmlFor="pu2-conf-tipo" className="pu2-rotulo">
+              Tipo da Prioridade ou Urgência <span className="obrigatorio">*</span>
+            </label>
+            <select id="pu2-conf-tipo" className="pu2-selecao" value={tipoPrioridade} onChange={(e) => setTipoPrioridade(e.target.value)}>
+              {tiposPrioridade.length === 0 && <option value={tipoPrioridade}>{tipoPrioridade}</option>}
+              {tiposPrioridade.map((t) => (
+                <option key={t.codigo} value={t.codigo}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
+
+        {tipoSolicitante === 'outros' && (
+          <div className="pu2-campo">
+            <label htmlFor="pu2-conf-sol-desc" className="pu2-rotulo">
+              Quem é o Solicitante? <span className="obrigatorio">*</span>
+            </label>
+            <input id="pu2-conf-sol-desc" className="pu2-entrada" value={descSolicitante} onChange={(e) => setDescSolicitante(e.target.value)} />
+          </div>
+        )}
+        <div className="pu2-campo">
+          <label htmlFor="pu2-conf-sol-nome" className="pu2-rotulo">
+            Nome do(s) Solicitante <span className="nota">(opcional)</span>
+          </label>
+          <input id="pu2-conf-sol-nome" className="pu2-entrada" value={nomeSolicitante} onChange={(e) => setNomeSolicitante(e.target.value)} />
+        </div>
+        {tipoPrioridade === 'outros' && (
+          <div className="pu2-campo">
+            <label htmlFor="pu2-conf-outros" className="pu2-rotulo">
+              Qual é o tipo? <span className="obrigatorio">*</span>
+            </label>
+            <input id="pu2-conf-outros" className="pu2-entrada" value={descOutros} onChange={(e) => setDescOutros(e.target.value)} />
+          </div>
+        )}
+
+        <div className="pu2-conf-grade">
+          <div className="pu2-campo">
+            <label htmlFor="pu2-conf-upj" className="pu2-rotulo">
+              UPJ de destino <span className="obrigatorio">*</span>
+            </label>
+            <select id="pu2-conf-upj" className="pu2-selecao" value={upjDestino} onChange={(e) => setUpjDestino(e.target.value)}>
+              <option value="">Selecione…</option>
+              {upjs.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {upjCurta(u)} {faixaVaras(u) ? `(${faixaVaras(u)})` : ''}
+                </option>
+              ))}
+            </select>
+            {a.nome_orgao_djen && <p className="pu2-ajuda">Órgão onde o processo está: {a.nome_orgao_djen}</p>}
+          </div>
+          <div className="pu2-campo">
+            <label htmlFor="pu2-conf-vara" className="pu2-rotulo">
+              Vara
+            </label>
+            <select id="pu2-conf-vara" className="pu2-selecao" value={varaValida ? vara : ''} onChange={(e) => setVara(e.target.value)}>
+              <option value="">A confirmar</option>
+              {(varasPossiveis.length > 0 ? varasPossiveis : Array.from({ length: 45 }, (_, i) => i + 1)).map((v) => (
+                <option key={v} value={String(v)}>
+                  {v}.ª Vara Cível
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="pu2-campo">
+            <label htmlFor="pu2-conf-sistema" className="pu2-rotulo">
+              Sistema
+            </label>
+            <select id="pu2-conf-sistema" className="pu2-selecao" value={plataforma} onChange={(e) => setPlataforma(e.target.value)}>
+              <option value="">Não informado</option>
+              <option value="eproc">Eproc</option>
+              <option value="saj">SAJ</option>
+            </select>
+          </div>
+        </div>
+
         <div className="pu2-campo">
           <label htmlFor="pu2-conf-evento" className="pu2-rotulo">
-            Evento(s) ou Folha(s)
+            Evento(s) ou Folha(s) <span className="obrigatorio">*</span>
           </label>
           <input id="pu2-conf-evento" className="pu2-entrada" value={eventoFolha} onChange={(e) => setEventoFolha(e.target.value)} />
         </div>
         <div className="pu2-campo">
           <label htmlFor="pu2-conf-descricao" className="pu2-rotulo">
-            Descrição Detalhada
+            Descrição Detalhada <span className="obrigatorio">*</span>
           </label>
           <textarea id="pu2-conf-descricao" className="pu2-area" rows={4} value={descricao} onChange={(e) => setDescricao(e.target.value)} />
-          {descricao !== a.descricao_prioridade && (
-            <p className="pu2-ajuda">O texto original fica guardado no histórico da anotação.</p>
-          )}
+          {descricao !== a.descricao_prioridade && <p className="pu2-ajuda">O texto original fica guardado no histórico da anotação.</p>}
+        </div>
+        <div className="pu2-campo">
+          <label htmlFor="pu2-conf-resumida" className="pu2-rotulo">
+            Descrição Resumida <span className="nota">(opcional, aparece nas listas)</span>
+          </label>
+          <input
+            id="pu2-conf-resumida"
+            className="pu2-entrada"
+            maxLength={100}
+            value={resumida}
+            onChange={(e) => setResumida(e.target.value)}
+            placeholder="Um título curto para a UPJ se preparar antes de ler os detalhes"
+          />
+          <p className="pu2-ajuda">{resumida.length}/100 caracteres</p>
+        </div>
+        <div className="pu2-campo">
+          <label htmlFor="pu2-conf-obs-atende" className="pu2-rotulo">
+            Observação Adicional <span className="nota">(Uso Interno Exclusivo do TJSP Atende)</span>
+          </label>
+          <textarea id="pu2-conf-obs-atende" className="pu2-area" rows={2} value={obsAtende} onChange={(e) => setObsAtende(e.target.value)} />
         </div>
         <div className="pu2-campo" style={{ marginBottom: 0 }}>
           <label htmlFor="pu2-conf-obs" className="pu2-rotulo">
@@ -719,7 +876,7 @@ export const DetalheAnotacaoV2: React.FC<Props> = ({
             </span>
           </Dado>
           <Dado rotulo="UPJ">{upj ? upjCurta(upj) : 'Não definida'}</Dado>
-          <Dado rotulo="Vara">{a.vara ? `${varaOrdinal(a.vara)} Vara Cível` : 'Não identificada'}</Dado>
+          <Dado rotulo="Vara">{a.vara ? `${varaOrdinal(a.vara)} Vara Cível` : 'A confirmar'}</Dado>
           <Dado rotulo="Plataforma">
             {a.plataforma ? (
               <LogoPlataforma className="pu2-logo-plataforma" plataforma={a.plataforma} />
@@ -734,8 +891,7 @@ export const DetalheAnotacaoV2: React.FC<Props> = ({
         <div className="pu2-grade quatro">
           <Dado rotulo="Anotado por">{a.criador_nome}</Dado>
           <Dado rotulo="Data da Anotação">{formatarDataHora(a.data_anotacao)}</Dado>
-          {/* O servidor grava conferido_por_id, mas não o nome (pendência da etapa 2):
-              quando quem conferiu é o próprio vinculado, o nome vem do vínculo. */}
+          {/* Desde a etapa 2 o banco grava o nome (item H); o vínculo cobre registros antigos. */}
           <Dado rotulo="Conferido por">
             {a.conferido_por_nome ??
               (a.conferido_por_id && a.conferido_por_id === a.conferente_vinculado_id ? a.conferente_vinculado_nome : null) ??
@@ -772,14 +928,24 @@ export const DetalheAnotacaoV2: React.FC<Props> = ({
       </Bloco>
 
       <Bloco titulo="Descrição">
+        {a.descricao_resumida && (
+          <Dado rotulo="Resumida" largo>
+            <strong>{a.descricao_resumida}</strong>
+          </Dado>
+        )}
         <Dado rotulo="Detalhada" largo>
           <span className="pu2-texto-longo">{a.descricao_prioridade}</span>
         </Dado>
       </Bloco>
 
       {/* Observação interna do TJSP Atende: nunca é mostrada à UPJ (RF-GER-02). */}
-      {!visaoUpj && (a.observacao_adicional_atende || a.observacao_adicional_gestor) && (
+      {!visaoUpj && (a.observacao_adicional_atende || a.observacao_adicional_gestor || a.competencia_excecao) && (
         <Bloco titulo="Observações internas do TJSP Atende" destaque="aviso">
+          {a.competencia_excecao && (
+            <Dado rotulo="Enviada pelo Gestor fora da competência reconhecida" largo>
+              <span className="pu2-texto-longo">{a.competencia_excecao}</span>
+            </Dado>
+          )}
           {a.observacao_adicional_atende && (
             <Dado rotulo="Do Atendente" largo>
               <span className="pu2-texto-longo">{a.observacao_adicional_atende}</span>
@@ -823,7 +989,8 @@ export const DetalheAnotacaoV2: React.FC<Props> = ({
               </Dado>
             )}
             {a.observacao_adicional_upj && (
-              <Dado rotulo="Observação da UPJ" largo>
+              /* I: visível a todos, para ser repassada nos próximos atendimentos. */
+              <Dado rotulo="Informação a ser repassada ao Solicitante" largo>
                 <span className="pu2-texto-longo">{a.observacao_adicional_upj}</span>
               </Dado>
             )}

@@ -161,3 +161,33 @@ Backup novo da produção → aplicar as migrations da branch na produção → 
 Function `prioridades-localizar` com os secrets → push da branch →
 Pull Request → aprovação → merge (publica) → dar a permissão do card v2 aos testadores
 pelo Boss Only → período de teste → trocar os cards → aposentar a v1.
+
+**Feito em 23/11/2026, de madrugada (com autorização do Celso):**
+- backup novo `backups-supabase/lhofkimrmzyjazfpqesd_2026-11-23_03h15` (igual ao de 22/11,
+  exceto sessões de login e 16 linhas do log de acessos);
+- migrations `20261122150000` e `20261123100000` aplicadas na produção. Conferido: 128
+  anotações intactas; as 116 conferidas ganharam o nome de quem conferiu; tipos na ordem nova;
+  9 funções `prioridades_v2_*`; 2 regras copiadas para a tabela v2; gatilho H ensaiado com
+  rollback;
+- Edge Function `prioridades-localizar` publicada na produção, com o secret `DATAJUD_API_KEY`.
+  `ALLOWED_ORIGINS` **não** foi criado, porque a produção não o tem e o `djen-proxy` da v1
+  depende disso (criá-lo restringiria também a v1). Fica para decidir depois;
+- CLI religado ao projeto de testes.
+
+Falta: push da branch, PR, merge (publica o site) e permissão do card aos testadores. A função
+de localização na produção só pode ser testada com login, depois do merge.
+
+O que muda para a v1 assim que as migrations entram (antes de qualquer merge): nomes novos dos
+tipos J e K, a opção "Tramitação prioritária – Perito" na lista de tipos (a v1 lê os tipos do
+banco e mostra o código nas telas de leitura, sem erro) e o "Conferido por" passa a ser gravado.
+Só a produção tem 2 migrations pendentes: `20261122150000` e `20261123100000` (a
+`20261019140000`, última da `main`, já estava no backup de 22/11).
+
+**Plano B, se a v1 der problema:**
+- Banco: `scripts/prioridades-v2/desfazer-etapa2-v1.sql` desfaz em segundos o que afeta a
+  v1 (gatilho H, textos J/K, tipo Perito), sem apagar dados. Para sozinho se alguma anotação
+  já usar o tipo Perito. Ensaiado nos testes em 23/11/2026 (resultado idêntico ao backup).
+- Site: reverter o commit de merge na `main` (botão "Revert" do PR no GitHub) republica o site
+  anterior.
+- Backup completo: último recurso. Restaurar volta o banco **inteiro** ao momento do backup e
+  perde tudo o que foi feito depois em todos os apps do Gerenciador.

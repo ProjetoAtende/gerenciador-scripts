@@ -11,6 +11,7 @@ import { VersionBadge } from '../components/VersionBadge';
 import { useSettings } from '../contexts/SettingsContext';
 import { HomeInstitutionalHeader } from '../components/HomeInstitutionalHeader';
 import { lerPrioridadesSessao } from '../components/prioridades/prioridadesSessao';
+import { lerPrioridadesV2Sessao } from '../components/prioridades-v2/prioridadesV2Sessao';
 // Barra de visualização simulada preservada em ../components/HomeVisualizacaoSimulada.tsx (desativada).
 
 const ScriptsModal = lazy(() => import('../components/ScriptsModal').then((m) => ({ default: m.ScriptsModal })));
@@ -28,6 +29,8 @@ const AtendeStackModal = lazy(() =>
   import('../components/atende-stack/AtendeStackModal').then((m) => ({ default: m.AtendeStackModal })),
 );
 const PrioridadesModal = lazy(() => import('../components/prioridades/PrioridadesModal'));
+// Versão nova (em teste). A v1 acima continua disponível como backup.
+const PrioridadesV2Modal = lazy(() => import('../components/prioridades-v2/PrioridadesV2Modal'));
 
 const containerVariants = {
   hidden: {},
@@ -53,6 +56,7 @@ const HOME_MODALS = {
   bossOnly: false,
   atendeStack: false,
   prioridades: false,
+  prioridadesV2: false,
 } as const;
 
 type HomeModalKey = keyof typeof HOME_MODALS;
@@ -108,6 +112,15 @@ const HOME_CARD_CONFIGS: HomeCardConfig[] = [
     permissionCode: 'home.card.prioridades_urgencias',
   },
   {
+    // Card separado da v1 de propósito: só aparece para quem recebeu a
+    // permissão (testadores) e permite voltar à versão atual a qualquer momento.
+    titulo: 'Prioridades e Urgências (nova versão)',
+    descricao: '⚖️ Versão nova em teste, com o visual redesenhado',
+    cor: 'bg-gradient-to-br from-rose-100 via-red-100 to-orange-100 dark:from-rose-900/30 dark:via-red-900/30 dark:to-orange-900/30',
+    modal: 'prioridadesV2',
+    permissionCode: 'home.card.prioridades_urgencias_v2',
+  },
+  {
     titulo: 'Outros Serviços',
     descricao: '📋 Registro de serviços operacionais',
     cor: 'bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-amber-900/30 dark:via-orange-900/30 dark:to-yellow-900/30',
@@ -157,6 +170,10 @@ export default function Home() {
     const sessao = lerPrioridadesSessao();
     if (sessao?.reabrir) {
       setModals((prev) => ({ ...prev, prioridades: true }));
+    }
+    const sessaoV2 = lerPrioridadesV2Sessao();
+    if (sessaoV2?.reabrir) {
+      setModals((prev) => ({ ...prev, prioridadesV2: true }));
     }
   }, []);
 
@@ -385,6 +402,12 @@ export default function Home() {
       {modals.prioridades && (
         <Suspense fallback={null}>
           <PrioridadesModal isOpen onClose={() => toggleModal('prioridades')} />
+        </Suspense>
+      )}
+
+      {modals.prioridadesV2 && (
+        <Suspense fallback={null}>
+          <PrioridadesV2Modal isOpen onClose={() => toggleModal('prioridadesV2')} />
         </Suspense>
       )}
 

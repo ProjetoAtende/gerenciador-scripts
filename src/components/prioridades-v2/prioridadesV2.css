@@ -514,10 +514,13 @@
   margin-bottom: 20px;
   font-size: 15.5px;
   line-height: 1.45;
+  /* Conteúdo centralizado (pedido de 24/11/2026). Exceções logo abaixo. */
+  text-align: center;
 }
 .pu2-caixa-titulo {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   font-weight: 800;
   font-size: 17px;
@@ -547,6 +550,18 @@
 .pu2-caixa ul {
   margin: 4px 0 0;
   padding-left: 22px;
+}
+/* Ficam alinhados à esquerda: listas, campos de texto, mensagens com botão de fechar
+   e a caixa de prazo (texto à esquerda, relógio à direita). */
+.pu2-caixa ul,
+.pu2-caixa .pu2-campo,
+.pu2-caixa.pu2-retorno,
+.pu2-caixa.pu2-prazo {
+  text-align: left;
+}
+.pu2-caixa.pu2-retorno .pu2-caixa-titulo,
+.pu2-caixa.pu2-prazo .pu2-caixa-titulo {
+  justify-content: flex-start;
 }
 .pu2-processo-local {
   display: flex;
@@ -610,6 +625,24 @@
   align-items: center;
   text-align: center;
   padding-top: 8px;
+}
+/* A área de conteúdo ocupa a altura toda na tela inicial; o bloco central (logotipo,
+   saudação, botão e resumo) fica no meio do espaço abaixo da marca. */
+.pu2-principal-conteudo-inicial {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.pu2-principal-conteudo-inicial .pu2-inicial {
+  flex: 1;
+}
+.pu2-inicial-centro {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 .pu2-marca {
   line-height: 1.05;
@@ -1021,6 +1054,10 @@
   font-size: 19px;
 }
 .pu2-marcacao-urgente {
+  display: flex;
+  width: fit-content;
+  /* Centralizada, com o mesmo espaço acima e abaixo (o de baixo afasta dos botões). */
+  margin: 20px auto;
   background: rgba(233, 0, 0, 0.08);
   border: 2px solid rgba(233, 0, 0, 0.35);
   border-radius: 10px;

@@ -190,6 +190,9 @@ const PrioridadesV2Modal: React.FC<Props> = ({ isOpen, onClose }) => {
     onClose();
   };
 
+  // A tela inicial ocupa a altura toda, para o bloco central ficar no meio da tela.
+  const telaInicialAberta = !estado.carregando && !creditosAbertos && estado.tela.tipo === 'inicial';
+
   const conteudo = (() => {
     if (estado.carregando) return <p className="pu2-carregando">Carregando…</p>;
 
@@ -354,7 +357,7 @@ const PrioridadesV2Modal: React.FC<Props> = ({ isOpen, onClose }) => {
       <header className="pu2-topo">
         <div className="pu2-topo-titulo">
           <img src={logo} alt="" />
-          <span>PRIORIDADES e URGÊNCIAS | TJSP Atende</span>
+          <span>PRIORIDADES e URGÊNCIAS | TJSP ATENDE</span>
         </div>
         <div className="pu2-topo-acoes">
           <button
@@ -391,7 +394,7 @@ const PrioridadesV2Modal: React.FC<Props> = ({ isOpen, onClose }) => {
           creditosAtivo={creditosAbertos}
         />
         <main className="pu2-principal" style={{ backgroundImage: `url(${fundo})` }}>
-          <div className="pu2-principal-conteudo">{conteudo}</div>
+          <div className={`pu2-principal-conteudo${telaInicialAberta ? ' pu2-principal-conteudo-inicial' : ''}`}>{conteudo}</div>
         </main>      </div>
     </div>
   );

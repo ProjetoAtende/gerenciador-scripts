@@ -65,41 +65,43 @@ export const TelaInicialV2: React.FC<Props> = ({ primeiroNome, perfilEfetivo, co
         <div className="pu2-marca-inf">PRIORIDADES e URGÊNCIAS</div>
       </div>
 
-      <img className="pu2-inicial-logo" src={logo} alt="" />
-      <h2 className="pu2-saudacao">Olá, {primeiroNome}!</h2>
+      <div className="pu2-inicial-centro">
+        <img className="pu2-inicial-logo" src={logo} alt="" />
+        <h2 className="pu2-saudacao">Olá, {primeiroNome}!</h2>
 
-      {podeCriar ? (
-        <button type="button" className="pu2-botao pu2-botao-primario pu2-botao-gigante" onClick={() => irPara({ tipo: 'nova' })}>
-          <Icone nome="nova" tamanho="1.1em" />
-          Nova Anotação
-        </button>
-      ) : (
-        ehPerfilUpj(perfilEfetivo) && (
-          <button
-            type="button"
-            className="pu2-botao pu2-botao-primario pu2-botao-gigante"
-            onClick={() => irPara({ tipo: 'lista', grupo: 'novas' })}
-          >
-            <Icone nome="novas" tamanho="1.1em" />
-            Ver Anotações Novas
+        {podeCriar ? (
+          <button type="button" className="pu2-botao pu2-botao-primario pu2-botao-gigante" onClick={() => irPara({ tipo: 'nova' })}>
+            <Icone nome="nova" tamanho="1.1em" />
+            Nova Anotação
           </button>
-        )
-      )}
-
-      <div className="pu2-resumo" aria-live="polite">
-        {pendencias.length === 0 ? (
-          <p className="pu2-resumo-ok">Tudo em dia: nenhuma anotação esperando por você.</p>
         ) : (
-          pendencias.map((p) => (
-            <p key={p.grupo} style={{ margin: 0 }}>
-              Você tem{' '}
-              <button type="button" onClick={() => irPara({ tipo: 'lista', grupo: p.grupo })}>
-                {p.destaque}
-              </button>{' '}
-              {p.complemento}
-            </p>
-          ))
+          ehPerfilUpj(perfilEfetivo) && (
+            <button
+              type="button"
+              className="pu2-botao pu2-botao-primario pu2-botao-gigante"
+              onClick={() => irPara({ tipo: 'lista', grupo: 'novas' })}
+            >
+              <Icone nome="novas" tamanho="1.1em" />
+              Ver Anotações Novas
+            </button>
+          )
         )}
+
+        <div className="pu2-resumo" aria-live="polite">
+          {pendencias.length === 0 ? (
+            <p className="pu2-resumo-ok">Tudo em dia: nenhuma anotação esperando por você.</p>
+          ) : (
+            pendencias.map((p) => (
+              <p key={p.grupo} style={{ margin: 0 }}>
+                Você tem{' '}
+                <button type="button" onClick={() => irPara({ tipo: 'lista', grupo: p.grupo })}>
+                  {p.destaque}
+                </button>{' '}
+                {p.complemento}
+              </p>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

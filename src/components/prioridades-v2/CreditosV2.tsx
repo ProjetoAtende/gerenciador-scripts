@@ -18,6 +18,7 @@ const TESTADO_E_APRIMORADO_POR = [
   'Paula Cristina Ferraz Toledo Novato',
   'Allan José Silva Bertucci',
   'Monica Coimbra de Conti',
+  'Vitor Iwamizu',
 ].sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
 const AGRADECIMENTO_ESPECIAL = ['Robson Alves Bezerra'];

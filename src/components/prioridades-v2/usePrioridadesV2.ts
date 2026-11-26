@@ -56,8 +56,13 @@ export function usePrioridadesV2(isOpen: boolean): UsePrioridadesV2 {
     setLinhasPainel(await listarLinhasPainel());
   }, []);
 
+  // Depende do ID, não do objeto `user`: o Supabase entrega um objeto novo a cada vez
+  // que a aba volta a ficar visível (troca de aba ou de programa). Depender do objeto
+  // recarregava a tela inteira e apagava o que estava sendo preenchido na Nova Anotação.
+  const usuarioId = user?.id ?? null;
+
   useEffect(() => {
-    if (!isOpen || !user) return;
+    if (!isOpen || !usuarioId) return;
     let cancelado = false;
 
     (async () => {
@@ -66,7 +71,7 @@ export function usePrioridadesV2(isOpen: boolean): UsePrioridadesV2 {
         const [resultadoPerfil, listaUpjs, cadastro] = await Promise.all([
           obterMeuPerfil(),
           listarUpjs(),
-          supabase.from('users').select('nome').eq('id', user.id).maybeSingle(),
+          supabase.from('users').select('nome').eq('id', usuarioId).maybeSingle(),
         ]);
         if (cancelado) return;
 
@@ -90,7 +95,7 @@ export function usePrioridadesV2(isOpen: boolean): UsePrioridadesV2 {
     return () => {
       cancelado = true;
     };
-  }, [isOpen, user, atualizar]);
+  }, [isOpen, usuarioId, atualizar]);
 
   const contadores = useMemo(() => {
     const ctx = {

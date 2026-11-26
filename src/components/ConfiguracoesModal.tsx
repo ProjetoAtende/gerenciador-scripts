@@ -4,6 +4,8 @@ import { Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEffectiveAuth } from '../hooks/useEffectiveAuth';
 import { useSettings } from '../contexts/SettingsContext';
+import { useAuth } from '../contexts/AuthContext';
+import { TrocarSenhaSecao } from './TrocarSenhaSecao';
 import {
   DEFAULT_NOTIFICATION_PREFERENCES,
   fetchEquipesNotificacaoOptions,
@@ -32,6 +34,8 @@ function createNotificationPreferenceState(): Record<string, NotificationPrefere
 
 export function ConfiguracoesModal({ isOpen, onClose }: ConfiguracoesModalProps) {
   const { equipeId } = useEffectiveAuth();
+  // Usuário real (não o simulado): a senha trocada é sempre a de quem está logado.
+  const { user } = useAuth();
   const { darkMode, openCardsInNewTab, toggleDarkMode, toggleOpenCardsInNewTab } = useSettings();
   const [savingDark, setSavingDark] = useState(false);
   const [savingNewTab, setSavingNewTab] = useState(false);
@@ -241,6 +245,8 @@ export function ConfiguracoesModal({ isOpen, onClose }: ConfiguracoesModalProps)
               />
             </button>
           </div>
+
+          <TrocarSenhaSecao email={user?.email} />
 
           <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 space-y-4">
             <div>

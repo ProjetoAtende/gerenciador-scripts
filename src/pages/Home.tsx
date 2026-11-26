@@ -12,6 +12,7 @@ import { useSettings } from '../contexts/SettingsContext';
 import { HomeInstitutionalHeader } from '../components/HomeInstitutionalHeader';
 import { lerPrioridadesSessao } from '../components/prioridades/prioridadesSessao';
 import { lerPrioridadesV2Sessao } from '../components/prioridades-v2/prioridadesV2Sessao';
+import logoPrioridadesV2 from '../components/prioridades-v2/assets/logo-prioridades.png';
 // Barra de visualização simulada preservada em ../components/HomeVisualizacaoSimulada.tsx (desativada).
 
 const ScriptsModal = lazy(() => import('../components/ScriptsModal').then((m) => ({ default: m.ScriptsModal })));
@@ -67,6 +68,8 @@ type HomeCardConfig = {
   cor: string;
   modal: HomeModalKey;
   permissionCode?: string;
+  /** Imagem no lugar do emoji (o primeiro "pedaço" da descrição deixa de ser o ícone). */
+  imagem?: string;
 };
 
 const HOME_CARD_CONFIGS: HomeCardConfig[] = [
@@ -103,22 +106,24 @@ const HOME_CARD_CONFIGS: HomeCardConfig[] = [
     descricao: '🗨 Perguntas e respostas da operação',
     cor: 'bg-gradient-to-br from-indigo-100 via-violet-100 to-purple-100 dark:from-indigo-900/30 dark:via-violet-900/30 dark:to-purple-900/30',
     modal: 'atendeStack',
+    permissionCode: 'home.card.atende_stack',
   },
   {
+    // Versão atual (v2), com o visual redesenhado.
     titulo: 'Prioridades e Urgências',
-    descricao: '⚖️ Anotações de prioridade e urgência entre o TJSP Atende e as UPJs',
-    cor: 'bg-gradient-to-br from-rose-100 via-red-100 to-orange-100 dark:from-rose-900/30 dark:via-red-900/30 dark:to-orange-900/30',
-    modal: 'prioridades',
-    permissionCode: 'home.card.prioridades_urgencias',
-  },
-  {
-    // Card separado da v1 de propósito: só aparece para quem recebeu a
-    // permissão (testadores) e permite voltar à versão atual a qualquer momento.
-    titulo: 'Prioridades e Urgências (nova versão)',
-    descricao: '⚖️ Versão nova em teste, com o visual redesenhado',
+    descricao: 'Anotações de prioridade e urgência entre o TJSP Atende e as UPJs',
     cor: 'bg-gradient-to-br from-rose-100 via-red-100 to-orange-100 dark:from-rose-900/30 dark:via-red-900/30 dark:to-orange-900/30',
     modal: 'prioridadesV2',
     permissionCode: 'home.card.prioridades_urgencias_v2',
+    imagem: logoPrioridadesV2,
+  },
+  {
+    // Versão antiga (v1), mantida como reserva enquanto a v2 se firma.
+    titulo: 'Prioridades e Urgências (versão antiga)',
+    descricao: '⚖️ Versão anterior, mantida como reserva',
+    cor: 'bg-gradient-to-br from-rose-100 via-red-100 to-orange-100 dark:from-rose-900/30 dark:via-red-900/30 dark:to-orange-900/30',
+    modal: 'prioridades',
+    permissionCode: 'home.card.prioridades_urgencias',
   },
   {
     titulo: 'Outros Serviços',
@@ -316,9 +321,18 @@ export default function Home() {
                 }
               }}
             >
-              <div className="text-4xl mb-2">{card.descricao.split(' ')[0]}</div>
+              <div className="text-4xl mb-2">
+                {card.imagem ? (
+                  // Mesma altura do emoji dos outros cards: a linha do text-4xl tem 40px (h-10).
+                  <img src={card.imagem} alt="" className="mx-auto block h-10 w-auto" />
+                ) : (
+                  card.descricao.split(' ')[0]
+                )}
+              </div>
               <h2 className="text-xl font-semibold dark:text-gray-100">{card.titulo}</h2>
-              <p className="text-gray-600 dark:text-gray-300 mt-1">{card.descricao.split(' ').slice(1).join(' ')}</p>
+              <p className="text-gray-600 dark:text-gray-300 mt-1">
+                {card.imagem ? card.descricao : card.descricao.split(' ').slice(1).join(' ')}
+              </p>
             </motion.button>
           ))}
         </motion.div>
